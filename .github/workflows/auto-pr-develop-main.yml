@@ -1,0 +1,44 @@
+name: Auto PR Develop to Main
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ensure-pr:
+    name: Ensure PR from develop to main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check and create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING_PR=$(gh pr list --head develop --base main --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #$EXISTING_PR already open."
+            exit 0
+          fi
+
+          git fetch origin main:refs/remotes/origin/main || true
+          DIFF_COUNT=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo "1")
+          if [ "$DIFF_COUNT" = "0" ]; then
+            echo "No differences between develop and main."
+            exit 0
+          fi
+
+          echo "Opening PR from develop to main..."
+          gh pr create \
+            --base main \
+            --head develop \
+            --title "Merge develop into main" \
+            --body "Automated pull request opened after new commit or merge into \`develop\`."
