@@ -79,6 +79,9 @@ export default class TabManager {
         TabManager.onColorSchemeChange = onColorSchemeChange;
         TabManager.getTabMessage = getTabMessage;
         TabManager.waitUntilReady = waitUntilReady;
+        if (__CHROMIUM_MV3__) {
+            TabManager.registerDeclarativePrePaint();
+        }
 
         const onMessage = (message: MessageCStoBG | MessageUItoBG, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => any) => {
             if (isFirefox && makeFirefoxHappy(message, sender, sendResponse)) {
@@ -468,6 +471,33 @@ export default class TabManager {
             ],
         });
     }
+
+    static async registerDeclarativePrePaint(isMV3: boolean = typeof __CHROMIUM_MV3__ !== 'undefined' ? __CHROMIUM_MV3__ : false): Promise<void> {
+        if (!isMV3) {
+            return;
+        }
+        if (typeof chrome === 'undefined' || !chrome.scripting || !chrome.scripting.registerContentScripts) {
+            return;
+        }
+        try {
+            const scripts = await chrome.scripting.getRegisteredContentScripts({ids: ['nyx-zero-fouc-root']});
+            if (scripts.length === 0) {
+                await chrome.scripting.registerContentScripts([
+                    {
+                        id: 'nyx-zero-fouc-root',
+                        matches: ['<all_urls>'],
+                        runAt: 'document_start',
+                        allFrames: true,
+                        persistAcrossSessions: true,
+                        js: ['inject/fallback.js'],
+                    },
+                ]);
+            }
+        } catch (e) {
+            logWarn('Could not register declarative pre-paint stylesheet', e);
+        }
+    }
+
 
     // sendMessage will send a tab messages to all active tabs and their frames.
     // If onlyUpdateActiveTab is specified, it will only send a new message to any

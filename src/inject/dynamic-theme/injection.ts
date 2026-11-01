@@ -9,10 +9,33 @@ const hostsBreakingOnStylePosition = [
     'zhale.me',
 ];
 
-const mode = hostsBreakingOnStylePosition.includes(location.hostname) ? 'away' : 'next';
+const mode = typeof location !== 'undefined' && hostsBreakingOnStylePosition.includes(location.hostname) ? 'away' : 'next';
 
 export function getStyleInjectionMode() {
     return mode;
+}
+
+export function injectEarlyRootStyle(doc: Document = document): HTMLStyleElement | null {
+    if (!doc || !doc.documentElement) {
+        return null;
+    }
+    const existing = doc.querySelector('.darkreader--root');
+    if (existing) {
+        return existing as HTMLStyleElement;
+    }
+    const rootStyle = doc.createElement('style');
+    rootStyle.classList.add('darkreader', 'darkreader--root');
+    rootStyle.textContent = 'html, body { background: #181a1b !important; color: #e8e6e3 !important; }';
+    (doc.documentElement || doc.head).appendChild(rootStyle);
+    return rootStyle;
+}
+
+export function removeEarlyRootStyle(doc: Document = document): void {
+    if (!doc) {
+        return;
+    }
+    const rootStyle = doc.querySelector('.darkreader--root');
+    rootStyle?.remove();
 }
 
 const stylesWaitingForBody = new Set<HTMLStyleElement | SVGStyleElement>();
