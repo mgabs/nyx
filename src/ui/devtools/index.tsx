@@ -69,7 +69,7 @@ if (__TEST__) {
 
             switch (type) {
                 case 'devtools-click': {
-                    let attempts = 10;
+                    let attempts = 20;
                     const click = () => {
                         const element: HTMLElement | null = document.querySelector(data);
                         if (element) {
@@ -79,7 +79,7 @@ if (__TEST__) {
                             respond({id, data: false});
                         } else {
                             attempts--;
-                            requestIdleCallback(click, {timeout: 500});
+                            setTimeout(click, 100);
                         }
                     };
 
@@ -88,7 +88,7 @@ if (__TEST__) {
                 }
                 case 'devtools-exists': {
                     // The required element may not exist yet
-                    let attempts = 10;
+                    let attempts = 20;
                     const check = () => {
                         const element: HTMLElement | null = document.querySelector(data);
                         if (element) {
@@ -97,7 +97,7 @@ if (__TEST__) {
                             respond({id, data: false});
                         } else {
                             attempts--;
-                            requestIdleCallback(check, {timeout: 500});
+                            setTimeout(check, 100);
                         }
                     };
 

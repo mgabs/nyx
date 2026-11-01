@@ -119,7 +119,7 @@ if (__TEST__) {
                             element.click();
                             respond({id});
                         } else {
-                            requestIdleCallback(check, {timeout: 500});
+                            setTimeout(check, 100);
                         }
                     };
 
@@ -133,7 +133,7 @@ if (__TEST__) {
                         if (element) {
                             respond({id, data: true});
                         } else {
-                            requestIdleCallback(check, {timeout: 500});
+                            setTimeout(check, 100);
                         }
                     };
 

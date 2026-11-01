@@ -97,6 +97,9 @@ export default class CustomJestEnvironment extends TestEnvironment {
         return await launch({
             args: [
                 '--show-component-extension-options',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
             ],
             enableExtensions: [extensionDir],
             executablePath,
@@ -126,6 +129,9 @@ export default class CustomJestEnvironment extends TestEnvironment {
         return await launch({
             args: [
                 '--show-component-extension-options',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
             ],
             enableExtensions: [extensionDir],
             executablePath,
