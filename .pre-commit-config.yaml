@@ -16,13 +16,13 @@ repos:
 
       - id: lint
         name: linter
-        entry: npm run lint
+        entry: make lint
         language: system
         pass_filenames: false
 
       - id: test
         name: test suite
-        entry: npm test
+        entry: make test
         language: system
         pass_filenames: false
 
