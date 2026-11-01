@@ -5,7 +5,7 @@ import * as reload from './reload.js';
 import {createTask} from './task.js';
 import {readJSON, writeJSON} from './utils.js';
 
-async function patchManifest(platform, debug, watch, test) {
+export async function patchManifest(platform, debug, watch, test) {
     const isMV2 = platform === PLATFORM.CHROMIUM_MV2 || platform === PLATFORM.CHROMIUM_MV2_PLUS;
     const isMV3 = platform === PLATFORM.CHROMIUM_MV3 || platform === PLATFORM.CHROMIUM_MV3_PLUS;
     const isPlus = platform === PLATFORM.CHROMIUM_MV2_PLUS || platform === PLATFORM.CHROMIUM_MV3_PLUS;
@@ -14,8 +14,10 @@ async function patchManifest(platform, debug, watch, test) {
     const manifestPatch = isMV2 ? {} : await readJSON(absolutePath(`src/manifest-${platform.replace('-plus', '')}.json`));
     const manifestExtras = isPlus ? await readJSON(absolutePath(`src/plus/manifest.json`)) : {};
     const patched = {...manifest, ...manifestPatch, ...manifestExtras};
+    patched.name = 'Nyx';
+    patched.description = 'Instant Dark Mode for the Web. Zero White Flash.';
     if (debug && isMV3) {
-        patched.name = isPlus ? 'Dark Reader MV3 Plus' : 'Dark Reader MV3';
+        patched.name = isPlus ? 'Nyx MV3 Plus' : 'Nyx MV3';
     }
     if (isMV3) {
         patched.browser_action = undefined;

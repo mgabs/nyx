@@ -1,7 +1,7 @@
 {
-  "name": "darkreader",
-  "version": "4.9.134",
-  "description": "Dark mode for every website",
+  "name": "Nyx",
+  "version": "0.0.1",
+  "description": "Instant Dark Mode for the Web. Zero White Flash.",
   "scripts": {
     "api": "node --max-old-space-size=3072 tasks/cli.js build --api",
     "build": "node --max-old-space-size=3072 tasks/cli.js build --release",
@@ -46,7 +46,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/darkreader/darkreader.git"
+    "url": "https://github.com/mgabs/nyx"
   },
   "author": "Alexander Shutau <darkreaderapp@gmail.com> (https://darkreader.org/)",
   "license": "MIT",

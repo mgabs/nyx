@@ -69,27 +69,27 @@
 
 ## 🛠️ Detailed Work Packages
 
-### Phase 1: P0 Foundation & Zero-FOUC
+### Phase 1: P0 Foundation & Zero-FOUC (Completed)
 
-- [ ] **B.1. Metadata & Manifest Rebranding**
+- [x] **B.1. Metadata & Manifest Rebranding**
   - **Files**: `tasks/bundle-manifest.js`, `src/manifest.json`, `package.json`
   - **Action**: Update extension name to **Nyx**, short description, homepage URL, repository references.
-- [ ] **B.2. MIT License Compliance & Attribution**
+- [x] **B.2. MIT License Compliance & Attribution**
   - **File**: `LICENSE`
   - **Action**: Preserve original copyright notice (`Copyright (c) 2026 Dark Reader Ltd.`) and add Nyx contributors notice.
-- [ ] **0.1. Declarative User Origin Root Stylesheet**
+- [x] **0.1. Declarative User Origin Root Stylesheet**
   - **File**: `src/inject/dynamic-theme/injection.ts`
   - **Action**: Enforce root baseline dark canvas synchronously (`html, body { background: #181a1b !important; }`) before HTML parsing starts.
-- [ ] **0.2. Service Worker Pre-Paint CSS Registration (MV3)**
+- [x] **0.2. Service Worker Pre-Paint CSS Registration (MV3)**
   - **File**: `src/background/tab-manager.ts`
   - **Action**: Pre-register dynamic content scripts/styles using `chrome.scripting.registerContentScripts` so styles apply before content script handshake completes.
-- [ ] **1.1. Convert `cachedFactory` to True LRU**
+- [x] **1.1. Convert `cachedFactory` to True LRU**
   - **File**: `src/utils/cache.ts`
   - **Action**: Change FIFO eviction to delete-and-reinsert on cache hits. Prevent cache churn on long browsing sessions.
-- [ ] **1.2. Fast-Path CSS Color Parser**
+- [x] **1.2. Fast-Path CSS Color Parser**
   - **File**: `src/utils/color.ts`
   - **Action**: Bypass regex for standard 3/6-digit hex (`#fff`, `#ffffff`) and integer `rgb(r, g, b)`. Use char code inspection.
-- [ ] **1.3. Unit Test & Benchmark Baseline**
+- [x] **1.3. Unit Test & Benchmark Baseline**
   - **Action**: Establish benchmark for `parseColor` and `modifyColorWithCache` under heavy load.
 
 ---

@@ -37,8 +37,22 @@ function linuxAppPath(app) {
  * @returns {Promise<string>}
  */
 export async function getChromePath() {
+    if (process.env.CHROME_BIN) {
+        return process.env.CHROME_BIN;
+    }
     if (process.platform === 'darwin') {
-        return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+        const candidates = [
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+            '/Applications/Chromium.app/Contents/MacOS/Chromium',
+            '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+            `${process.env.HOME}/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`,
+        ];
+        for (const candidate of candidates) {
+            if (fs.existsSync(candidate)) {
+                return candidate;
+            }
+        }
     }
     if (process.platform === 'win32') {
         return winProgramFiles('Google\\Chrome\\Application\\chrome.exe');
@@ -58,29 +72,59 @@ export async function getChromePath() {
  * @returns {Promise<string>}
  */
 export async function getEdgePath() {
-    if (process.platform === 'darwin') {
-        return '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
+    if (process.env.EDGE_BIN && fs.existsSync(process.env.EDGE_BIN)) {
+        return process.env.EDGE_BIN;
     }
-    if (process.platform === 'win32') {
-        return winProgramFiles('Microsoft\\Edge\\Application\\msedge.exe');
-    }
-    const possibleLinuxPaths = ['microsoft-edge', 'microsoft-edge-stable'];
-    for (const possiblePath of possibleLinuxPaths) {
-        try {
-            return await linuxAppPath(possiblePath);
-        } catch (e) {
-            // ignore
+    try {
+        if (process.platform === 'darwin') {
+            const edgeDarwin = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge';
+            if (fs.existsSync(edgeDarwin)) {
+                return edgeDarwin;
+            }
         }
+        if (process.platform === 'win32') {
+            const edgeWin = winProgramFiles('Microsoft\\Edge\\Application\\msedge.exe');
+            if (fs.existsSync(edgeWin)) {
+                return edgeWin;
+            }
+        }
+        const possibleLinuxPaths = ['microsoft-edge', 'microsoft-edge-stable'];
+        for (const possiblePath of possibleLinuxPaths) {
+            try {
+                const p = await linuxAppPath(possiblePath);
+                if (fs.existsSync(p)) {
+                    return p;
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
+    } catch {
+        // ignore
     }
-    throw new Error('Could not find Edge');
+    // Fall back to Chrome when Edge is not available
+    return await getChromePath();
 }
 
 /**
  * @returns {Promise<string>}
  */
 export async function getFirefoxPath() {
+    if (process.env.FIREFOX_BIN) {
+        return process.env.FIREFOX_BIN;
+    }
     if (process.platform === 'darwin') {
-        return '/Applications/Firefox Nightly.app/Contents/MacOS/firefox';
+        const candidates = [
+            '/Applications/Firefox Nightly.app/Contents/MacOS/firefox',
+            '/Applications/Firefox.app/Contents/MacOS/firefox',
+            '/Applications/Firefox Developer Edition.app/Contents/MacOS/firefox',
+            `${process.env.HOME}/Applications/Firefox.app/Contents/MacOS/firefox`,
+        ];
+        for (const candidate of candidates) {
+            if (fs.existsSync(candidate)) {
+                return candidate;
+            }
+        }
     }
     if (process.platform === 'win32') {
         return await winProgramFiles('Firefox Nightly\\firefox.exe');

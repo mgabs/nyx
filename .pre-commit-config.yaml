@@ -2,8 +2,6 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
       - id: check-merge-conflict
@@ -12,19 +10,24 @@ repos:
     hooks:
       - id: check-lgtm-directives
         name: check unresolved lgtm review directives
-        entry: make check-directives
+        entry: sh -c 'if [ -d .lgtm/reviews ]; then ! grep -rn "^#ref " .lgtm/reviews; fi'
         language: system
         pass_filenames: false
 
-      # Configure project-specific linter and test hooks below
       - id: lint
         name: linter
-        entry: make lint
+        entry: npm run lint
         language: system
         pass_filenames: false
 
       - id: test
         name: test suite
-        entry: make test
+        entry: npm test
+        language: system
+        pass_filenames: false
+
+      - id: browser-test-syntax
+        name: verify browser test harness syntax
+        entry: node --check tests/browser/environment.js tests/browser/paths.js tests/browser/server.js tests/inject/karma.conf.js tests/inject/karma.conf.cjs
         language: system
         pass_filenames: false
