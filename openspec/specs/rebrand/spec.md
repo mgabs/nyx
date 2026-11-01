@@ -18,3 +18,10 @@ The project LICENSE MUST retain full upstream copyright notice (`Copyright (c) 2
 #### Scenario: License compliance verification
 - **WHEN** reviewing `LICENSE`
 - **THEN** both original copyright and Nyx contributor notices are present and intact.
+
+### Requirement: REQ-BRAND-3 Settings and Developer Tools Identity
+The popup and Settings page titles MUST identify as Nyx settings, and the Developer Tools page title MUST identify as Nyx developer tools. Settings and Developer Tools headers and settings news descriptions MUST use the Nyx name without renaming internal CSS variables or removing upstream attribution.
+
+#### Scenario: Opening extension settings or developer tools
+- **WHEN** a user opens the popup, Settings, or Developer Tools
+- **THEN** the page title identifies Nyx, and Settings and Developer Tools display the Nyx wordmark.
