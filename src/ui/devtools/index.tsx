@@ -33,8 +33,7 @@ const startPromise = start();
 declare const __TEST__: boolean;
 if (__TEST__) {
     const socket = new WebSocket(`ws://localhost:8894`);
-    socket.onopen = async () => {
-        await startPromise;
+    socket.onopen = () => {
         socket.send(JSON.stringify({
             data: {
                 type: 'devtools',

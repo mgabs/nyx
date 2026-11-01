@@ -265,9 +265,9 @@ export default class CustomJestEnvironment extends TestEnvironment {
 
         let timeout = 10;
         let errors = checkAll();
-        for (let i = 0; (errors.length !== 0) && (i < 10); i++) {
-            timeout *= 2;
-            await new Promise((r) => requestIdleCallback(r, {timeout}));
+        for (let i = 0; (errors.length !== 0) && (i < 15); i++) {
+            timeout = Math.min(timeout * 2, 500);
+            await new Promise((r) => setTimeout(r, timeout));
             errors = checkAll();
         }
         return errors;
@@ -393,12 +393,16 @@ export default class CustomJestEnvironment extends TestEnvironment {
                 });
 
                 function sendToContext(sockets, type, data) {
+                    const activeSockets = sockets.filter(Boolean);
+                    if (activeSockets.length === 0) {
+                        return Promise.reject(new Error(`No active socket available to send ${type}`));
+                    }
                     return new Promise((resolve, reject) => {
                         const id = generateRandomId();
                         resolvers.set(id, resolve);
                         rejectors.set(id, reject);
                         const json = JSON.stringify({type, data, id});
-                        for (const ws of sockets) {
+                        for (const ws of activeSockets) {
                             ws.send(json);
                         }
                     });
@@ -408,8 +412,19 @@ export default class CustomJestEnvironment extends TestEnvironment {
                     return sendToContext(Array.from(popupSockets), type, data);
                 }
 
-                function sendToDevTools(type, data) {
-                    return sendToContext([devToolsSocket], type, data);
+                async function waitForDevTools() {
+                    for (let i = 0; i < 50; i++) {
+                        if (devToolsSocket) {
+                            return devToolsSocket;
+                        }
+                        await new Promise((r) => setTimeout(r, 100));
+                    }
+                    return devToolsSocket;
+                }
+
+                async function sendToDevTools(type, data) {
+                    const ws = await waitForDevTools();
+                    return await sendToContext([ws], type, data);
                 }
 
                 function sendToBackground(type, data) {
