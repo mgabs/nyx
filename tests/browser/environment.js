@@ -408,7 +408,10 @@ export default class CustomJestEnvironment extends TestEnvironment {
                     });
                 }
 
-                function sendToPopup(type, data) {
+                async function sendToPopup(type, data) {
+                    for (let i = 0; i < 50 && popupSockets.size === 0; i++) {
+                        await new Promise((r) => setTimeout(r, 100));
+                    }
                     return sendToContext(Array.from(popupSockets), type, data);
                 }
 

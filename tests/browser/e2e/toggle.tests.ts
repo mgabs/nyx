@@ -244,8 +244,8 @@ describe('Toggling the extension', () => {
     });
 
     it('should have new design button on desktop', async () => {
-        await devtoolsUtils.click('.settings-tab-panel__button:nth-child(4)');
-        expect(await devtoolsUtils.exists('.preview-design-button'));
+        expect(await devtoolsUtils.click('.settings-tab-panel__button:last-child')).toBe(true);
+        expect(await devtoolsUtils.exists('.preview-design-button')).toBe(true);
     });
 
     it('dynamic themes', async () => {

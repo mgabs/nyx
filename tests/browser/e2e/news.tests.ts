@@ -9,6 +9,7 @@ describe('News', () => {
             headline: 'Test news',
         }]);
 
-        popupUtils.exists(newsSelector);
+        await popupUtils.click('.news-button');
+        expect(await popupUtils.exists(newsSelector)).toBe(true);
     });
 });

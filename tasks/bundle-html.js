@@ -53,7 +53,7 @@ const htmlEntries = [
         platforms: [PLATFORM.CHROMIUM_MV2, PLATFORM.CHROMIUM_MV2_PLUS, PLATFORM.FIREFOX_MV2, PLATFORM.THUNDERBIRD],
     },
     {
-        title: 'Dark Reader settings',
+        title: 'Nyx settings',
         path: 'ui/popup/index.html',
         hasLoader: true,
         hasStyleSheet: true,
@@ -61,7 +61,7 @@ const htmlEntries = [
         reloadType: reload.UI,
     },
     {
-        title: 'Dark Reader settings',
+        title: 'Nyx settings',
         path: 'ui/options/index.html',
         hasLoader: false,
         hasStyleSheet: true,
@@ -69,7 +69,7 @@ const htmlEntries = [
         reloadType: reload.UI,
     },
     {
-        title: 'Dark Reader developer tools',
+        title: 'Nyx developer tools',
         path: 'ui/devtools/index.html',
         hasLoader: false,
         hasStyleSheet: true,

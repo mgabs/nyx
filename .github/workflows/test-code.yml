@@ -42,16 +42,16 @@ jobs:
           cache: npm
 
       - name: Install npm dependencies
-        run: npm ci
+        run: make install
 
       - name: Deps
         run: cat package-lock.json
 
       - name: Lint code for code-style errors
-        run: npm run lint
+        run: make lint
 
       - name: Check for compatibility issues
-        run: npm run lint:bundle
+        run: make lint-bundle
 
       - name: Check NPM dependencies
-        run: node tests/dependencies.js
+        run: make test-dependencies

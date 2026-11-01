@@ -10,6 +10,7 @@ const config = {
     testMatch: ['<rootDir>/tests/browser/**/*.tests.ts'],
     moduleFileExtensions: ['ts', 'tsx', 'js'],
     testEnvironment: '<rootDir>/tests/browser/environment.js',
+    testTimeout: 30000,
     verbose: true,
     transform: {'^.+\\.ts(x?)$': ['ts-jest', {tsconfig: '<rootDir>/tests/browser/tsconfig.json'}]},
     globals: {
