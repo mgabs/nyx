@@ -1,0 +1,26 @@
+diff --git a/node_modules/karma-coverage/lib/preprocessor.js b/node_modules/karma-coverage/lib/preprocessor.js
+index 0323311..e3b5cdd 100644
+--- a/node_modules/karma-coverage/lib/preprocessor.js
++++ b/node_modules/karma-coverage/lib/preprocessor.js
+@@ -7,7 +7,7 @@
+ // ------------
+ 
+ const { createInstrumenter } = require('istanbul-lib-instrument')
+-const minimatch = require('minimatch')
++const minimatch = require('minimatch').minimatch
+ const path = require('path')
+ const globalSourceMapStore = require('./source-map-store')
+ const globalCoverageMap = require('./coverage-map')
+diff --git a/node_modules/karma-coverage/lib/reporter.js b/node_modules/karma-coverage/lib/reporter.js
+index b062af6..08b6173 100644
+--- a/node_modules/karma-coverage/lib/reporter.js
++++ b/node_modules/karma-coverage/lib/reporter.js
+@@ -14,7 +14,7 @@ var path = require('path')
+ const { promisify } = require('util')
+ var istanbulLibCoverage = require('istanbul-lib-coverage')
+ var istanbulLibReport = require('istanbul-lib-report')
+-var minimatch = require('minimatch')
++var minimatch = require('minimatch').minimatch
+ 
+ var globalSourceMapStore = require('./source-map-store')
+ var globalCoverageMap = require('./coverage-map')
