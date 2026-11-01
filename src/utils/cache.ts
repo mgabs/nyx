@@ -3,7 +3,10 @@ export function cachedFactory<K, V>(factory: (key: K) => V, size: number): (key:
 
     return (key: K) => {
         if (cache.has(key)) {
-            return cache.get(key)!;
+            const val = cache.get(key)!;
+            cache.delete(key);
+            cache.set(key, val);
+            return val;
         }
         const value = factory(key);
         cache.set(key, value);

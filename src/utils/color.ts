@@ -157,8 +157,189 @@ const supportedColorFuncs = [
     'oklch',
 ];
 
+function parseHexDigit(c: number): number {
+    if (c >= 48 && c <= 57) {
+        return c - 48;
+    }
+    if (c >= 97 && c <= 102) {
+        return c - 87;
+    }
+    if (c >= 65 && c <= 70) {
+        return c - 55;
+    }
+    return -1;
+}
+
+export function parseHexFast(c: string): RGBA | null {
+    const len = c.length;
+    if ((len !== 4 && len !== 7) || c.charCodeAt(0) !== 35) {
+        return null;
+    }
+    if (len === 4) {
+        const r = parseHexDigit(c.charCodeAt(1));
+        const g = parseHexDigit(c.charCodeAt(2));
+        const b = parseHexDigit(c.charCodeAt(3));
+        if ((r | g | b) < 0) {
+            return null;
+        }
+        return {r: r * 17, g: g * 17, b: b * 17, a: 1};
+    }
+    const r1 = parseHexDigit(c.charCodeAt(1));
+    const r2 = parseHexDigit(c.charCodeAt(2));
+    const g1 = parseHexDigit(c.charCodeAt(3));
+    const g2 = parseHexDigit(c.charCodeAt(4));
+    const b1 = parseHexDigit(c.charCodeAt(5));
+    const b2 = parseHexDigit(c.charCodeAt(6));
+    if ((r1 | r2 | g1 | g2 | b1 | b2) < 0) {
+        return null;
+    }
+    return {
+        r: (r1 << 4) | r2,
+        g: (g1 << 4) | g2,
+        b: (b1 << 4) | b2,
+        a: 1,
+    };
+}
+
+export function parseRgbFast(s: string): RGBA | null {
+    const len = s.length;
+    if (len < 10) {
+        return null;
+    }
+    const c0 = s.charCodeAt(0);
+    const c1 = s.charCodeAt(1);
+    const c2 = s.charCodeAt(2);
+    const c3 = s.charCodeAt(3);
+    if (
+        (c0 !== 114 && c0 !== 82) ||
+        (c1 !== 103 && c1 !== 71) ||
+        (c2 !== 98 && c2 !== 66) ||
+        c3 !== 40
+    ) {
+        return null;
+    }
+    if (s.charCodeAt(len - 1) !== 41) {
+        return null;
+    }
+
+    let i = 4;
+    const end = len - 1;
+
+    let r = 0;
+    let g = 0;
+    let b = 0;
+
+    while (i < end && (s.charCodeAt(i) === 32 || s.charCodeAt(i) === 9)) {
+        i++;
+    }
+    if (i >= end) {
+        return null;
+    }
+
+    let hasDigits = false;
+    while (i < end) {
+        const code = s.charCodeAt(i);
+        if (code >= 48 && code <= 57) {
+            hasDigits = true;
+            r = r * 10 + (code - 48);
+            i++;
+        } else {
+            break;
+        }
+    }
+    if (!hasDigits) {
+        return null;
+    }
+
+    while (i < end && (s.charCodeAt(i) === 32 || s.charCodeAt(i) === 9)) {
+        i++;
+    }
+    if (i >= end) {
+        return null;
+    }
+
+    let isCommaSeparated = false;
+    if (s.charCodeAt(i) === 44) {
+        isCommaSeparated = true;
+        i++;
+        while (i < end && (s.charCodeAt(i) === 32 || s.charCodeAt(i) === 9)) {
+            i++;
+        }
+    }
+
+    hasDigits = false;
+    while (i < end) {
+        const code = s.charCodeAt(i);
+        if (code >= 48 && code <= 57) {
+            hasDigits = true;
+            g = g * 10 + (code - 48);
+            i++;
+        } else {
+            break;
+        }
+    }
+    if (!hasDigits) {
+        return null;
+    }
+
+    while (i < end && (s.charCodeAt(i) === 32 || s.charCodeAt(i) === 9)) {
+        i++;
+    }
+    if (i >= end) {
+        return null;
+    }
+
+    if (isCommaSeparated) {
+        if (s.charCodeAt(i) !== 44) {
+            return null;
+        }
+        i++;
+        while (i < end && (s.charCodeAt(i) === 32 || s.charCodeAt(i) === 9)) {
+            i++;
+        }
+    }
+
+    hasDigits = false;
+    while (i < end) {
+        const code = s.charCodeAt(i);
+        if (code >= 48 && code <= 57) {
+            hasDigits = true;
+            b = b * 10 + (code - 48);
+            i++;
+        } else {
+            break;
+        }
+    }
+    if (!hasDigits) {
+        return null;
+    }
+
+    while (i < end && (s.charCodeAt(i) === 32 || s.charCodeAt(i) === 9)) {
+        i++;
+    }
+    if (i !== end) {
+        return null;
+    }
+
+    return {r, g, b, a: 1};
+}
+
 export function parse($color: string): RGBA | null {
-    const c = $color.trim().toLowerCase();
+    const trimmed = $color.trim();
+    if (trimmed.charCodeAt(0) === 35) {
+        const hex = parseHexFast(trimmed);
+        if (hex) {
+            return hex;
+        }
+    } else {
+        const rgb = parseRgbFast(trimmed);
+        if (rgb) {
+            return rgb;
+        }
+    }
+
+    const c = trimmed.toLowerCase();
+
     if (c.includes('(from ')) {
         if (c.indexOf('(from') !== c.lastIndexOf('(from')) {
             return null;
