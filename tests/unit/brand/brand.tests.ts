@@ -30,6 +30,13 @@ describe('Brand Identity & MIT Attribution Specification', () => {
             expect(manifest.action.default_title).toBe('Nyx');
         });
 
+        test.each(['firefox', 'thunderbird'])('%s must use an independent Nyx extension ID', async (platform) => {
+            const manifest = JSON.parse(await fs.readFile(rootPath(`src/manifest-${platform}.json`), 'utf8'));
+            const settings = manifest.browser_specific_settings || manifest.applications;
+
+            expect(settings.gecko.id).toBe('nyx@mgabs.github.io');
+        });
+
         test('tasks/bundle-manifest.js source contains Nyx branding', async () => {
             const bundleManifestRaw = await fs.readFile(rootPath('tasks/bundle-manifest.js'), 'utf8');
 

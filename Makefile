@@ -9,7 +9,7 @@ build:
 	node tasks/cli.js build
 
 build-release:
-	node tasks/cli.js build --release
+	node tasks/cli.js build --release $(ARGS)
 
 clean:
 	rm -rf build
