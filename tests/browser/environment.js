@@ -311,131 +311,145 @@ export default class CustomJestEnvironment extends TestEnvironment {
     async createMessageServer() {
         const awaitForEvent = this.awaitForEvent.bind(this);
 
-        return new Promise((resolve) => {
-            const wsServer = new WebSocketServer({port: POPUP_TEST_PORT});
-            let backgroundSocket = null;
-            let devToolsSocket = null;
-            const popupSockets = new Set();
-            const pageSockets = new Set();
-            const resolvers = new Map();
-            const rejectors = new Map();
+        return new Promise((resolve, reject) => {
+            const startServer = (retries = 20) => {
+                const wsServer = new WebSocketServer({port: POPUP_TEST_PORT});
+                let backgroundSocket = null;
+                let devToolsSocket = null;
+                const popupSockets = new Set();
+                const pageSockets = new Set();
+                const resolvers = new Map();
+                const rejectors = new Map();
 
-            let onDownloadCallback = null;
+                let onDownloadCallback = null;
 
-            wsServer.on('connection', async (ws) => {
-                ws.on('message', (data) => {
-                    const message = JSON.parse(data);
-                    if (message.id === null && message.data && message.data.type === 'background' && message.data.extensionOrigin) {
+                wsServer.on('error', (err) => {
+                    if (err && err.code === 'EADDRINUSE' && retries > 0) {
+                        try {
+                            wsServer.close();
+                        } catch {}
+                        setTimeout(() => startServer(retries - 1), 300);
+                    } else {
+                        reject(err);
+                    }
+                });
+
+                wsServer.on('connection', async (ws) => {
+                    ws.on('message', (data) => {
+                        const message = JSON.parse(data);
+                        if (message.id === null && message.data && message.data.type === 'background' && message.data.extensionOrigin) {
                         // This is the initial message which contains extension's URL origin
                         // and signals that extenstion is ready
-                        this.extensionOrigin = message.data.extensionOrigin;
-                        this.extensionStartListeners.forEach((ready) => ready());
-                        ws.on('close', () => backgroundSocket = null);
-                        backgroundSocket = ws;
-                        resolve(wsServer);
-                    } else if (message.id === null && message.data && message.data.type === 'devtools') {
-                        ws.on('close', () => devToolsSocket = null);
-                        devToolsSocket = ws;
-                        this.onPageEventResponse(message.data.uuid);
-                    } else if (message.id === null && message.data && message.data.type === 'popup') {
-                        ws.on('close', () => popupSockets.delete(ws));
-                        popupSockets.add(ws);
-                        this.onPageEventResponse(message.data.uuid);
-                    } else if (message.id === null && message.data && message.data.type === 'page') {
-                        if (message.data.message === 'page-ready' && message.data.uuid === 'ready-/') {
-                            ws.on('close', () => pageSockets.delete(ws));
-                            pageSockets.add(ws);
+                            this.extensionOrigin = message.data.extensionOrigin;
+                            this.extensionStartListeners.forEach((ready) => ready());
+                            ws.on('close', () => backgroundSocket = null);
+                            backgroundSocket = ws;
+                            resolve(wsServer);
+                        } else if (message.id === null && message.data && message.data.type === 'devtools') {
+                            ws.on('close', () => devToolsSocket = null);
+                            devToolsSocket = ws;
+                            this.onPageEventResponse(message.data.uuid);
+                        } else if (message.id === null && message.data && message.data.type === 'popup') {
+                            ws.on('close', () => popupSockets.delete(ws));
+                            popupSockets.add(ws);
+                            this.onPageEventResponse(message.data.uuid);
+                        } else if (message.id === null && message.data && message.data.type === 'page') {
+                            if (message.data.message === 'page-ready' && message.data.uuid === 'ready-/') {
+                                ws.on('close', () => pageSockets.delete(ws));
+                                pageSockets.add(ws);
+                            }
+                            this.onPageEventResponse(message.data.uuid);
+                        } else if (message.id === null && message.data && message.data.type === 'download') {
+                            if (onDownloadCallback) {
+                                onDownloadCallback(message.data);
+                            }
+                        } else if (message.error) {
+                            const reject = rejectors.get(message.id);
+                            reject(message.error);
+                        } else {
+                            const resolve = resolvers.get(message.id);
+                            resolve(message.data);
                         }
-                        this.onPageEventResponse(message.data.uuid);
-                    } else if (message.id === null && message.data && message.data.type === 'download') {
-                        if (onDownloadCallback) {
-                            onDownloadCallback(message.data);
+                        resolvers.delete(message.id);
+                        rejectors.delete(message.id);
+                    });
+                });
+
+                function sendToContext(sockets, type, data) {
+                    return new Promise((resolve, reject) => {
+                        const id = generateRandomId();
+                        resolvers.set(id, resolve);
+                        rejectors.set(id, reject);
+                        const json = JSON.stringify({type, data, id});
+                        for (const ws of sockets) {
+                            ws.send(json);
                         }
-                    } else if (message.error) {
-                        const reject = rejectors.get(message.id);
-                        reject(message.error);
-                    } else {
-                        const resolve = resolvers.get(message.id);
-                        resolve(message.data);
-                    }
-                    resolvers.delete(message.id);
-                    rejectors.delete(message.id);
-                });
-            });
+                    });
+                }
 
-            function sendToContext(sockets, type, data) {
-                return new Promise((resolve, reject) => {
-                    const id = generateRandomId();
-                    resolvers.set(id, resolve);
-                    rejectors.set(id, reject);
-                    const json = JSON.stringify({type, data, id});
-                    for (const ws of sockets) {
-                        ws.send(json);
-                    }
-                });
-            }
+                function sendToPopup(type, data) {
+                    return sendToContext(Array.from(popupSockets), type, data);
+                }
 
-            function sendToPopup(type, data) {
-                return sendToContext(Array.from(popupSockets), type, data);
-            }
+                function sendToDevTools(type, data) {
+                    return sendToContext([devToolsSocket], type, data);
+                }
 
-            function sendToDevTools(type, data) {
-                return sendToContext([devToolsSocket], type, data);
-            }
+                function sendToBackground(type, data) {
+                    return sendToContext([backgroundSocket], type, data);
+                }
 
-            function sendToBackground(type, data) {
-                return sendToContext([backgroundSocket], type, data);
-            }
+                function sendToPage(type, data) {
+                    return sendToContext(Array.from(pageSockets), type, data);
+                }
 
-            function sendToPage(type, data) {
-                return sendToContext(Array.from(pageSockets), type, data);
-            }
+                async function applyDevtoolsConfig(type, fixes) {
+                    const promise = awaitForEvent('darkreader-dynamic-theme-ready');
+                    await Promise.all([
+                        sendToDevTools(type, fixes),
+                        promise,
+                    ]);
+                }
 
-            async function applyDevtoolsConfig(type, fixes) {
-                const promise = awaitForEvent('darkreader-dynamic-theme-ready');
-                await Promise.all([
-                    sendToDevTools(type, fixes),
-                    promise,
-                ]);
-            }
+                this.global.popupUtils = {
+                    saveFile: async (name, content) => sendToPopup('popup-saveFile', {name, content}),
+                    click: async (selector) => await sendToPopup('popup-click', selector),
+                    exists: async (selector) => await sendToPopup('popup-exists', selector),
+                };
 
-            this.global.popupUtils = {
-                saveFile: async (name, content) => sendToPopup('popup-saveFile', {name, content}),
-                click: async (selector) => await sendToPopup('popup-click', selector),
-                exists: async (selector) => await sendToPopup('popup-exists', selector),
+                this.global.devtoolsUtils = {
+                    click: async (selector) => await sendToDevTools('devtools-click', selector),
+                    exists: async (selector) => await sendToDevTools('devtools-exists', selector),
+                    paste: async (fixes) => await applyDevtoolsConfig('devtools-paste', fixes),
+                    reset: async () => await applyDevtoolsConfig('devtools-reset'),
+                };
+
+                this.global.backgroundUtils = {
+                    changeSettings: async (settings) => await sendToBackground('changeSettings', settings),
+                    collectData: async () => await sendToBackground('collectData'),
+                    changeChromeStorage: async (region, data) => await sendToBackground('changeChromeStorage', {region, data}),
+                    getChromeStorage: async (region, keys) => await sendToBackground('getChromeStorage', {region, keys}),
+                    getManifest: async () => await sendToBackground('getManifest'),
+                    getColorScheme: async () => {
+                        return await sendToBackground('firefox-getColorScheme');
+                    },
+                    emulateColorScheme: async (colorScheme) => {
+                        await sendToBackground('firefox-emulateColorScheme', colorScheme);
+                    },
+                    setNews: async (news) => await sendToBackground('setNews', news),
+                    onDownload: (callback) => onDownloadCallback = callback,
+                };
+
+                this.global.pageUtils = {
+                    emulateColorScheme: async (colorScheme) => await sendToPage('firefox-emulateColorScheme', colorScheme),
+                    getColorScheme: async () => {
+                        return await sendToPage('firefox-getColorScheme');
+                    },
+                };
+
+                this.global.awaitForEvent = awaitForEvent;
             };
-
-            this.global.devtoolsUtils = {
-                click: async (selector) => await sendToDevTools('devtools-click', selector),
-                exists: async (selector) => await sendToDevTools('devtools-exists', selector),
-                paste: async (fixes) => await applyDevtoolsConfig('devtools-paste', fixes),
-                reset: async () => await applyDevtoolsConfig('devtools-reset'),
-            };
-
-            this.global.backgroundUtils = {
-                changeSettings: async (settings) => await sendToBackground('changeSettings', settings),
-                collectData: async () => await sendToBackground('collectData'),
-                changeChromeStorage: async (region, data) => await sendToBackground('changeChromeStorage', {region, data}),
-                getChromeStorage: async (region, keys) => await sendToBackground('getChromeStorage', {region, keys}),
-                getManifest: async () => await sendToBackground('getManifest'),
-                getColorScheme: async () => {
-                    return await sendToBackground('firefox-getColorScheme');
-                },
-                emulateColorScheme: async (colorScheme) => {
-                    await sendToBackground('firefox-emulateColorScheme', colorScheme);
-                },
-                setNews: async (news) => await sendToBackground('setNews', news),
-                onDownload: (callback) => onDownloadCallback = callback,
-            };
-
-            this.global.pageUtils = {
-                emulateColorScheme: async (colorScheme) => await sendToPage('firefox-emulateColorScheme', colorScheme),
-                getColorScheme: async () => {
-                    return await sendToPage('firefox-getColorScheme');
-                },
-            };
-
-            this.global.awaitForEvent = awaitForEvent;
+            startServer();
         });
     }
 
