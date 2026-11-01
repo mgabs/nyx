@@ -28,6 +28,7 @@
 | 4.1  | DOM Mutation Batching         |  4  |  3  |  1.33 | P1 (Perf)  |
 +------+-------------------------------+-----+-----+-------+------------+
 | B.3  | App Icons & Assets            |  3  |  2  |  1.5  | P2         |
+| B.5  | Whole-App Rebrand Scan        |  4  |  2  |  2.0  | P2         |
 | 6.1  | OLED Pitch Black Mode         |  3  |  2  |  1.5  | P2         |
 | 5.1  | Auto-Contrast UI Toggle       |  3  |  2  |  1.5  | P2         |
 | 4.2  | AdoptedStyleSheet Cache       |  3  |  3  |  1.0  | P2         |
@@ -52,12 +53,14 @@
 - **Hot-Path Quick Wins**: 1.1, 1.2. Replace FIFO with LRU cache, char-code color parser.
 
 ### 2. P1: Engine Speed & Readability (Core Differentiator)
+- **Measurement First**: M.1. Establish engine baselines before evaluating P1 optimizations or new engine profiles.
 - **Startup Latency**: 3.1, 3.2. Precompile 820KB regex config to binary/JSON trie.
 - **Readability Engine**: 2.1, 2.2. Dynamic WCAG AA contrast enforcement.
 - **DOM Stability**: 4.1. Mutation microtask batching for SPAs.
 
 ### 3. P2: User Features & Polish
 - **Branding Assets**: B.3 (Icons), B.4 (Sponsor link).
+- **Brand Consistency**: B.5. Scan the whole app and generated store packages for remaining upstream branding.
 - **Themes**: 6.1 (OLED black canvas), 5.1 (UI toggle for auto-contrast).
 - **DOM/Fix Optimization**: 4.2 (AdoptedStyleSheet caching), 3.3 (Config dead domain pruning).
 
@@ -96,6 +99,14 @@
 
 ### Phase 2: P1 Engine Speed & Contrast
 
+- [ ] **M.1. Engine Measurement & Baseline**
+  - **Status**: Paused after research; Gate 0 approval is pending. No benchmark implementation or measured baseline exists yet.
+  - **Research**: [engine-measurement-baseline](changes/engine-measurement-baseline/research.md).
+  - **Recommended Approach (not yet approved)**: Dedicated Puppeteer runner using deterministic local fixtures, separate from instrumented correctness tests.
+  - **Matrix**: No extension, installed-but-disabled extension, Filter, Filter+, Dynamic, and Static; compare Chromium and Firefox separately, with explicitly defined fresh-profile and warm-cache runs.
+  - **Measurements**: Startup/dark-frame timing, observed bright frames with capture-coverage limitations, CPU/long tasks, responsiveness, memory where supported, screenshots, and separate image-analysis diagnostics.
+  - **Reporting**: Five excluded warm-ups and twenty measured runs per supported case; retain raw samples, failures, median/p95, commit/browser/hardware/settings metadata, and unsupported-metric reasons. Establish variance before setting regression budgets.
+  - **Resume**: Human review of Option B at Gate 0, followed by proposal, specs, design, tasks, and a separate implementation request. Do not introduce new engines, entropy classification, or OCR in this baseline change.
 - [ ] **3.1. Build-Time Serialization for Site Fixes**
   - **Files**: `tasks/bundle-manifest.js`, `tasks/build.js`, `src/generators/utils/parse.ts`
   - **Action**: Compile `src/config/dynamic-theme-fixes.config` (~820KB) into indexed JSON or flat trie at build time.
@@ -125,6 +136,10 @@
 - [ ] **B.4. Custom Donation / Sponsor Link**
   - **File**: `src/utils/links.ts`
   - **Action**: Route `DONATE_URL` to Nyx sponsor/donation page.
+- [ ] **B.5. Whole-App Rebrand Scan & Remediation**
+  - **Scope**: All UI surfaces (popup, Settings, Developer Tools, CSS editor), localized strings, logos/icons, accessibility labels, help/support/sponsor links, manifests, build tooling, documentation, and generated Chrome, Edge, Firefox, Thunderbird, and Safari packages.
+  - **Action**: Inventory remaining `Dark Reader` / `darkreader` references; distinguish user-visible branding from required upstream attribution and compatibility identifiers, then replace unintended branding with Nyx.
+  - **Validation**: Add an automated rebrand scan with an explicit allowlist for MIT copyright/credits, intentional upstream references, and compatibility-sensitive identifiers such as CSS variables, storage keys, and message protocols. Review built packages and smoke-test each UI surface before marking complete.
 - [ ] **5.1. Theme Definition Extension & Popup Toggle**
   - **Files**: `src/definitions.d.ts`, `src/defaults.ts`, `src/ui/popup/components/filter-settings/`
   - **Action**: Add `autoContrast: boolean` to theme schema and toggle switch in popup UI.
