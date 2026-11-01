@@ -1,9 +1,10 @@
+import fs from 'node:fs';
 import {TestEnvironment} from 'jest-environment-node';
 import {launch} from 'puppeteer-core';
 import {WebSocketServer} from 'ws';
 
 import {generateHTMLCoverageReports} from './coverage.js';
-import {getChromePath, getFirefoxPath, chromeMV3ExtensionDebugDir, chromeMV3PlusExtensionDebugDir, firefoxExtensionDebugDir, getEdgePath} from './paths.js';
+import {getChromePath, getFirefoxPath, chromeExtensionDebugDir, chromeMV3ExtensionDebugDir, chromeMV3PlusExtensionDebugDir, firefoxExtensionDebugDir, getEdgePath} from './paths.js';
 import {createTestServer, generateRandomId} from './server.js';
 
 const TEST_SERVER_PORT = 8891;
@@ -81,7 +82,10 @@ export default class CustomJestEnvironment extends TestEnvironment {
      * @returns {Promise<Browser>}
      */
     async launchChrome() {
-        const extensionDir = chromeMV3ExtensionDebugDir;
+        let extensionDir = chromeMV3ExtensionDebugDir;
+        if (!fs.existsSync(extensionDir) && fs.existsSync(chromeExtensionDebugDir)) {
+            extensionDir = chromeExtensionDebugDir;
+        }
         let executablePath;
         try {
             executablePath = await getChromePath();
@@ -105,7 +109,14 @@ export default class CustomJestEnvironment extends TestEnvironment {
      * @returns {Promise<Browser>}
      */
     async launchEdge() {
-        const extensionDir = chromeMV3PlusExtensionDebugDir;
+        let extensionDir = chromeMV3PlusExtensionDebugDir;
+        if (!fs.existsSync(extensionDir)) {
+            if (fs.existsSync(chromeExtensionDebugDir)) {
+                extensionDir = chromeExtensionDebugDir;
+            } else if (fs.existsSync(chromeMV3ExtensionDebugDir)) {
+                extensionDir = chromeMV3ExtensionDebugDir;
+            }
+        }
         let executablePath;
         try {
             executablePath = await getEdgePath();
