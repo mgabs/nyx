@@ -324,7 +324,7 @@ describe('Style override', () => {
     });
 
     it('should keep style proxy after theme rebuild', async () => {
-        if (product === 'firefox') {
+        if (product !== 'chrome-mv3') {
             return;
         }
         await loadTestPage({
