@@ -1,4 +1,4 @@
-import {getStyleInjectionMode, injectEarlyRootStyle, removeEarlyRootStyle, injectStyleAway, removeStyleContainer} from '../../../src/inject/dynamic-theme/injection';
+import {getStyleInjectionMode, injectEarlyRootStyle, injectStyleAway, removeStyleContainer} from '../../../src/inject/dynamic-theme/injection';
 
 describe('Style Injection Unit Tests', () => {
     let mockDoc: any;
@@ -182,13 +182,13 @@ describe('Style Injection Unit Tests', () => {
             querySelectorAll: (sel: string) => sel === '.darkreader--sync' ? [syncStyle] : [],
         };
         const fakeBody: any = {
-            querySelector: (sel: string) => null,
+            querySelector: (_sel: string) => null,
             append: (c: any) => appendedToBody.push(c),
         };
         const fakeDoc: any = {
             body: fakeBody,
             querySelector: (sel: string) => sel === '.darkreader-style-container' ? fakeContainer : null,
-            createElement: (tag: string) => fakeContainer,
+            createElement: (_tag: string) => fakeContainer,
         };
         (global as any).document = fakeDoc;
 
