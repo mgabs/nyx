@@ -39,11 +39,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            build/release/darkreader-*
+            build/release/nyx-*
             CHANGELOG.md
 
       - name: Upload built artifact
         uses: actions/upload-artifact@v4
         with:
-          path: build/release/darkreader-*
+          path: build/release/nyx-*
           retention-days: ${{ inputs.retention_days }}

@@ -1,6 +1,6 @@
 {
   "name": "Nyx",
-  "version": "4.9.134",
+  "version": "0.0.1",
   "description": "Instant Dark Mode for the Web. Zero White Flash.",
   "scripts": {
     "api": "node --max-old-space-size=3072 tasks/cli.js build --api",
