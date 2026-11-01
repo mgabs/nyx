@@ -1,0 +1,118 @@
+diff --git a/node_modules/karma/lib/completion.js b/node_modules/karma/lib/completion.js
+index eb05852..d5f9a17 100644
+--- a/node_modules/karma/lib/completion.js
++++ b/node_modules/karma/lib/completion.js
+@@ -52,15 +52,13 @@ function sendCompletion (possibleWords, env) {
+ }
+ 
+ function sendCompletionFiles (env) {
+-  glob(env.last + '*', { mark: true, nocase: true }, (err, files) => {
+-    if (err) return console.error(err)
+-
++  glob.glob(env.last + '*', { mark: true, nocase: true }).then((files) => {
+     if (files.length === 1 && files[0].endsWith('/')) {
+       sendCompletionFiles({ last: files[0] })
+     } else {
+       console.log(files.join('\n'))
+     }
+-  })
++  }, (err) => console.error(err))
+ }
+ 
+ function complete (env) {
+diff --git a/node_modules/karma/lib/file-list.js b/node_modules/karma/lib/file-list.js
+index b4ec01d..c54ec43 100644
+--- a/node_modules/karma/lib/file-list.js
++++ b/node_modules/karma/lib/file-list.js
+@@ -1,8 +1,8 @@
+ 'use strict'
+ 
+ const { promisify } = require('util')
+-const mm = require('minimatch')
+-const Glob = require('glob').Glob
++const mm = require('minimatch').minimatch
++const globSync = require('glob').globSync
+ const fs = require('graceful-fs')
+ const statAsync = promisify(fs.stat.bind(fs))
+ const pathLib = require('path')
+@@ -68,9 +68,9 @@ class FileList {
+           return
+         }
+ 
+-        const mg = new Glob(pathLib.normalize(pattern), { cwd: '/', follow: true, nodir: true, sync: true })
++        const matches = globSync(pathLib.normalize(pattern), { cwd: '/', follow: true, nodir: true }).sort()
+ 
+-        const files = mg.found
++        const files = matches
+           .filter((path) => {
+             if (this._findExcluded(path)) {
+               log.debug(`Excluded file "${path}"`)
+@@ -82,7 +82,7 @@ class FileList {
+               return true
+             }
+           })
+-          .map((path) => new File(path, mg.statCache[path].mtime, nocache, type, isBinary))
++          .map((path) => new File(path, fs.statSync(path).mtime, nocache, type, isBinary))
+ 
+         if (nocache) {
+           log.debug(`Not preprocessing "${pattern}" due to nocache`)
+@@ -92,7 +92,7 @@ class FileList {
+ 
+         this.buckets.set(pattern, files)
+ 
+-        if (_.isEmpty(mg.found)) {
++        if (_.isEmpty(matches)) {
+           log.warn(`Pattern "${pattern}" does not match any file.`)
+         } else if (_.isEmpty(files)) {
+           log.warn(`All files matched by "${pattern}" were excluded or matched by prior matchers.`)
+diff --git a/node_modules/karma/lib/helper.js b/node_modules/karma/lib/helper.js
+index 9be1193..0a0edaa 100644
+--- a/node_modules/karma/lib/helper.js
++++ b/node_modules/karma/lib/helper.js
+@@ -3,7 +3,7 @@
+ const _ = require('lodash')
+ const mkdirp = require('mkdirp')
+ const useragent = require('ua-parser-js')
+-const mm = require('minimatch')
++const mm = require('minimatch').minimatch
+ 
+ exports.browserFullNameToShort = (fullName) => {
+   const ua = useragent(fullName)
+diff --git a/node_modules/karma/lib/init.js b/node_modules/karma/lib/init.js
+index f55f94e..fa43d10 100755
+--- a/node_modules/karma/lib/init.js
++++ b/node_modules/karma/lib/init.js
+@@ -3,7 +3,7 @@
+ const readline = require('readline')
+ const path = require('path')
+ const glob = require('glob')
+-const mm = require('minimatch')
++const mm = require('minimatch').minimatch
+ const exec = require('child_process').exec
+ 
+ const helper = require('./helper')
+diff --git a/node_modules/karma/lib/preprocessor.js b/node_modules/karma/lib/preprocessor.js
+index b6bf756..c3ada68 100644
+--- a/node_modules/karma/lib/preprocessor.js
++++ b/node_modules/karma/lib/preprocessor.js
+@@ -20,7 +20,7 @@ const tryToRead = function (path, log) {
+   })
+ }
+ 
+-const mm = require('minimatch')
++const mm = require('minimatch').minimatch
+ const { isBinaryFile } = require('isbinaryfile')
+ const _ = require('lodash')
+ const CryptoUtils = require('./utils/crypto-utils')
+diff --git a/node_modules/karma/lib/watcher.js b/node_modules/karma/lib/watcher.js
+index 7a16667..2ad107b 100644
+--- a/node_modules/karma/lib/watcher.js
++++ b/node_modules/karma/lib/watcher.js
+@@ -1,6 +1,6 @@
+ 'use strict'
+ 
+-const mm = require('minimatch')
++const mm = require('minimatch').minimatch
+ const braces = require('braces')
+ const PatternUtils = require('./utils/pattern-utils')
+ 
