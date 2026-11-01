@@ -899,6 +899,7 @@ describe('CSS VARIABLES OVERRIDE', () => {
         );
         createOrUpdateDynamicTheme(theme, null, false);
         await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await timeout(50);
         expect(getComputedStyle(container.querySelector('.icon1')!).backgroundImage).toMatch(/^url\("blob:.*"\)$/);
         expect(getComputedStyle(container.querySelector('.icon2')!).backgroundImage).toMatch(/^url\("blob:.*"\)$/);
         expect(getComputedStyle(container.querySelector('.icon3')!).backgroundImage).toMatch(/^url\("blob:.*"\), url\("blob:.*"\)$/);
