@@ -28,12 +28,13 @@ async function start(): Promise<void> {
     });
 }
 
-start();
+const startPromise = start();
 
 declare const __TEST__: boolean;
 if (__TEST__) {
     const socket = new WebSocket(`ws://localhost:8894`);
     socket.onopen = async () => {
+        await startPromise;
         socket.send(JSON.stringify({
             data: {
                 type: 'devtools',
@@ -42,16 +43,33 @@ if (__TEST__) {
             id: null,
         }));
     };
-    socket.onmessage = (e) => {
+    socket.onmessage = async (e) => {
         const respond = (message: {id: number; data?: string | boolean; error?: string}) => socket.send(JSON.stringify(message));
         const message: {type: string; id: number; data: string} = JSON.parse(e.data);
         const {type, id, data} = message;
         try {
-            const textarea: HTMLTextAreaElement = document.querySelector('.config-editor textarea.editor')!;
-            const [buttonReset, buttonApply] = document.querySelectorAll('.config-editor .buttons button');
+            await startPromise;
+
+            const getEditorElements = async (retries = 20): Promise<{textarea: HTMLTextAreaElement; buttonReset: HTMLButtonElement; buttonApply: HTMLButtonElement}> => {
+                const textarea = document.querySelector('.config-editor textarea.editor') as HTMLTextAreaElement | null;
+                const buttons = document.querySelectorAll('.config-editor .buttons button');
+                if (textarea && buttons.length >= 2) {
+                    return {
+                        textarea,
+                        buttonReset: buttons[0] as HTMLButtonElement,
+                        buttonApply: buttons[1] as HTMLButtonElement,
+                    };
+                }
+                if (retries <= 0) {
+                    throw new Error('DevTools editor elements not found');
+                }
+                await new Promise((r) => setTimeout(r, 100));
+                return getEditorElements(retries - 1);
+            };
+
             switch (type) {
                 case 'devtools-click': {
-                    let attempts = 4;
+                    let attempts = 10;
                     const click = () => {
                         const element: HTMLElement | null = document.querySelector(data);
                         if (element) {
@@ -70,7 +88,7 @@ if (__TEST__) {
                 }
                 case 'devtools-exists': {
                     // The required element may not exist yet
-                    let attempts = 4;
+                    let attempts = 10;
                     const check = () => {
                         const element: HTMLElement | null = document.querySelector(data);
                         if (element) {
@@ -86,16 +104,23 @@ if (__TEST__) {
                     check();
                     break;
                 }
-                case 'devtools-paste':
+                case 'devtools-paste': {
+                    const {textarea, buttonApply} = await getEditorElements();
                     textarea.value = data;
-                    (buttonApply as HTMLButtonElement).click();
+                    buttonApply.click();
                     respond({id});
                     break;
-                case 'devtools-reset':
+                }
+                case 'devtools-reset': {
+                    const {buttonReset} = await getEditorElements();
+                    buttonReset.click();
+                    const confirmButton = document.querySelector('button.message-box__button-ok') as HTMLButtonElement | null;
+                    if (confirmButton) {
+                        confirmButton.click();
+                    }
                     respond({id});
-                    (buttonReset as HTMLButtonElement).click();
-                    (document.querySelector('button.message-box__button-ok') as HTMLButtonElement).click();
                     break;
+                }
             }
         } catch (err) {
             respond({id, error: String(err)});

@@ -68,17 +68,34 @@ export async function createTestServer(port) {
     }
 
     /**
+     * @param {number} [retries=20]
      * @returns {Promise<void>}
      */
-    function start() {
-        return new Promise((resolve) => {
-            server = http
-                .createServer(handleRequest)
-                .listen(port, () => resolve());
+    function start(retries = 20) {
+        return new Promise((resolve, reject) => {
+            const currentServer = http.createServer(handleRequest);
 
-            server.on('connection', (socket) => {
+            currentServer.on('error', (err) => {
+                if (/** @type {any} */ (err)?.code === 'EADDRINUSE' && retries > 0) {
+                    try {
+                        currentServer.close();
+                    } catch {}
+                    setTimeout(() => {
+                        start(retries - 1).then(resolve, reject);
+                    }, 250);
+                } else {
+                    reject(err);
+                }
+            });
+
+            currentServer.on('connection', (socket) => {
                 sockets.add(socket);
                 socket.on('close', () => sockets.delete(socket));
+            });
+
+            currentServer.listen(port, () => {
+                server = currentServer;
+                resolve();
             });
         });
     }
@@ -95,18 +112,31 @@ export async function createTestServer(port) {
      */
     function close() {
         if (!server) {
-            return;
+            return Promise.resolve();
         }
         return new Promise((resolve) => {
-            server.close((err) => {
+            const currentServer = server;
+            server = null;
+            const idx = terminationListeners.indexOf(close);
+            if (idx !== -1) {
+                terminationListeners.splice(idx, 1);
+            }
+            if (typeof currentServer.closeAllConnections === 'function') {
+                try {
+                    currentServer.closeAllConnections();
+                } catch {}
+            }
+            sockets.forEach((socket) => {
+                try {
+                    socket.destroy();
+                } catch {}
+            });
+            sockets.clear();
+            currentServer.close((err) => {
                 if (err) {
                     console.error(err);
                 }
-                server = null;
                 resolve();
-            });
-            sockets.forEach((socket) => {
-                socket.destroy();
             });
         });
     }
