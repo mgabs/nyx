@@ -1,7 +1,7 @@
 {
     "applications": {
         "gecko": {
-            "id": "addon@darkreader.org",
+            "id": "nyx@mgabs.github.io",
             "strict_min_version": "78.0a1"
         }
     },
