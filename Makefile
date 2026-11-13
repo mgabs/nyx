@@ -1,47 +1,57 @@
-.PHONY: all install build build-release clean lint lint-bundle test test-unit test-inject test-chrome test-chrome-mv3 test-firefox test-browser test-dependencies bench
+.PHONY: help build api debug lint test test-unit test-inject test-browser test-chrome test-chrome-mv3 test-firefox test-all check bench
 
-all: lint test
+CHROME_BIN ?= $(shell \
+	for p in \
+		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+		"/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary" \
+		"/Applications/Chromium.app/Contents/MacOS/Chromium" \
+		"/Applications/Brave Browser.app/Contents/MacOS/Brave Browser" \
+		"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge" \
+		"$(HOME)/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; do \
+		if [ -x "$$p" ]; then echo "$$p"; break; fi; \
+	done)
+export CHROME_BIN
 
-install:
-	npm ci
+help:
+	@echo "Targets: build api debug lint test test-unit test-inject test-browser test-chrome test-chrome-mv3 test-firefox test-all check"
 
 build:
-	node tasks/cli.js build
+	npm run build
 
-build-release:
-	node tasks/cli.js build --release $(ARGS)
+api:
+	npm run api
 
-clean:
-	rm -rf build
+debug:
+	npm run debug
 
 lint:
 	npm run lint
 
-lint-bundle:
-	npm run lint:bundle
-
-test: test-unit
+test:
+	npm test
 
 test-unit:
-	npm run test:unit -- $(ARGS)
+	npm run test:unit
 
 test-inject:
-	npm run test:inject -- $(ARGS)
-
-test-chrome:
-	npm run test:chrome -- $(ARGS)
-
-test-chrome-mv3:
-	npm run test:chrome-mv3 -- $(ARGS)
-
-test-firefox:
-	npm run test:firefox -- $(ARGS)
+	npm run test:inject
 
 test-browser:
 	npm run test:browser
 
-test-dependencies:
-	node tests/dependencies.js
+test-chrome:
+	npm run test:chrome
+
+test-chrome-mv3:
+	npm run test:chrome-mv3
+
+test-firefox:
+	npm run test:firefox
+
+test-all:
+	npm run test:all
 
 bench:
 	npm run bench -- $(ARGS)
+
+check: lint test build api

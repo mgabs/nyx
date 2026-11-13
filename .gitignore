@@ -47,3 +47,5 @@ deno.json
 
 .worktrees/
 tests/perf/results/
+.serena/
+.lgtm/

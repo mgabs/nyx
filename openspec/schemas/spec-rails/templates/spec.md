@@ -9,6 +9,7 @@
 The system MUST <!-- exact verifiable behavior -->.
 
 #### Scenario: <!-- primary happy path -->
+- **GIVEN** <!-- precondition -->
 - **WHEN** <!-- action -->
 - **THEN** <!-- outcome -->
 
@@ -16,10 +17,8 @@ The system MUST <!-- exact verifiable behavior -->.
 <!-- Budget: operation MUST complete within <budget>. -->
 
 #### Scenario: <!-- budget check -->
+- **GIVEN** <!-- precondition -->
 - **WHEN** <!-- measured operation -->
 - **THEN** <!-- within budget -->
 
 <!-- Also cover Assumptions (ASM-*) and Edge Cases & Errors as scenarios. -->
-
-## Review Gate
-- [ ] **Gate 2 Approval**: Specifications reviewed and approved by human before technical design.

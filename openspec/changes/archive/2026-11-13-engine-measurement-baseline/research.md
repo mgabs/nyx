@@ -11,9 +11,9 @@ Establish reproducible engine measurements before optimizing or introducing prof
 - Current zero-FOUC requirements demand zero bright frames. Stylesheet-presence assertions cannot prove compositor paint behavior.
 - Chromium tracing and Firefox measurements must be reported separately; unsupported metrics must be null with a reason, never zero.
 
-Candidate fixtures: article, image gallery, dashboard, deterministic SPA mutations, Shadow DOM, formula markup, and native-dark page. Fix assets and workloads locally; real-site compatibility checks are supplementary and must not send customer data elsewhere.
+Candidate fixtures: article, image gallery, dashboard, deterministic SPA `MutationObserver` / inline-style churn (long tasks >50ms), Shadow DOM (open/closed) + `adoptedStyleSheets`, formula markup, and native-dark page. Fix assets and workloads locally; real-site compatibility checks are supplementary and must not send customer data elsewhere.
 
-Proposed matrix: no extension installed, extension installed but disabled, CSS Filter, SVG Filter, Dynamic, and Static. Keep theme settings identical and record site-specific fixes. Static quality depends on selector coverage; do not silently give it special fixtures.
+Proposed matrix: no extension installed, extension installed but disabled, CSS Filter, SVG Filter, Dynamic, Static, and standalone API (`darkreader.js`). Keep theme settings identical and record site-specific fixes. Static quality depends on selector coverage; do not silently give it special fixtures.
 
 Separate fresh-profile runs from repeated-navigation runs. Use five excluded warm-ups and twenty measured runs per supported case, preserve raw samples and failures, and report median/p95 plus sample count. A fresh profile alone does not guarantee cold OS or network caches; record precisely which caches are controlled.
 
@@ -29,7 +29,7 @@ Reuse existing fixtures and setup directly. Minimal scaffolding, but coverage in
 
 ### Option B: Dedicated runner using existing Puppeteer and server helpers
 
-Add a separate benchmark entry point and deterministic fixtures, reusing browser path resolution and settings mechanisms where appropriate. Keep performance collection out of ordinary tests, store structured raw results and optional traces/screenshots under an ignored output directory, and expose a Make target plus manually triggered CI smoke run.
+Add a separate benchmark entry point (`npm run bench` in `tests/perf/`) and deterministic fixtures, reusing browser path resolution and settings mechanisms where appropriate. Keep performance collection out of ordinary tests, store structured raw results and optional traces/screenshots under an ignored output directory, and expose a Make target plus manually triggered CI smoke run.
 
 Start with supported Chromium metrics and Firefox portable checkpoints/screenshots; mark unsupported browser metrics explicitly. Full benchmark runs remain opt-in until variance is measured. Record commit, browser, OS, CPU, theme, fixture hash, build mode, warm/cold definition, and collector availability. Compare only compatible environments.
 

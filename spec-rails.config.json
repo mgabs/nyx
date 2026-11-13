@@ -1,0 +1,9 @@
+{
+  "stack": "ts",
+  "strict": true,
+  "testCommand": "npm test",
+  "coverageCommand": "npm run test:coverage",
+  "coverageMinScore": 95,
+  "mutationCommand": "npx stryker run",
+  "mutationMinScore": 95
+}

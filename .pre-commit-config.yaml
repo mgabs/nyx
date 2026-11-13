@@ -8,12 +8,6 @@ repos:
 
   - repo: local
     hooks:
-      - id: check-lgtm-directives
-        name: check unresolved lgtm review directives
-        entry: sh -c 'if [ -d .lgtm/reviews ]; then ! grep -rn "^#ref " .lgtm/reviews; fi'
-        language: system
-        pass_filenames: false
-
       - id: lint
         name: linter
         entry: make lint

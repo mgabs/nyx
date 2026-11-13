@@ -2,6 +2,19 @@ schema: spec-rails
 githubCopilot:
   cloudAgent: false
 
+context: |
+  Supported runtime targets: Chrome (MV2 and MV3), Firefox, and standalone API (`darkreader.js` / `darkreader.mjs` via `npm run api`).
+  Compile-time flags (`__PLUS__`, `__THUNDERBIRD__`) and `src/stubs/` remain intact unless explicitly scoped for removal.
+  Required verification gates: `npm test`, `npm run test:browser`, `npm run test:inject`, `npm run lint`, `npm run build`, and `npm run api`.
+  Architecture & subsystem map: see `docs/nyx-blueprint.md`.
+
+rules:
+  proposal:
+    - Scope each change to a single vertical slice; never combine runtime performance optimizations with UI or platform removals.
+    - Explicitly list Out-of-Scope Non-Goals and numeric exit criteria where applicable.
+  tasks:
+    - Keep tasks small, independently verifiable, and gated by the required test and build suite.
+
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.
