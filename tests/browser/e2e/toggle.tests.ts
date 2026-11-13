@@ -26,8 +26,9 @@ async function loadBasicPage(header: string) {
 }
 
 describe('Toggling the extension', () => {
-    const automationMenuSelector = '.header__more-settings-button';
-    const automationSystemSelector = '.header__more-settings__system-dark-mode__checkbox .checkbox__input';
+    const onSelector = '.app-switch__control .multi-switch__option:nth-child(2)';
+    const autoSelector = '.app-switch__control .multi-switch__option:nth-child(3)';
+    const offSelector = '.app-switch__control .multi-switch__option:nth-child(4)';
 
     it('should turn On/Off', async () => {
         await loadBasicPage('Toggle on/off');
@@ -41,7 +42,7 @@ describe('Toggling the extension', () => {
             ['a', 'color', 'rgb(51, 145, 255)'],
         ]);
 
-        await popupUtils.click('.toggle__off');
+        await popupUtils.click(offSelector);
         await timeout(500);
 
         await expectStyles([
@@ -53,7 +54,7 @@ describe('Toggling the extension', () => {
             ['a', 'color', 'rgb(0, 0, 238)'],
         ]);
 
-        await popupUtils.click('.toggle__on');
+        await popupUtils.click(onSelector);
         await timeout(500);
 
         await expectStyles([
@@ -81,8 +82,7 @@ describe('Toggling the extension', () => {
             ['a', 'color', 'rgb(51, 145, 255)'],
         ]);
 
-        await popupUtils.click(automationMenuSelector);
-        await popupUtils.click(automationSystemSelector);
+        await popupUtils.click(autoSelector);
 
         await expectStyles([
             ['document', 'background-color', 'rgba(0, 0, 0, 0)'],
@@ -120,7 +120,7 @@ describe('Toggling the extension', () => {
             ['a', 'color', 'rgb(0, 0, 238)'],
         ]);
 
-        await popupUtils.click(automationSystemSelector);
+        await popupUtils.click(onSelector);
 
         await expectStyles([
             ['document', 'background-color', 'rgb(24, 26, 27)'],
@@ -216,8 +216,7 @@ describe('Toggling the extension', () => {
         await emulateColorScheme('dark');
         await expectStyles(darkPageExpectations);
 
-        await popupUtils.click(automationMenuSelector);
-        await popupUtils.click(automationSystemSelector);
+        await popupUtils.click(autoSelector);
 
         await expectStyles(darkPageExpectations);
 
@@ -236,16 +235,11 @@ describe('Toggling the extension', () => {
         await expectStyles(lightPageExpectations);
         await expectStyles(lightSubframePageExpectations);
 
-        await popupUtils.click(automationSystemSelector);
+        await popupUtils.click(onSelector);
 
         await expectStyles(darkPageExpectations);
 
         await emulateColorScheme('dark');
-    });
-
-    it('should have new design button on desktop', async () => {
-        expect(await devtoolsUtils.click('.settings-tab-panel__button:last-child')).toBe(true);
-        expect(await devtoolsUtils.exists('.preview-design-button')).toBe(true);
     });
 
     it('dynamic themes', async () => {

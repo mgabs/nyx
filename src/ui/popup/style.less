@@ -5,16 +5,8 @@
 @popup-content-height: 30rem;
 @popup-content-padding: 1rem;
 
-@import "./components/custom-settings-toggle/style";
-@import "./components/engine-switch/style";
-@import "./components/filter-settings/style";
-@import "./components/font-settings/style";
-@import "./components/header/style";
-@import "./components/loader/style";
-@import "./components/more-settings/style";
-@import "./components/news/style";
-@import "./components/site-list-settings/style";
-@import "./components/site-toggle/style";
+@import "./loader/style";
+@import "./site-toggle/style";
 
 body {
     align-items: stretch;
@@ -396,10 +388,6 @@ footer {
 
 body {
     border: 2px solid white;
-}
-
-html:not(.mobile):not(.preview) body.ext-tall {
-    height: @popup-content-height + 4rem;
 }
 
 .overlay {

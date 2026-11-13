@@ -2,7 +2,7 @@ import {m} from 'malevic';
 import {getContext} from 'malevic/dom';
 import {withState, useState} from 'malevic/state';
 
-import {getLocalMessage} from '../../../../utils/locales';
+import {getLocalMessage} from '../../../utils/locales';
 
 
 interface LoaderProps {

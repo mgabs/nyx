@@ -7,6 +7,7 @@ import {isMobile} from '../../../utils/platform';
 import {Overlay} from '../../controls';
 import {openExtensionPage} from '../../utils';
 import MainPage from '../main-page';
+import NewsSection from '../news-section';
 import {Page, PageViewer} from '../page-viewer';
 import ThemePage from '../theme/page';
 
@@ -30,10 +31,6 @@ function Logo() {
 type PageId = (
     'main'
     | 'theme'
-    | 'settings'
-    | 'site-list'
-    | 'automation'
-    | 'manage-settings'
 );
 
 let popstate: (() => void) | null = null;
@@ -57,13 +54,7 @@ function Pages(props: ViewProps) {
     }
 
     function goBack() {
-        const activePage = store.activePage;
-        const settingsPageSubpages: PageId[] = ['automation', 'manage-settings', 'site-list'];
-        if (settingsPageSubpages.includes(activePage)) {
-            store.activePage = 'settings';
-        } else {
-            store.activePage = 'main';
-        }
+        store.activePage = 'main';
         context.refresh();
     }
 
@@ -140,6 +131,9 @@ export default function Body(props: ViewProps) {
                 <section class="m-section">
                     <DonateGroup />
                 </section>
+            ) : null}
+            {props.data.news && props.data.news.length > 0 ? (
+                <NewsSection {...props} />
             ) : null}
             <Overlay />
         </body>

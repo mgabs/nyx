@@ -1,15 +1,15 @@
 describe('News', () => {
-    const newsSelector = 'div.news.news--expanded';
+    const newsSelector = 'div.news-section.news-section--expanded';
 
     it('should display news', async () => {
         await backgroundUtils.setNews([{
             id: 'some',
-            date: '10',
+            date: new Date().toISOString(),
             url: '/',
             headline: 'Test news',
         }]);
 
-        await popupUtils.click('.news-button');
+        await new Promise((resolve) => setTimeout(resolve, 900));
         expect(await popupUtils.exists(newsSelector)).toBe(true);
     });
 });

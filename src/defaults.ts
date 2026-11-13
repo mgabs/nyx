@@ -101,7 +101,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
         latitude: null,
         longitude: null,
     },
-    previewNewDesign: false,
     previewNewestDesign: false,
     enableForPDF: true,
     enableForProtectedPages: false,

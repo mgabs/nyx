@@ -1,4 +1,5 @@
 @import "../../../theme";
+@import "../../md3-tokens";
 @import "./collapsible-panel";
 
 .theme-page {
@@ -13,10 +14,13 @@
             }
         
             &__list {
-                border: @size-border solid @color-border;
+                background-color: @md-surface-container;
+                border: 1px solid @md-outline-variant;
+                border-radius: @md-radius-control;
                 border-top: none;
-                box-shadow: 0 0 0.25rem 0.0625rem black;
+                box-shadow: @md-elevation-2;
                 box-sizing: border-box;
+                overflow: hidden;
 
                 &__item {
                     min-height: @size-control-inner + 2 * @size-border;

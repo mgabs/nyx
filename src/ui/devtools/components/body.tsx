@@ -7,7 +7,6 @@ import {formatDetectorHints, parseDetectorHints} from '../../../generators/detec
 import {formatDynamicThemeFixes, parseDynamicThemeFixes} from '../../../generators/dynamic-theme';
 import {formatStaticThemes, parseStaticThemes} from '../../../generators/static-theme';
 import {ThemeEngine} from '../../../generators/theme-engines';
-import {isMobile} from '../../../utils/platform';
 import {Button, Overlay} from '../../controls';
 import TabPanel from '../../options/tab-panel/tab-panel';
 import {getCurrentThemePreset} from '../../popup/theme/utils';
@@ -34,15 +33,10 @@ export default function Body(props: DevtoolsProps): Malevic.Child {
         context.refresh();
     }
 
-    const previewButtonText = data.settings.previewNewDesign ? 'Switch to old design' : 'Enable design prototype';
     const previewNewestButtonText = data.settings.previewNewestDesign ? 'Switch to old design' : 'Preview new design';
 
-    function toggleDesign(): void {
-        actions.changeSettings({previewNewDesign: !data.settings.previewNewDesign, previewNewestDesign: false});
-    }
-
     function toggleNewestDesign(): void {
-        actions.changeSettings({previewNewestDesign: !data.settings.previewNewestDesign, previewNewDesign: false});
+        actions.changeSettings({previewNewestDesign: !data.settings.previewNewestDesign});
     }
 
     return (
@@ -151,7 +145,6 @@ export default function Body(props: DevtoolsProps): Malevic.Child {
                 </TabPanel.Tab>
                 <TabPanel.Tab id="advanced" label="Advanced">
                     <div class="buttons">
-                        {isMobile || (__PLUS__ && !data.settings.previewNewDesign) ? null : <Button class="preview-design-button" onclick={toggleDesign}>{previewButtonText}</Button>}
                         {__PLUS__ ? <Button class="preview-design-button" onclick={toggleNewestDesign}>{previewNewestButtonText}</Button> : null}
                     </div>
                 </TabPanel.Tab>

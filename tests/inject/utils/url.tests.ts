@@ -19,7 +19,6 @@ it('URL is enabled', () => {
             automation: null,
             time: null,
             location: null,
-            previewNewDesign: false,
             enableForPDF: false,
             enableForProtectedPages: false,
             enableContextMenus: false,

@@ -178,7 +178,6 @@ export function validateSettings(settings: Partial<UserSettings>): SettingValida
         return locValidator.errors.length === 0;
     }, DEFAULT_SETTINGS);
 
-    validateProperty(settings, 'previewNewDesign', isBoolean, DEFAULT_SETTINGS);
     validateProperty(settings, 'previewNewestDesign', isBoolean, DEFAULT_SETTINGS);
     validateProperty(settings, 'enableForPDF', isBoolean, DEFAULT_SETTINGS);
     validateProperty(settings, 'enableForProtectedPages', isBoolean, DEFAULT_SETTINGS);

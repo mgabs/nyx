@@ -40,7 +40,6 @@ export function getMockData(override = {} as Partial<ExtensionData>): ExtensionD
                 behavior: 'OnOff',
                 mode: '',
             },
-            previewNewDesign: false,
             previewNewestDesign: false,
             time: {
                 activation: '18:00',

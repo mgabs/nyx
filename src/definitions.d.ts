@@ -110,7 +110,6 @@ export interface UserSettings {
     automation: Automation;
     time: TimeSettings;
     location: LocationSettings;
-    previewNewDesign: boolean;
     previewNewestDesign: boolean;
     enableForPDF: boolean;
     enableForProtectedPages: boolean;
