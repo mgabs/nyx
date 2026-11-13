@@ -116,7 +116,6 @@ test('Settings Validation', () => {
             latitude: 59,
             longitude: '5.3',
         },
-        previewNewDesign: '',
         previewNewestDesign: 2,
         enableForPDF: null as boolean | null,
         enableForProtectedPages: 'ok',
@@ -200,7 +199,6 @@ test('Settings Validation', () => {
             latitude: 59,
             longitude: 53,
         },
-        previewNewDesign: true,
         previewNewestDesign: false,
         enableForPDF: false,
         enableForProtectedPages: true,
@@ -211,4 +209,10 @@ test('Settings Validation', () => {
     validation = validateSettings(validSet);
     expect(validation.errors).toEqual([]);
     expect(validSet).toEqual(validSetCopy);
+
+    // Legacy previewNewDesign key is ignored without error
+    const legacySet = {...validSet, previewNewDesign: 'invalid'} as any;
+    validation = validateSettings(legacySet);
+    expect(validation.errors).toEqual([]);
+    expect('previewNewDesign' in DEFAULT_SETTINGS).toBe(false);
 });

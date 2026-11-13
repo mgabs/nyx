@@ -5,7 +5,7 @@ import {getLocalMessage} from '../../../utils/locales';
 import {isChromium} from '../../../utils/platform';
 import {isURLEnabled, isPDF, isLocalFile} from '../../../utils/url';
 import {ControlGroup} from '../../controls';
-import SiteToggle from '../components/site-toggle';
+import SiteToggle from '../site-toggle';
 
 export default function SiteToggleGroup(props: ViewProps) {
     const tab = props.data.activeTab;

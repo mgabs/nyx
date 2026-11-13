@@ -1,3 +1,5 @@
+@import "../md3-tokens.less";
+
 .mobile {
     body {
         border: none;
@@ -6,8 +8,31 @@
     }
 }
 
-.mobile,
-.preview {
+body {
+    background-color: @md-surface;
+
+    .button,
+    .nav-button {
+        border: 1px solid @md-outline-variant;
+        border-radius: @md-radius-pill;
+        background-color: @md-surface-container;
+        transition: background-color @md-transition, border-color @md-transition;
+
+        &:hover {
+            background-color: @md-surface-container-high;
+            border-color: @md-outline;
+        }
+    }
+
+    .multi-switch,
+    .updown,
+    .dropdown__selected,
+    .select__textbox {
+        border: 1px solid @md-outline-variant;
+        border-radius: @md-radius-control;
+        background-color: @md-surface-container;
+    }
+
     .m-section {
         width: 100%;
 
@@ -21,7 +46,8 @@
     }
 
     .pages-section {
-        height: 24.4375rem;
+        flex: 1 1 auto;
+        min-height: 23.5rem;
     }
 
     .m-logo {
@@ -39,20 +65,23 @@
 
     .m-help-button {
         align-items: center;
+        background-color: @md-surface-container;
         background-image: @icon-right;
-        background-position: center right 0.25rem;
+        background-position: center right 0.5rem;
         background-repeat: no-repeat;
         background-size: 1rem;
-        border: @size-border solid @color-border;
+        border: 1px solid @md-outline-variant;
+        border-radius: @md-radius-pill;
         display: inline-flex;
         justify-content: center;
-        height: @size-control-inner;
+        height: @size-control-inner + 0.125rem;
         text-decoration: none;
-        width: calc(100% - 2 * @size-border);
+        transition: background-color @md-transition, border-color @md-transition;
+        width: 100%;
 
         &:hover {
-            background-color: @color-control-hover;
-            transition: background-color @time-fast;
+            background-color: @md-surface-container-high;
+            border-color: @md-outline;
         }
 
         &__text {
@@ -174,27 +203,22 @@
     }
 }
 
-.preview .dev-tools-button {
+.dev-tools-button {
     overflow: visible;
     position: relative;
-    width: calc(100% - 2 * 0.125rem);
+    width: 100%;
 }
 
-.mobile,
-.preview {
-    @import "../main-page/style.less";
-    @import "../news-section/style.less";
-    @import "../page-viewer/style.less";
-    @import "../theme/controls/theme-control.less";
-    @import "../theme/controls/mode.less";
-    @import "../theme/page/style.less";
-    @import "../theme/preset-picker/style.less";
-}
+@import "../main-page/style.less";
+@import "../news-section/style.less";
+@import "../page-viewer/style.less";
+@import "../theme/controls/theme-control.less";
+@import "../theme/controls/mode.less";
+@import "../theme/page/style.less";
+@import "../theme/preset-picker/style.less";
 
-.preview {
-    .m-body-short {
-        height: @popup-content-height - 2.5rem;
-    }
+.m-body-short {
+    height: @popup-content-height - 2.5rem;
 }
 
 .mobile.firefox {
@@ -240,12 +264,10 @@
     }
 }
 
-.preview:not(.mobile) {
-    body {
-        border-color: mix(@color-back, @color-control-fore);
-    }
-}
-
 html:not(.mobile) {
+    body {
+        border-color: @md-outline-variant;
+    }
+
     width: calc(@popup-content-width + 2 * @popup-content-padding + 4px);
 }

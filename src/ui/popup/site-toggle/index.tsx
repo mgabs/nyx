@@ -1,8 +1,8 @@
 import {m} from 'malevic';
 
-import type {ExtWrapper} from '../../../../definitions';
-import {getURLHostOrProtocol, isURLEnabled, isPDF} from '../../../../utils/url';
-import {Button} from '../../../controls';
+import type {ExtWrapper} from '../../../definitions';
+import {getURLHostOrProtocol, isURLEnabled, isPDF} from '../../../utils/url';
+import {Button} from '../../controls';
 
 import CheckmarkIcon from './checkmark-icon';
 

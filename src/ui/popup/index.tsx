@@ -7,21 +7,14 @@ import {isMobile, isFirefox} from '../../utils/platform';
 import Connector from '../connect/connector';
 import {getFontList, saveFile} from '../utils';
 
-import Body from './components/body';
+import NewBody from './body';
+import Loader from './loader';
 import {fixNotClosingPopupOnNavigation} from './utils/issues';
-import {initAltUI, shouldUseAltUI} from '@plus/popup/plus-body';
+import {PlusBody, initAltUI, shouldUseAltUI} from '@plus/popup/plus-body';
 
 declare const __PLUS__: boolean;
 
 function renderBody(data: ExtensionData, fonts: string[], installation: {date: number; version: string}, actions: ExtensionActions) {
-    if (data.settings.previewNewDesign) {
-        if (!document.documentElement.classList.contains('preview')) {
-            document.documentElement.classList.add('preview');
-        }
-    } else if (document.documentElement.classList.contains('preview')) {
-        document.documentElement.classList.remove('preview');
-    }
-
     if (data.news && data.news.length > 0) {
         const latest = data.news[0];
         if (latest && !latest.displayed) {
@@ -29,9 +22,25 @@ function renderBody(data: ExtensionData, fonts: string[], installation: {date: n
         }
     }
 
-    sync(document.body, (
-        <Body data={data} actions={actions} fonts={fonts} installation={installation} />
-    ));
+    if (!data.isReady) {
+        sync(document.body, (
+            <body>
+                <Loader complete={false} />
+            </body>
+        ));
+        return;
+    }
+
+    const v = installation?.version?.split('.').map((p) => parseInt(p));
+    const n = v && v.length >= 3 ? (v[0] * 1e6 + v[1] * 1e3 + v[2]) : 0;
+    const usePlusBody = __PLUS__ && (
+        data.settings.previewNewestDesign || (isMobile && n && n >= 4009093)
+    );
+
+    sync(document.body, usePlusBody
+        ? <PlusBody data={data} actions={actions} fonts={fonts} />
+        : <NewBody data={data} actions={actions} fonts={fonts} />
+    );
 }
 
 async function getInstallationData() {
