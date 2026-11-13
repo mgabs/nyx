@@ -46,3 +46,4 @@ deno.json
 .DS_Store
 
 .worktrees/
+tests/perf/results/

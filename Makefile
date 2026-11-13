@@ -1,4 +1,4 @@
-.PHONY: all install build build-release clean lint lint-bundle test test-unit test-inject test-chrome test-chrome-mv3 test-firefox test-browser test-dependencies
+.PHONY: all install build build-release clean lint lint-bundle test test-unit test-inject test-chrome test-chrome-mv3 test-firefox test-browser test-dependencies bench
 
 all: lint test
 
@@ -42,3 +42,6 @@ test-browser:
 
 test-dependencies:
 	node tests/dependencies.js
+
+bench:
+	npm run bench -- $(ARGS)
