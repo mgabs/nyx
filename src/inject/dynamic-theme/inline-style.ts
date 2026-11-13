@@ -2,7 +2,6 @@ import {setInlineStyleValue} from '@plus/dynamic/inject';
 import type {Theme} from '../../definitions';
 import {forEach, push} from '../../utils/array';
 import {isShadowDomSupported} from '../../utils/platform';
-import {throttle} from '../../utils/throttle';
 import {getDuration} from '../../utils/time';
 import {getAbsoluteURL} from '../../utils/url';
 import {iterateShadowHosts, createOptimizedTreeObserver, isReadyStateComplete, addReadyStateCompleteListener, addDOMReadyListener, isDOMReady} from '../utils/dom';
@@ -10,6 +9,7 @@ import {logWarn} from '../utils/log';
 
 import {iterateCSSDeclarations} from './css-rules';
 import {getImageDetails} from './image';
+import {createInlineMutationBatcher} from './inline-mutation-batcher';
 import {getModifiableCSSDeclaration} from './modify-css';
 import type {CSSVariableModifier, ModifiedVarDeclaration} from './variables';
 import {variablesStore} from './variables';
@@ -160,6 +160,7 @@ function getInlineStyleElements(root: Node) {
 
 const treeObservers = new Map<Node, {disconnect(): void}>();
 const attrObservers = new Map<Node, MutationObserver>();
+const attrCleaners = new Map<Node, () => void>();
 
 let asyncCancelled = true;
 
@@ -185,16 +186,19 @@ function deepWatchForInlineStyles(
     if (treeObservers.has(root)) {
         treeObservers.get(root)!.disconnect();
         attrObservers.get(root)!.disconnect();
+        attrCleaners.get(root)?.();
     }
 
     const discoveredNodes = new WeakSet<Node>();
 
-    function discoverNodes(node: Node) {
+    function discoverNodes(node: Node): boolean {
+        let didDiscover = false;
         getInlineStyleElements(node).forEach((el: HTMLElement) => {
             if (discoveredNodes.has(el)) {
                 return;
             }
             discoveredNodes.add(el);
+            didDiscover = true;
             elementStyleDidChange(el);
         });
         iterateShadowHosts(node, (n) => {
@@ -202,19 +206,29 @@ function deepWatchForInlineStyles(
                 return;
             }
             discoveredNodes.add(n);
+            didDiscover = true;
             shadowRootDiscovered(n.shadowRoot!);
             deepWatchForInlineStyles(n.shadowRoot!, elementStyleDidChange, shadowRootDiscovered);
         });
+        return didDiscover;
     }
 
     const treeObserver = createOptimizedTreeObserver(root, {
         onMinorMutations: (_root, {additions}) => {
-            additions.forEach((added) => discoverNodes(added));
-            variablesStore.matchVariablesAndDependents();
+            let didDiscover = false;
+            additions.forEach((added) => {
+                if (discoverNodes(added)) {
+                    didDiscover = true;
+                }
+            });
+            if (didDiscover) {
+                variablesStore.matchVariablesAndDependents();
+            }
         },
         onHugeMutations: () => {
-            discoverNodes(root);
-            variablesStore.matchVariablesAndDependents();
+            if (discoverNodes(root)) {
+                variablesStore.matchVariablesAndDependents();
+            }
         },
     });
     treeObservers.set(root, treeObserver);
@@ -224,26 +238,35 @@ function deepWatchForInlineStyles(
     const ATTEMPTS_INTERVAL = getDuration({seconds: 10});
     const RETRY_TIMEOUT = getDuration({seconds: 2});
     const MAX_ATTEMPTS_COUNT = 50;
-    let cache: MutationRecord[] = [];
+    let deferredTargets: HTMLElement[] = [];
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    const handleAttributeMutations = throttle((mutations: MutationRecord[]) => {
-        const handledTargets = new Set<Node>();
-        mutations.forEach((m) => {
-            const target = m.target as HTMLElement;
-            if (handledTargets.has(target)) {
-                return;
-            }
-            if (INLINE_STYLE_ATTRS.includes(m.attributeName!)) {
-                handledTargets.add(target);
-                elementStyleDidChange(target);
-            }
-        });
-        variablesStore.matchVariablesAndDependents();
+    const batcher = createInlineMutationBatcher<HTMLElement>({
+        scheduleMicrotask: queueMicrotask,
+        onFlush: (targets) => {
+            targets.forEach((target) => elementStyleDidChange(target));
+            variablesStore.matchVariablesAndDependents();
+        },
     });
+
+    function collectInlineTargets(mutations: MutationRecord[]): HTMLElement[] {
+        const targets: HTMLElement[] = [];
+        for (let i = 0; i < mutations.length; i++) {
+            const m = mutations[i];
+            if (INLINE_STYLE_ATTRS.includes(m.attributeName!)) {
+                targets.push(m.target as HTMLElement);
+            }
+        }
+        return targets;
+    }
+
     const attrObserver = new MutationObserver((mutations) => {
+        const targets = collectInlineTargets(mutations);
+        if (targets.length === 0) {
+            return;
+        }
         if (timeoutId) {
-            cache.push(...mutations);
+            deferredTargets.push(...targets);
             return;
         }
         attemptCount++;
@@ -252,21 +275,21 @@ function deepWatchForInlineStyles(
             start = now;
         } else if (attemptCount >= MAX_ATTEMPTS_COUNT) {
             if (now - start < ATTEMPTS_INTERVAL) {
+                deferredTargets.push(...targets);
                 timeoutId = setTimeout(() => {
                     start = null;
                     attemptCount = 0;
                     timeoutId = null;
-                    const attributeCache = cache;
-                    cache = [];
-                    handleAttributeMutations(attributeCache);
+                    const targetsToFlush = deferredTargets;
+                    deferredTargets = [];
+                    batcher.enqueue(targetsToFlush);
                 }, RETRY_TIMEOUT);
-                cache.push(...mutations);
                 return;
             }
             start = now;
             attemptCount = 1;
         }
-        handleAttributeMutations(mutations);
+        batcher.enqueue(targets);
     });
     attrObserver.observe(root, {
         attributes: true,
@@ -274,14 +297,24 @@ function deepWatchForInlineStyles(
         subtree: true,
     });
     attrObservers.set(root, attrObserver);
+    attrCleaners.set(root, () => {
+        batcher.cancel();
+        deferredTargets = [];
+        if (timeoutId !== null) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+    });
 }
 
 export function stopWatchingForInlineStyles(): void {
     asyncCancelled = true;
     treeObservers.forEach((o) => o.disconnect());
     attrObservers.forEach((o) => o.disconnect());
+    attrCleaners.forEach((clean) => clean());
     treeObservers.clear();
     attrObservers.clear();
+    attrCleaners.clear();
     inlineStringValueCache.clear();
     inlineStyleCache = new WeakMap();
     svgInversionCache = new WeakSet();

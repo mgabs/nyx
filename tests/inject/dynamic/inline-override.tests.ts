@@ -139,4 +139,19 @@ describe('INLINE STYLES', () => {
         const rect = container.querySelector('rect')!;
         expect(getComputedStyle(rect).fill).toBe('rgb(255, 26, 26)');
     });
+
+    it('should batch multiple synchronous inline style changes without dropping any element', async () => {
+        container.innerHTML = '<span id="s1" style="color: red;">1</span><span id="s2" style="color: red;">2</span>';
+        createOrUpdateDynamicTheme(theme, null, false);
+        const s1 = container.querySelector('#s1') as HTMLElement;
+        const s2 = container.querySelector('#s2') as HTMLElement;
+
+        s1.style.color = 'green';
+        await Promise.resolve();
+        s2.style.color = 'blue';
+        await timeout(0);
+
+        expect(getComputedStyle(s1).color).toBe('rgb(140, 255, 140)');
+        expect(getComputedStyle(s2).color).not.toBe('rgb(0, 0, 255)');
+    });
 });
