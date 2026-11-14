@@ -57,7 +57,7 @@ Release builds MUST use a Nyx-specific Mozilla extension ID and generate named C
 - **THEN** it logs the error, returns `null`, and leaves existing extension functionality unaffected
 
 ### Requirement: REQ-BRAND-6 Full Locale, Asset, and Standalone API Rebrand
-All 42 `src/_locales/*/messages.json` and `src/_locales/store/*` files MUST replace Dark Reader brand names with Nyx, UI image assets MUST use `nyx-*` filenames (`nyx-type.svg`, `nyx-icon-256x256.png`, `nyx-thumb-up.svg`), and the standalone API build (`npm run api`) MUST emit `nyx.js` and `nyx.mjs` exposing the `Nyx` global and `package.json` `main`/`module` entrypoints.
+All 42 `src/_locales/*/messages.json` and `src/_locales/store/*` files MUST replace Dark Reader brand names with Nyx, UI and extension icon assets MUST use `nyx-*` / `nyx_*.png` filenames featuring Nyx's Obsidian/Silver/Amber Owl Badge (`nyx-type.svg` in `#f59e0b`, `nyx-icon-256x256.png`, `nyx-thumb-up.svg`, `src/icons/nyx_16.png`, `nyx_48.png`, `nyx_128.png`, `nyx_active_19.png`, `nyx_active_38.png`, `nyx_active_light_19.png`, `nyx_active_light_38.png`) with zero legacy `dr_*.png` references in manifests or `IconManager`, and the standalone API build (`npm run api`) MUST emit `nyx.js` and `nyx.mjs` exposing the `Nyx` global and `package.json` `main`/`module` entrypoints.
 
 #### Scenario: Building standalone API bundles
 - **GIVEN** the repository build system
@@ -68,6 +68,11 @@ All 42 `src/_locales/*/messages.json` and `src/_locales/store/*` files MUST repl
 - **GIVEN** any of the 42 supported locales under `src/_locales/`
 - **WHEN** searching localized messages and store descriptions for `"Dark Reader"`
 - **THEN** zero user-facing `"Dark Reader"` brand strings remain
+
+#### Scenario: Inspecting extension manifests and toolbar icons
+- **GIVEN** `src/manifest.json`, `src/manifest-chrome-mv3.json`, `src/background/icon-manager.ts`, and `src/icons/`
+- **WHEN** inspecting icon paths and files
+- **THEN** all icons use `nyx_*.png` owl badge assets at matching pixel dimensions (`16`, `19`, `38`, `48`, `128`, `256`) and zero `dr_*.png` files or references exist
 
 ### Requirement: REQ-BRAND-7 Internal CSS/DOM Token Rebrand with Dual Lock Meta Support
 The dynamic theme engine, injector, built-in configs (`src/config/`), and tests MUST use `--nyx-*` CSS custom properties, `.nyx` classes, and `data-nyx-*` DOM attributes instead of `--darkreader-*`, `.darkreader`, and `data-darkreader-*`, while recognizing BOTH `<meta name="nyx-lock">` and `<meta name="darkreader-lock">` as dark-mode opt-out signals.
