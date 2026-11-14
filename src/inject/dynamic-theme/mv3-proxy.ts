@@ -4,9 +4,9 @@ import {injectProxy} from './stylesheet-proxy';
 
 document.currentScript && document.currentScript.remove();
 
-const key = 'darkreaderProxyInjected';
-const EVENT_ARG = '__darkreader__stylesheetProxy__arg';
-const EVENT_CLEAN_UP = '__darkreader__cleanUp';
+const key = 'nyxProxyInjected';
+const EVENT_ARG = '__nyx__stylesheetProxy__arg';
+const EVENT_CLEAN_UP = '__nyx__cleanUp';
 
 const registeredScriptPath = !document.currentScript;
 

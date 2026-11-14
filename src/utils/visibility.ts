@@ -1,13 +1,13 @@
 /**
  * The following code contains a workaround for extensions designed to prevent page from knowing when it is hidden
- * GitHub issue: https://github.com/darkreader/darkreader/issues/10004
- * GitHub PR: https://github.com/darkreader/darkreader/pull/10047
+ * GitHub issue: https://github.com/mgabs/nyx/issues/10004
+ * GitHub PR: https://github.com/mgabs/nyx/pull/10047
  *
  * Due to the intentional breakage introduced by these extensions, this utility might incorrectly report that document
  * is visible while it is not, but it will never report document as hidden while it is visible.
  *
  * This code exploits the fact that most such extensions block only a subset of Page Lifecycle API,
- * which notifies page of being hidden but not of being shown, while Dark Reader really cares only about
+ * which notifies page of being hidden but not of being shown, while Nyx really cares only about
  * page being shown.
  * Specifically:
  *  - extensions block visibilitychange and blur event

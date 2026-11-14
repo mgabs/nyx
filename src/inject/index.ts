@@ -18,7 +18,7 @@ declare const __TEST__: boolean;
 
 let unloaded = false;
 
-let darkReaderDynamicThemeStateForTesting: 'loading' | 'ready' = 'loading';
+let nyxDynamicThemeStateForTesting: 'loading' | 'ready' = 'loading';
 
 declare const __CHROMIUM_MV2__: boolean;
 declare const __CHROMIUM_MV3__: boolean;
@@ -84,10 +84,10 @@ function sendMessage(message: MessageCStoBG | MessageCStoUI): true | undefined {
          * Regular message passing errors are returned via rejected promise or runtime.lastError.
          */
         if (error.message === 'Extension context invalidated.') {
-            console.log('Dark Reader: instance of old CS detected, cleaning up.');
+            console.log('Nyx: instance of old CS detected, cleaning up.');
             cleanup();
         } else {
-            console.log('Dark Reader: unexpected error during message passing.');
+            console.log('Nyx: unexpected error during message passing.');
         }
     }
 }
@@ -157,9 +157,9 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
                 }, detectorHints);
             }
             if (__TEST__) {
-                darkReaderDynamicThemeStateForTesting = 'ready';
-                sendMessageForTesting('darkreader-dynamic-theme-ready');
-                sendMessageForTesting(`darkreader-dynamic-theme-ready-${document.location.pathname}`);
+                nyxDynamicThemeStateForTesting = 'ready';
+                sendMessageForTesting('nyx-dynamic-theme-ready');
+                sendMessageForTesting(`nyx-dynamic-theme-ready-${document.location.pathname}`);
             }
             break;
         }
@@ -260,11 +260,11 @@ if (!__THUNDERBIRD__) {
 }
 
 if (location.origin === HOMEPAGE_URL) {
-    document.addEventListener('__darkreader_activate__', async (e) => {
+    document.addEventListener('__nyx_activate__', async (e) => {
         const {email, key} = (e as CustomEvent).detail;
         const result = await activateTheme(email, key);
         const detail = {result};
-        document.dispatchEvent(new CustomEvent('__darkreader_activationResult__', {
+        document.dispatchEvent(new CustomEvent('__nyx_activationResult__', {
             detail: __FIREFOX_MV2__ && typeof cloneInto === 'function' ? cloneInto(detail, window) : detail,
         }));
     }, {once: true});
@@ -279,12 +279,12 @@ if (__TEST__) {
         }
     }
 
-    async function awaitDarkReaderReady() {
-        if (darkReaderDynamicThemeStateForTesting !== 'ready') {
+    async function awaitNyxReady() {
+        if (nyxDynamicThemeStateForTesting !== 'ready') {
             return new Promise<void>((resolve) => {
                 document.addEventListener('test-message', (event) => {
                     const message = (event as CustomEvent).detail;
-                    if (message === 'darkreader-dynamic-theme-ready' && darkReaderDynamicThemeStateForTesting === 'ready') {
+                    if (message === 'nyx-dynamic-theme-ready' && nyxDynamicThemeStateForTesting === 'ready') {
                         resolve();
                     }
                 }, {passive: true});
@@ -307,7 +307,7 @@ if (__TEST__) {
         // Wait for DOM to be complete
         // Note that here we wait only for DOM parsing and not for sub-resource load
         await awaitDOMContentLoaded();
-        await awaitDarkReaderReady();
+        await awaitNyxReady();
         socket.send(JSON.stringify({
             data: {
                 type: 'page',

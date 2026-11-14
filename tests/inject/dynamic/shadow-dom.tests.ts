@@ -35,9 +35,9 @@ describe('SHADOW DOM', () => {
             expect(shadowRoot.adoptedStyleSheets.length).toBeGreaterThan(0);
             return;
         }
-        expect(shadowRoot.firstElementChild!.classList.contains('darkreader--inline')).toBe(true);
-        expect(shadowRoot.firstElementChild!.nextElementSibling!.classList.contains('darkreader--override')).toBe(true);
-        expect(shadowRoot.firstElementChild!.nextElementSibling!.nextElementSibling!.classList.contains('darkreader--invert')).toBe(true);
+        expect(shadowRoot.firstElementChild!.classList.contains('nyx--inline')).toBe(true);
+        expect(shadowRoot.firstElementChild!.nextElementSibling!.classList.contains('nyx--override')).toBe(true);
+        expect(shadowRoot.firstElementChild!.nextElementSibling!.nextElementSibling!.classList.contains('nyx--invert')).toBe(true);
     });
 
     it('should override styles', async () => {
@@ -60,7 +60,7 @@ describe('SHADOW DOM', () => {
         expect(getComputedStyle(shadowRoot.querySelector('strong')!).color).toBe('rgb(255, 26, 26)');
         if (!__PLUS__) {
             const testCase = shadowRoot.querySelector('.test-case-style')!;
-            expect(testCase.nextElementSibling!.classList.contains('darkreader--sync')).toBe(true);
+            expect(testCase.nextElementSibling!.classList.contains('nyx--sync')).toBe(true);
             expect((testCase.nextElementSibling as HTMLStyleElement).sheet!.cssRules.length).toBe(2);
         }
     });
@@ -87,9 +87,9 @@ describe('SHADOW DOM', () => {
         expect(getComputedStyle(shadowRoot.querySelector('strong')!).color).toBe('rgb(255, 26, 26)');
         if (!__PLUS__) {
             const testCase = shadowRoot.querySelector('.test-case-style')!;
-            expect(shadowRoot.firstElementChild!.classList.contains('darkreader--inline')).toBe(true);
-            expect(shadowRoot.firstElementChild!.nextElementSibling!.classList.contains('darkreader--override')).toBe(true);
-            expect(testCase.nextElementSibling!.classList.contains('darkreader--sync')).toBe(true);
+            expect(shadowRoot.firstElementChild!.classList.contains('nyx--inline')).toBe(true);
+            expect(shadowRoot.firstElementChild!.nextElementSibling!.classList.contains('nyx--override')).toBe(true);
+            expect(testCase.nextElementSibling!.classList.contains('nyx--sync')).toBe(true);
             expect((testCase.nextElementSibling as HTMLStyleElement).sheet!.cssRules.length).toBe(2);
         }
     });
@@ -191,7 +191,7 @@ describe('SHADOW DOM', () => {
         const darkendH1 = shadowRoot.querySelector('h1')!;
         if (!__PLUS__) {
             const testCase = shadowRoot.querySelector('.test-case-style')!;
-            expect(testCase.nextElementSibling!.classList.contains('darkreader--sync')).toBe(true);
+            expect(testCase.nextElementSibling!.classList.contains('nyx--sync')).toBe(true);
             expect((testCase.nextElementSibling as HTMLStyleElement).sheet!.cssRules.length).toBe(1);
             expect(shadowRoot.adoptedStyleSheets.length).toBe(2);
         }

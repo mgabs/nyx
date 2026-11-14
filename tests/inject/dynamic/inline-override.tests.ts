@@ -62,8 +62,8 @@ describe('INLINE STYLES', () => {
         const td = container.querySelector('td')!;
         expect(getComputedStyle(td).backgroundColor).not.toBe('rgb(255, 0, 0)');
         if (!__PLUS__) {
-            expect(td.hasAttribute('data-darkreader-inline-bgcolor')).toBe(true);
-            expect(td.style.getPropertyValue('--darkreader-inline-bgcolor')).not.toBe('');
+            expect(td.hasAttribute('data-nyx-inline-bgcolor')).toBe(true);
+            expect(td.style.getPropertyValue('--nyx-inline-bgcolor')).not.toBe('');
         }
     });
 
@@ -111,8 +111,8 @@ describe('INLINE STYLES', () => {
         const span = document.querySelector('span')!;
         expect(getComputedStyle(span).color).toBe('rgb(255, 26, 26)');
         if (!__PLUS__) {
-            expect(span.getAttribute('style')!.startsWith('color: red; --darkreader-inline-color:')).toBeTrue();
-            expect(span.getAttribute('style')!.includes('--darkreader-inline-color: var(--darkreader-text-ff0000, #ff1a1a);')).toBe(true);
+            expect(span.getAttribute('style')!.startsWith('color: red; --nyx-inline-color:')).toBeTrue();
+            expect(span.getAttribute('style')!.includes('--nyx-inline-color: var(--nyx-text-ff0000, #ff1a1a);')).toBe(true);
         }
 
         span.style.color = '';

@@ -18,7 +18,7 @@ export async function getActiveTab(): Promise<chrome.tabs.Tab | null> {
     let tab = (await queryTabs({
         active: true,
         lastFocusedWindow: true,
-        // Explicitly exclude Dark Reader's Dev Tools and other special windows from the query
+        // Explicitly exclude Nyx's Dev Tools and other special windows from the query
         windowType: 'normal',
     }))[0];
     if (!tab) {
@@ -32,7 +32,7 @@ export async function getActiveTab(): Promise<chrome.tabs.Tab | null> {
         if (__DEBUG__ || __TEST__) {
             log = 'method 1';
         }
-        // When Dark Reader's DevTools are open, last focused window might be the DevTools window
+        // When Nyx's DevTools are open, last focused window might be the DevTools window
         // so we lift this restriction and try again (with the best guess)
         tab = (await queryTabs({
             active: true,

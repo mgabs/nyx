@@ -7,7 +7,7 @@ import {defineSheetScope} from './style-scope';
 import {createStyleSheetModifier} from './stylesheet-modifier';
 
 let canUseSheetProxy = false;
-document.addEventListener('__darkreader__inlineScriptsAllowed', () => canUseSheetProxy = true, {once: true});
+document.addEventListener('__nyx__inlineScriptsAllowed', () => canUseSheetProxy = true, {once: true});
 
 const overrides = new WeakSet<CSSStyleSheet>();
 const overridesBySource = new WeakMap<CSSStyleSheet, CSSStyleSheet>();
@@ -34,7 +34,7 @@ const createOverrideSheet: () => CSSStyleSheet = isFirefox ?
     } :
     () => new CSSStyleSheet();
 
-function isDarkReaderSheet(sheet: CSSStyleSheet): boolean {
+function isNyxSheet(sheet: CSSStyleSheet): boolean {
     let result = drSheetCheckResults.get(sheet);
     if (result != null) {
         return result;
@@ -42,7 +42,7 @@ function isDarkReaderSheet(sheet: CSSStyleSheet): boolean {
     result = Boolean(
         sheet &&
         sheet.cssRules.length > 0 &&
-        (sheet.cssRules[0] as CSSStyleRule).selectorText?.startsWith('#__darkreader'),
+        (sheet.cssRules[0] as CSSStyleRule).selectorText?.startsWith('#__nyx'),
     );
     drSheetCheckResults.set(sheet, result);
     return result;
@@ -53,7 +53,7 @@ export function createAdoptedStyleSheetOverride(node: Document | ShadowRoot): Ad
 
     function iterateSourceSheets(iterator: (sheet: CSSStyleSheet) => void) {
         forEach(getAdoptedSheets(node), (sheet) => {
-            if (!overrides.has(sheet) && !isDarkReaderSheet(sheet)) {
+            if (!overrides.has(sheet) && !isNyxSheet(sheet)) {
                 iterator(sheet);
             }
             defineSheetScope(sheet, node);
@@ -111,7 +111,7 @@ export function createAdoptedStyleSheetOverride(node: Document | ShadowRoot): Ad
         if (count === 1) {
             // MS Copilot issue, where there is an empty `:root {}` style at the beginning.
             // Counting all the rules for all the shadow DOM elements can be expensive.
-            const sourceSheet = getAdoptedSheets(node).find((s) => !overrides.has(s) && !isDarkReaderSheet(s));
+            const sourceSheet = getAdoptedSheets(node).find((s) => !overrides.has(s) && !isNyxSheet(s));
             const rule = sourceSheet?.cssRules[0];
             return rule instanceof CSSStyleRule ? rule.style.length : count;
         }
@@ -127,7 +127,7 @@ export function createAdoptedStyleSheetOverride(node: Document | ShadowRoot): Ad
         const sheets = getAdoptedSheets(node);
         for (let i = sheets.length - 1; i >= 0; i--) {
             const sheet = sheets[i];
-            if (overrides.has(sheet) || isDarkReaderSheet(sheet)) {
+            if (overrides.has(sheet) || isNyxSheet(sheet)) {
                 continue;
             }
 
@@ -148,7 +148,7 @@ export function createAdoptedStyleSheetOverride(node: Document | ShadowRoot): Ad
                 for (let i = override.cssRules.length - 1; i >= 0; i--) {
                     override.deleteRule(i);
                 }
-                override.insertRule('#__darkreader__adoptedOverride {}');
+                override.insertRule('#__nyx__adoptedOverride {}');
                 injectSheet(sheet, override);
                 overrides.add(override);
                 return override;
@@ -177,7 +177,7 @@ export function createAdoptedStyleSheetOverride(node: Document | ShadowRoot): Ad
         callbackRequested = true;
         queueMicrotask(() => {
             callbackRequested = false;
-            const sheets = getAdoptedSheets(node).filter((s) => !overrides.has(s) && !isDarkReaderSheet(s));
+            const sheets = getAdoptedSheets(node).filter((s) => !overrides.has(s) && !isNyxSheet(s));
             sheets.forEach((sheet) => overridesBySource.delete(sheet));
             callback(sheets);
         });
@@ -211,9 +211,9 @@ export function createAdoptedStyleSheetOverride(node: Document | ShadowRoot): Ad
             canUseSheetProxy = true;
             handleArrayChange(callback);
         };
-        addSheetChangeEventListener('__darkreader__adoptedStyleSheetsChange', onAdoptedSheetsChange);
-        addSheetChangeEventListener('__darkreader__adoptedStyleSheetChange', onAdoptedSheetsChange);
-        addSheetChangeEventListener('__darkreader__adoptedStyleDeclarationChange', onAdoptedSheetsChange);
+        addSheetChangeEventListener('__nyx__adoptedStyleSheetsChange', onAdoptedSheetsChange);
+        addSheetChangeEventListener('__nyx__adoptedStyleSheetChange', onAdoptedSheetsChange);
+        addSheetChangeEventListener('__nyx__adoptedStyleDeclarationChange', onAdoptedSheetsChange);
 
         if (canUseSheetProxy) {
             return;

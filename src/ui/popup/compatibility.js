@@ -16,7 +16,7 @@
     var text = document.createTextNode([
         'Your Google Chrome (or Chromium) version ' + version + ' is out of date.',
         'In order to use this extension update your Google Chrome.',
-        'If you cannot update, install the old Dark Reader version, which works for at least Chrome 49, from '
+        'If you cannot update, install the old Nyx version, which works for at least Chrome 49, from '
     ].join(' '));
     var link = document.createElement('a');
     link.href = 'https://chrome.google.com/webstore/detail/oibheihomapbjogmoabgfbkchjchpdfp';
@@ -24,9 +24,9 @@
     link.textContent = 'here';
     warning.appendChild(text);
     warning.appendChild(link);
-    warning.style.backgroundColor = '#00222b';
+    warning.style.backgroundColor = '#111114';
     warning.style.boxSizing = 'border-box';
-    warning.style.color = '#e96c4c';
+    warning.style.color = '#f59e0b';
     warning.style.height = '100%';
     warning.style.left = '0';
     warning.style.padding = '40% 1rem 0 1rem';
@@ -36,7 +36,7 @@
     warning.style.top = '0';
     warning.style.width = '100%';
     warning.style.zIndex = '2014';
-    link.style.color = '#e96c4c';
+    link.style.color = '#f59e0b';
     link.style.outline = 'none';
     document.body.appendChild(warning);
 })();

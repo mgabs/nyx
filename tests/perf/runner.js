@@ -141,7 +141,7 @@ export async function runBenchmark(config) {
         server.setPaths(getFixturePaths(name));
     }
 
-    const apiPath = path.resolve(process.cwd(), 'darkreader.js');
+    const apiPath = path.resolve(process.cwd(), 'nyx.js');
     const apiScript = fs.existsSync(apiPath) ? fs.readFileSync(apiPath, 'utf8') : null;
 
     /** @type {Array<ReturnType<typeof createSeriesRecord>>} */

@@ -87,7 +87,7 @@ export function getMockData(override = {} as Partial<ExtensionData>): ExtensionD
         activeTab: {
             id: 1,
             documentId: 'id',
-            url: 'https://darkreader.org/',
+            url: 'https://github.com/mgabs/nyx/',
             isProtected: false,
             isInDarkList: false,
             isInjected: true,

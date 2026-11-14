@@ -100,10 +100,10 @@ function runCheck(callback: (hasDarkTheme: boolean) => void) {
         return;
     }
 
-    const drSheets = Array.from(document.styleSheets).filter((s) => (s.ownerNode as HTMLElement)?.classList.contains('darkreader'))
+    const drSheets = Array.from(document.styleSheets).filter((s) => (s.ownerNode as HTMLElement)?.classList.contains('nyx'))
         .concat(
             Array.isArray(document.adoptedStyleSheets) ? Array.from(document.adoptedStyleSheets).filter(
-                (s) => (s.cssRules?.[0] as CSSStyleRule)?.selectorText?.startsWith('#__darkreader')
+                (s) => (s.cssRules?.[0] as CSSStyleRule)?.selectorText?.startsWith('#__nyx')
             ) : [],
         );
     drSheets.forEach((sheet) => sheet.disabled = true);
@@ -122,7 +122,7 @@ function hasSomeStyle() {
         return true;
     }
     for (const style of document.styleSheets) {
-        if (style && style.ownerNode && !((style.ownerNode as HTMLElement).classList && (style.ownerNode as HTMLElement).classList.contains('darkreader'))) {
+        if (style && style.ownerNode && !((style.ownerNode as HTMLElement).classList && (style.ownerNode as HTMLElement).classList.contains('nyx'))) {
             return true;
         }
     }

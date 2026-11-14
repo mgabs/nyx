@@ -49,7 +49,7 @@ export function createAsyncTasksQueue(): AsyncTaskQueue {
         }
         frameId = null;
         if (__TEST__) {
-            document.dispatchEvent(new CustomEvent('__darkreader__test__asyncQueueComplete'));
+            document.dispatchEvent(new CustomEvent('__nyx__test__asyncQueueComplete'));
         }
     }
 

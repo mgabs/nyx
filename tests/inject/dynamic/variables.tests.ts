@@ -898,7 +898,7 @@ describe('CSS VARIABLES OVERRIDE', () => {
             '</h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await waitForEvent('__nyx__test__asyncQueueComplete');
         await timeout(50);
         expect(getComputedStyle(container.querySelector('.icon1')!).backgroundImage).toMatch(/^url\("blob:.*"\)$/);
         expect(getComputedStyle(container.querySelector('.icon2')!).backgroundImage).toMatch(/^url\("blob:.*"\)$/);
@@ -927,7 +927,7 @@ describe('CSS VARIABLES OVERRIDE', () => {
             '<h1><i class="icon"></i>Mixed background</h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await waitForEvent('__nyx__test__asyncQueueComplete');
         expect(getComputedStyle(container.querySelector('.icon')!).backgroundImage).toMatch(/^url\("blob:.*"\), linear-gradient\(rgb\(204, 0, 0\), rgb\(0, 0, 0\)\)$/);
     });
 

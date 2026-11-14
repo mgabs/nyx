@@ -21,7 +21,7 @@ export function ExportTheme({data}: ViewProps): Malevic.Child {
                     ((__FIREFOX_MV2__ || __THUNDERBIRD__) ? (!(sender as any).contextId || (sender as any).contextId === documentId) : true))
         )) {
             const url = getURLHostOrProtocol(sender.tab!.url!).replace(/[^a-z0-1\-]/g, '-');
-            saveFile(`DarkReader-${url}.css`, data);
+            saveFile(`Nyx-${url}.css`, data);
             chrome.runtime.onMessage.removeListener(listener);
         }
     };

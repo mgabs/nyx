@@ -16,8 +16,8 @@ export default tslint.config({
     ],
     ignores: [
         'build/**',
-        'darkreader.js',
-        'darkreader.mjs',
+        'nyx.js',
+        'nyx.mjs',
         'node_modules/**',
         'tests/coverage/**',
         '**/compatibility.js',
@@ -183,8 +183,8 @@ export default tslint.config({
     },
 }, {
     files: [
-        '**/darkreader.js',
-        '**/darkreader.mjs',
+        '**/nyx.js',
+        '**/nyx.mjs',
     ],
     extends: [
         eslintPluginCompat.config['flat/recommended'],

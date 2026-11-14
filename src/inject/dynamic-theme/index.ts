@@ -59,7 +59,7 @@ function createOrUpdateStyle(className: string, root: ParentNode = document.head
         element = classMap.get(className)!;
     } else {
         element = document.createElement('style');
-        element.classList.add('darkreader');
+        element.classList.add('nyx');
         element.classList.add(className);
         element.media = 'screen';
         element.textContent = '';
@@ -75,7 +75,7 @@ function createOrUpdateScript(className: string, root: ParentNode = document.hea
     let element: HTMLScriptElement | null = root.querySelector(`.${className}`);
     if (!element) {
         element = document.createElement('script');
-        element.classList.add('darkreader');
+        element.classList.add('nyx');
         element.classList.add(className);
     }
     return element;
@@ -111,7 +111,7 @@ class HeadStaticStyleInjector extends StaticStyleInjectorBase {
     }
 
     inject(id: string, text: string, position: 'beginning' | 'ending', callback?: () => void) {
-        const style = createOrUpdateStyle(`darkreader--${id}`, document);
+        const style = createOrUpdateStyle(`nyx--${id}`, document);
         style.textContent = text;
         const prevNode = position === 'beginning' ? this.lastStyle : document.head.lastChild;
         document.head.insertBefore(style, prevNode ? prevNode.nextSibling : document.head.firstChild);
@@ -122,7 +122,7 @@ class HeadStaticStyleInjector extends StaticStyleInjectorBase {
 
 class AwayStaticStyleInjector extends StaticStyleInjectorBase {
     inject(id: string, text: string) {
-        const style = createOrUpdateStyle(`darkreader--${id}`, document);
+        const style = createOrUpdateStyle(`nyx--${id}`, document);
         style.textContent = text;
         injectStyleAway(style);
         return style.sheet!;
@@ -150,12 +150,12 @@ const scheduleInversionStyleUpdate = throttle(() => {
         return;
     }
 
-    const invertStyle = document.head?.querySelector<HTMLStyleElement>('.darkreader--invert');
+    const invertStyle = document.head?.querySelector<HTMLStyleElement>('.nyx--invert');
     if (invertStyle) {
         invertStyle.textContent = getInversionStyleValue();
     }
     shadowRootsWithOverrides.forEach((root) => {
-        const shadowInvertStyle = root.querySelector<HTMLStyleElement>('.darkreader--invert');
+        const shadowInvertStyle = root.querySelector<HTMLStyleElement>('.nyx--invert');
         if (shadowInvertStyle) {
             shadowInvertStyle.textContent = getInversionStyleValue();
         }
@@ -208,7 +208,7 @@ function getInversionStyleValue(): string {
         target.push([
             `${selectors.join(', ')} {`,
             `    filter: none !important;`,
-            `    color: var(--darkreader-neutral-text) !important;`,
+            `    color: var(--nyx-neutral-text) !important;`,
             '}',
             `${selectors.map((s) => `${s} > *`).join(', ')} {`,
             `    filter: none !important;`,
@@ -294,10 +294,10 @@ function createStaticStyleOverrides() {
     const neutralTextColor = modifyForegroundColor(parseColorWithCache('#000000')!, theme!);
     const variableStyleContent = [
         `:root {`,
-        `   --darkreader-neutral-background: ${neutralBackgroundColor};`,
-        `   --darkreader-neutral-text: ${neutralTextColor};`,
-        `   --darkreader-selection-background: ${selectionColors?.backgroundColorSelection ?? 'initial'};`,
-        `   --darkreader-selection-text: ${selectionColors?.foregroundColorSelection ?? 'initial'};`,
+        `   --nyx-neutral-background: ${neutralBackgroundColor};`,
+        `   --nyx-neutral-text: ${neutralTextColor};`,
+        `   --nyx-selection-background: ${selectionColors?.backgroundColorSelection ?? 'initial'};`,
+        `   --nyx-selection-text: ${selectionColors?.foregroundColorSelection ?? 'initial'};`,
         `}`,
     ].join('\n');
     const variableSheet = staticStyleInjector.inject('variables', variableStyleContent, 'beginning', () => registerVariablesSheet(variableSheet));
@@ -306,14 +306,14 @@ function createStaticStyleOverrides() {
 
     const enableStyleSheetsProxy = !(fixes && fixes.disableStyleSheetsProxy);
     const enableCustomElementRegistryProxy = !(fixes && fixes.disableCustomElementRegistryProxy);
-    document.dispatchEvent(new CustomEvent('__darkreader__cleanUp'));
+    document.dispatchEvent(new CustomEvent('__nyx__cleanUp'));
     if (__CHROMIUM_MV3__) {
         // Notify the dedicated injector of the data.
-        document.dispatchEvent(new CustomEvent('__darkreader__stylesheetProxy__arg', {detail: {enableStyleSheetsProxy, enableCustomElementRegistryProxy}}));
+        document.dispatchEvent(new CustomEvent('__nyx__stylesheetProxy__arg', {detail: {enableStyleSheetsProxy, enableCustomElementRegistryProxy}}));
     } else {
-        const proxyScript = createOrUpdateScript('darkreader--proxy');
+        const proxyScript = createOrUpdateScript('nyx--proxy');
         proxyScript.append(`(${injectProxy})(${enableStyleSheetsProxy}, ${enableCustomElementRegistryProxy})`);
-        document.head.insertBefore(proxyScript, document.head.querySelector('.darkreader')?.nextSibling ?? document.head.firstElementChild);
+        document.head.insertBefore(proxyScript, document.head.querySelector('.nyx')?.nextSibling ?? document.head.firstElementChild);
         proxyScript.remove();
     }
 
@@ -323,14 +323,14 @@ function createStaticStyleOverrides() {
 const shadowRootsWithOverrides = new Set<ShadowRoot>();
 
 function createShadowStaticStyleOverridesInner(root: ShadowRoot) {
-    const inlineStyle = createOrUpdateStyle('darkreader--inline', root);
+    const inlineStyle = createOrUpdateStyle('nyx--inline', root);
     inlineStyle.textContent = getInlineOverrideStyle();
     root.insertBefore(inlineStyle, root.firstChild);
-    const overrideStyle = createOrUpdateStyle('darkreader--override', root);
+    const overrideStyle = createOrUpdateStyle('nyx--override', root);
     overrideStyle.textContent = fixes && fixes.css ? replaceCSSTemplates(fixes.css) : '';
     root.insertBefore(overrideStyle, inlineStyle.nextSibling);
 
-    const invertStyle = createOrUpdateStyle('darkreader--invert', root);
+    const invertStyle = createOrUpdateStyle('nyx--invert', root);
     invertStyle.textContent = getInversionStyleValue();
     root.insertBefore(invertStyle, overrideStyle.nextSibling);
     shadowRootsWithOverrides.add(root);
@@ -341,11 +341,11 @@ function delayedCreateShadowStaticStyleOverrides(root: ShadowRoot): void {
         // Disconnect observer immediately before making any other changes
         observer.disconnect();
 
-        // Do not make any changes unless Dark Reader's fixes have been removed
+        // Do not make any changes unless Nyx's fixes have been removed
         for (const {type, removedNodes} of mutations) {
             if (type === 'childList') {
                 for (const {nodeName, className} of removedNodes as any) {
-                    if (nodeName === 'STYLE' && ['darkreader darkreader--inline', 'darkreader darkreader--override', 'darkreader darkreader--invert'].includes(className)) {
+                    if (nodeName === 'STYLE' && ['nyx nyx--inline', 'nyx nyx--override', 'nyx nyx--invert'].includes(className)) {
                         createShadowStaticStyleOverridesInner(root);
                         return;
                     }
@@ -364,7 +364,7 @@ function createShadowStaticStyleOverrides(root: ShadowRoot) {
 
     // The shadow DOM may not be populated yet and the custom element implementation
     // may assume that unpopulated shadow root is empty and inadvertently remove
-    // Dark Reader's overrides
+    // Nyx's overrides
     const delayed = root.firstChild === null;
     createShadowStaticStyleOverridesInner(root);
     if (delayed) {
@@ -389,9 +389,9 @@ function replaceCSSTemplates($cssText: string) {
 
 function cleanFallbackStyle() {
     const fallback = (
-        staticStyleMap.get(document.head)?.get('darkreader--fallback') ||
-        staticStyleMap.get(document)?.get('darkreader--fallback') ||
-        document.querySelector('.darkreader--fallback')
+        staticStyleMap.get(document.head)?.get('nyx--fallback') ||
+        staticStyleMap.get(document)?.get('nyx--fallback') ||
+        document.querySelector('.nyx--fallback')
     );
     if (fallback) {
         fallback.textContent = '';
@@ -407,7 +407,7 @@ function updateRootVars() {
         return;
     }
 
-    const rootVarsStyle = createOrUpdateStyle('darkreader--root-vars');
+    const rootVarsStyle = createOrUpdateStyle('nyx--root-vars');
     variablesStore.putRootVars(rootVarsStyle, theme!);
 }
 
@@ -460,7 +460,7 @@ function createManager(element: StyleElement) {
             loadingStyles.add(loadingStyleId);
             logInfo(`Current amount of styles loading: ${loadingStyles.size}`);
 
-            const fallbackStyle = createOrUpdateStyle('darkreader--fallback');
+            const fallbackStyle = createOrUpdateStyle('nyx--fallback');
             if (!fallbackStyle.textContent) {
                 fallbackStyle.textContent = getModifiedFallbackStyle(theme!, {strict: false});
             }
@@ -485,7 +485,7 @@ function createManager(element: StyleElement) {
         variablesStore.matchVariablesAndDependents();
         manager.render(theme!, ignoredImageAnalysisSelectors);
         if (__TEST__) {
-            document.dispatchEvent(new CustomEvent('__darkreader__test__dynamicUpdateComplete'));
+            document.dispatchEvent(new CustomEvent('__nyx__test__dynamicUpdateComplete'));
         }
     }
 
@@ -610,9 +610,11 @@ function stopWatchingForUpdates() {
 let metaObserver: MutationObserver;
 let headObserver: MutationObserver | null = null;
 
+const LOCK_META_SELECTOR = 'meta[name="nyx-lock"], meta[name="darkreader-lock"]';
+
 function addMetaListener() {
     metaObserver = new MutationObserver(() => {
-        if (document.querySelector('meta[name="darkreader-lock"]')) {
+        if (document.querySelector(LOCK_META_SELECTOR)) {
             metaObserver.disconnect();
             removeDynamicTheme();
         }
@@ -620,26 +622,26 @@ function addMetaListener() {
     metaObserver.observe(document.head, {childList: true, subtree: true});
 }
 
-function createDarkReaderInstanceMarker() {
+function createNyxInstanceMarker() {
     const metaElement: HTMLMetaElement = document.createElement('meta');
-    metaElement.name = 'darkreader';
+    metaElement.name = 'nyx';
     metaElement.content = INSTANCE_ID;
     document.head.appendChild(metaElement);
 }
 
 function isDRLocked() {
-    return document.querySelector('meta[name="darkreader-lock"]') != null;
+    return document.querySelector(LOCK_META_SELECTOR) != null;
 }
 
-function isAnotherDarkReaderInstanceActive() {
-    const meta: HTMLMetaElement | null = document.querySelector('meta[name="darkreader"]');
+function isAnotherNyxInstanceActive() {
+    const meta: HTMLMetaElement | null = document.querySelector('meta[name="nyx"]');
     if (meta) {
         if (meta.content !== INSTANCE_ID) {
             return true;
         }
         return false;
     }
-    createDarkReaderInstanceMarker();
+    createNyxInstanceMarker();
     addMetaListener();
     return false;
 }
@@ -654,13 +656,13 @@ function interceptOldScript({success, failure}: {success: () => void; failure: (
         return;
     }
 
-    const oldMeta = document.head.querySelector('meta[name="darkreader"]') as HTMLMetaElement | null;
+    const oldMeta = document.head.querySelector('meta[name="nyx"]') as HTMLMetaElement | null;
     if (!oldMeta || oldMeta.content === INSTANCE_ID) {
         return;
     }
 
     const lock = document.createElement('meta');
-    lock.name = 'darkreader-lock';
+    lock.name = 'nyx-lock';
     document.head.append(lock);
     queueMicrotask(() => {
         lock.remove();
@@ -671,7 +673,7 @@ function interceptOldScript({success, failure}: {success: () => void; failure: (
 function disableConflictingPlugins() {
     if (document.documentElement.hasAttribute('data-wp-dark-mode-preset')) {
         const disableWPDarkMode = () => {
-            document.dispatchEvent(new CustomEvent('__darkreader__disableConflictingPlugins'));
+            document.dispatchEvent(new CustomEvent('__nyx__disableConflictingPlugins'));
             document.documentElement.classList.remove('wp-dark-mode-active');
             document.documentElement.removeAttribute('data-wp-dark-mode-active');
         };
@@ -706,8 +708,8 @@ function selectRelevantFix(documentURL: string, fixes: DynamicThemeFix[] | null)
 
 function createPDFOverlay(parent: ParentNode) {
     const overlay = document.createElement('div');
-    overlay.classList.add('darkreader');
-    overlay.classList.add('darkreader--pdf-overlay');
+    overlay.classList.add('nyx');
+    overlay.classList.add('nyx--pdf-overlay');
     overlay.style.backdropFilter = 'invert(100%) contrast(90%)';
     overlay.style.pointerEvents = 'none';
     overlay.style.position = 'fixed';
@@ -860,8 +862,8 @@ export function createOrUpdateDynamicThemeInternal(themeConfig: Theme, dynamicTh
     const ready = () => {
         const success = () => {
             disableConflictingPlugins();
-            document.documentElement.setAttribute('data-darkreader-mode', 'dynamic');
-            document.documentElement.setAttribute('data-darkreader-scheme', theme!.mode ? 'dark' : 'dimmed');
+            document.documentElement.setAttribute('data-nyx-mode', 'dynamic');
+            document.documentElement.setAttribute('data-nyx-scheme', theme!.mode ? 'dark' : 'dimmed');
             createThemeAndWatchForUpdates();
         };
 
@@ -870,8 +872,8 @@ export function createOrUpdateDynamicThemeInternal(themeConfig: Theme, dynamicTh
         };
 
         if (isDRLocked()) {
-            removeNode(document.querySelector('.darkreader--fallback'));
-        } else if (isAnotherDarkReaderInstanceActive()) {
+            removeNode(document.querySelector('.nyx--fallback'));
+        } else if (isAnotherNyxInstanceActive()) {
             interceptOldScript({
                 success,
                 failure,
@@ -885,7 +887,7 @@ export function createOrUpdateDynamicThemeInternal(themeConfig: Theme, dynamicTh
         ready();
     } else {
         if (!isFirefox) {
-            const fallbackStyle = createOrUpdateStyle('darkreader--fallback');
+            const fallbackStyle = createOrUpdateStyle('nyx--fallback');
             document.documentElement.appendChild(fallbackStyle);
             fallbackStyle.textContent = getModifiedFallbackStyle(theme, {strict: true});
         }
@@ -909,8 +911,8 @@ export function createOrUpdateDynamicThemeInternal(themeConfig: Theme, dynamicTh
 }
 
 function removeProxy() {
-    document.dispatchEvent(new CustomEvent('__darkreader__cleanUp'));
-    removeNode(document.head.querySelector('.darkreader--proxy'));
+    document.dispatchEvent(new CustomEvent('__nyx__cleanUp'));
+    removeNode(document.head.querySelector('.nyx--proxy'));
 }
 
 const cleaners: Array<() => void> = [];
@@ -948,23 +950,23 @@ function setupDocumentPiPFontFix(): void {
 
     function injectFontCSS(fontCSS: string): void {
         const pipDoc = getPipDoc();
-        if (!pipDoc || pipDoc.querySelector('.darkreader--font-fix')) {
+        if (!pipDoc || pipDoc.querySelector('.nyx--font-fix')) {
             return;
         }
         const style = pipDoc.createElement('style');
-        style.classList.add('darkreader');
-        style.classList.add('darkreader--font-fix');
+        style.classList.add('nyx');
+        style.classList.add('nyx--font-fix');
         style.textContent = fontCSS;
         (pipDoc.head || pipDoc.documentElement).appendChild(style);
     }
 
     function removeFontCSS(): void {
-        getPipDoc()?.querySelector('.darkreader--font-fix')?.remove();
+        getPipDoc()?.querySelector('.nyx--font-fix')?.remove();
     }
 
     function onPiPEnter(): void {
         const pipDoc = getPipDoc();
-        if (!pipDoc || pipDoc.querySelector('meta[name="darkreader-lock"]')) {
+        if (!pipDoc || pipDoc.querySelector(LOCK_META_SELECTOR)) {
             return;
         }
         const fontCSS = collectFontSheetCSS();
@@ -973,7 +975,7 @@ function setupDocumentPiPFontFix(): void {
         }
         injectFontCSS(fontCSS);
         const observer = new MutationObserver(() => {
-            if (pipDoc.querySelector('meta[name="darkreader-lock"]')) {
+            if (pipDoc.querySelector(LOCK_META_SELECTOR)) {
                 observer.disconnect();
                 docPiP.removeEventListener('enter', onPiPEnter);
                 removeFontCSS();
@@ -995,20 +997,20 @@ function setupDocumentPiPFontFix(): void {
 }
 
 export function removeDynamicTheme(): void {
-    document.documentElement.removeAttribute(`data-darkreader-mode`);
-    document.documentElement.removeAttribute(`data-darkreader-scheme`);
+    document.documentElement.removeAttribute(`data-nyx-mode`);
+    document.documentElement.removeAttribute(`data-nyx-scheme`);
     cleanDynamicThemeCache();
-    removeNode(document.querySelector('.darkreader--fallback'));
+    removeNode(document.querySelector('.nyx--fallback'));
     if (document.head) {
         const selectors = [
-            '.darkreader--user-agent',
-            '.darkreader--text',
-            '.darkreader--invert',
-            '.darkreader--inline',
-            '.darkreader--override',
-            '.darkreader--variables',
-            '.darkreader--root-vars',
-            'meta[name="darkreader"]',
+            '.nyx--user-agent',
+            '.nyx--text',
+            '.nyx--invert',
+            '.nyx--inline',
+            '.nyx--override',
+            '.nyx--variables',
+            '.nyx--root-vars',
+            'meta[name="nyx"]',
         ];
 
         restoreMetaThemeColor();
@@ -1017,14 +1019,14 @@ export function removeDynamicTheme(): void {
         removeProxy();
     }
     shadowRootsWithOverrides.forEach((root) => {
-        removeNode(root.querySelector('.darkreader--inline'));
-        removeNode(root.querySelector('.darkreader--override'));
+        removeNode(root.querySelector('.nyx--inline'));
+        removeNode(root.querySelector('.nyx--override'));
     });
     shadowRootsWithOverrides.clear();
     forEach(styleManagers.keys(), (el) => removeManager(el));
     loadingStyles.clear();
     cleanLoadingLinks();
-    forEach(document.querySelectorAll('.darkreader'), removeNode);
+    forEach(document.querySelectorAll('.nyx'), removeNode);
     removeStyleContainer();
 
     adoptedStyleManagers.forEach((manager) => manager.destroy());

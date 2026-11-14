@@ -6,7 +6,7 @@ interface SheetWatcher {
 }
 
 let canUseSheetProxy = false;
-document.addEventListener('__darkreader__inlineScriptsAllowed', () => canUseSheetProxy = true, {once: true});
+document.addEventListener('__nyx__inlineScriptsAllowed', () => canUseSheetProxy = true, {once: true});
 
 export function createSheetWatcher(
     element: HTMLLinkElement | HTMLStyleElement,
@@ -48,11 +48,11 @@ export function createSheetWatcher(
     }
 
     function watchForSheetChangesUsingProxy() {
-        element.addEventListener('__darkreader__updateSheet', onSheetChange);
+        element.addEventListener('__nyx__updateSheet', onSheetChange);
     }
 
     function stopWatchingForSheetChangesUsingProxy() {
-        element.removeEventListener('__darkreader__updateSheet', onSheetChange);
+        element.removeEventListener('__nyx__updateSheet', onSheetChange);
     }
 
     function stopWatchingForSheetChanges() {

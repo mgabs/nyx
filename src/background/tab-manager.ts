@@ -298,7 +298,7 @@ export default class TabManager {
             if (themeMessageTypes.includes(message.type)) {
                 IconManager.setIcon({tabId, isActive: true, colorScheme: message.data?.theme?.mode ? 'dark' : 'light'});
             } else if (message.type === MessageTypeBGtoCS.CLEAN_UP) {
-                const isActive = TabManager.tabs[tabId]?.[0]?.url?.startsWith('https://darkreader.org/');
+                const isActive = TabManager.tabs[tabId]?.[0]?.url?.startsWith('https://github.com/mgabs/nyx/');
                 IconManager.setIcon({tabId, isActive});
             }
         }
@@ -503,7 +503,7 @@ export default class TabManager {
     // If onlyUpdateActiveTab is specified, it will only send a new message to any
     // tab that matches the active tab's hostname. This is to ensure that when a user
     // has multiple tabs of the same website, every tab will receive the new message
-    // and not just that tab as Dark Reader currently doesn't have per-tab operations,
+    // and not just that tab as Nyx currently doesn't have per-tab operations,
     // this should be the expected behavior.
     static async sendMessage(onlyUpdateActiveTab = false): Promise<void> {
         TabManager.timestamp++;

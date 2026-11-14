@@ -39,7 +39,7 @@ describe('MEDIA QUERIES', () => {
         createOrUpdateDynamicTheme(theme, null, false);
         expect(getComputedStyle(document.querySelector('h1')!).backgroundColor).toBe('rgb(0, 102, 0)');
         expect(getComputedStyle(document.querySelector('h1 strong')!).color).toBe('rgb(255, 174, 26)');
-        expect(document.querySelector('.testcase-style-2')!.nextElementSibling!.classList.contains('darkreader--sync')).toBe(false);
+        expect(document.querySelector('.testcase-style-2')!.nextElementSibling!.classList.contains('nyx--sync')).toBe(false);
     });
 
     it('should style lazyloaded media', async () => {
@@ -59,7 +59,7 @@ describe('MEDIA QUERIES', () => {
         expect(getComputedStyle(document.querySelector('h1')!).backgroundColor).toBe('rgb(0, 102, 0)');
         expect(getComputedStyle(document.querySelector('h1 strong')!).color).toBe('rgb(255, 174, 26)');
         if (!__PLUS__) {
-            expect(document.querySelector('.testcase-style')!.nextElementSibling!.classList.contains('darkreader--sync')).toBe(true);
+            expect(document.querySelector('.testcase-style')!.nextElementSibling!.classList.contains('nyx--sync')).toBe(true);
         }
     });
 
@@ -143,7 +143,7 @@ describe('MEDIA QUERIES', () => {
         expect(getComputedStyle(document.querySelector('h1')!).backgroundColor).toBe('rgb(102, 102, 102)');
         expect(getComputedStyle(document.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
         if (!__PLUS__) {
-            expect(document.querySelector('.testcase-style-2')!.nextElementSibling!.classList.contains('darkreader--sync')).toBe(true);
+            expect(document.querySelector('.testcase-style-2')!.nextElementSibling!.classList.contains('nyx--sync')).toBe(true);
         }
     });
 
@@ -180,7 +180,7 @@ describe('MEDIA QUERIES', () => {
         createOrUpdateDynamicTheme(theme, null, false);
         expect(getComputedStyle(document.querySelector('h1')!).backgroundColor).toBe('rgb(0, 102, 0)');
         expect(getComputedStyle(document.querySelector('h1 strong')!).color).toBe('rgb(255, 174, 26)');
-        expect(document.querySelector('.testcase-style-2')!.nextElementSibling!.classList.contains('darkreader--sync')).toBe(false);
+        expect(document.querySelector('.testcase-style-2')!.nextElementSibling!.classList.contains('nyx--sync')).toBe(false);
     });
 
     it('should handle media query and print', () => {

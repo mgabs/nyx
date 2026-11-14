@@ -25,8 +25,8 @@ describe('Style Injection Unit Tests', () => {
             head: mockHead,
             body: null,
             querySelector: (selector: string) => {
-                if (selector === '.darkreader--root') {
-                    return appendedChildren.find((c) => c.classList?.has('darkreader--root')) || null;
+                if (selector === '.nyx--root') {
+                    return appendedChildren.find((c) => c.classList?.has('nyx--root')) || null;
                 }
                 return null;
             },
@@ -134,7 +134,7 @@ describe('Style Injection Unit Tests', () => {
 
         const fakeDoc: any = {
             body: null,
-            querySelector: (sel: string) => sel === '.darkreader-style-container' ? fakeContainer : null,
+            querySelector: (sel: string) => sel === '.nyx-style-container' ? fakeContainer : null,
             createElement: mockDoc.createElement,
         };
         (global as any).document = fakeDoc;
@@ -179,7 +179,7 @@ describe('Style Injection Unit Tests', () => {
             nextElementSibling: {},
             append: (c: any) => containerChildren.push(c),
             remove: () => {},
-            querySelectorAll: (sel: string) => sel === '.darkreader--sync' ? [syncStyle] : [],
+            querySelectorAll: (sel: string) => sel === '.nyx--sync' ? [syncStyle] : [],
         };
         const fakeBody: any = {
             querySelector: (_sel: string) => null,
@@ -187,7 +187,7 @@ describe('Style Injection Unit Tests', () => {
         };
         const fakeDoc: any = {
             body: fakeBody,
-            querySelector: (sel: string) => sel === '.darkreader-style-container' ? fakeContainer : null,
+            querySelector: (sel: string) => sel === '.nyx-style-container' ? fakeContainer : null,
             createElement: (_tag: string) => fakeContainer,
         };
         (global as any).document = fakeDoc;

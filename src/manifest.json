@@ -1,22 +1,22 @@
 {
     "manifest_version": 2,
     "name": "Nyx",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "author": "Alexander Shutau",
     "description": "Instant Dark Mode for the Web. Zero White Flash.",
     "default_locale": "en",
     "browser_action": {
         "default_title": "Nyx",
         "default_icon": {
-            "38": "icons/dr_active_38.png",
-            "19": "icons/dr_active_19.png"
+            "38": "icons/nyx_active_38.png",
+            "19": "icons/nyx_active_19.png"
         },
         "default_popup": "ui/popup/index.html"
     },
     "icons": {
-        "16": "icons/dr_16.png",
-        "48": "icons/dr_48.png",
-        "128": "icons/dr_128.png"
+        "16": "icons/nyx_16.png",
+        "48": "icons/nyx_48.png",
+        "128": "icons/nyx_128.png"
     },
     "background": {
         "persistent": true,

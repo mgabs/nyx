@@ -32,8 +32,8 @@ async function processAPIBuildModule(filepath) {
 }
 
 async function processAPIBuild() {
-    await processAPIBuildModule('darkreader.js');
-    await processAPIBuildModule('darkreader.mjs');
+    await processAPIBuildModule('nyx.js');
+    await processAPIBuildModule('nyx.mjs');
 }
 
 async function processExtensionPlatform(platform) {

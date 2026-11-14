@@ -1,18 +1,15 @@
 import {getUILanguage} from './locales';
 import {isEdge, isMobile} from './platform';
 
-export const HOMEPAGE_URL = 'https://darkreader.org';
-export const BLOG_URL = 'https://darkreader.org/blog/';
-export const NEWS_URL = 'https://darkreader.org/blog/posts.json';
+export const HOMEPAGE_URL = 'https://github.com/mgabs/nyx';
+export const BLOG_URL = 'https://github.com/mgabs/nyx/wiki/';
+export const NEWS_URL = 'https://raw.githubusercontent.com/mgabs/nyx/main/docs/news.json';
 export const DEVTOOLS_DOCS_URL = 'https://github.com/mgabs/nyx/blob/main/CONTRIBUTING.md';
-export const DONATE_URL = 'https://darkreader.org/support-us/';
 export const GITHUB_URL = 'https://github.com/mgabs/nyx';
-export const MOBILE_URL = 'https://darkreader.org/tips/mobile/';
-export const PRIVACY_URL = 'https://darkreader.org/privacy/';
-export const TWITTER_URL = 'https://twitter.com/darkreaderapp';
-export const UNINSTALL_URL = 'https://darkreader.org/goodluck/';
-export const HELP_URL = 'https://darkreader.org/help';
-export const CONFIG_URL_BASE = 'https://raw.githubusercontent.com/darkreader/darkreader/main/src/config';
+export const MOBILE_URL = 'https://github.com/mgabs/nyx/wiki/Mobile';
+export const PRIVACY_URL = 'https://github.com/mgabs/nyx/blob/main/PRIVACY.md';
+export const HELP_URL = 'https://github.com/mgabs/nyx/wiki';
+export const CONFIG_URL_BASE = 'https://raw.githubusercontent.com/mgabs/nyx/main/src/config';
 
 const helpLocales = [
     'be',
@@ -42,5 +39,8 @@ export function getHelpURL(): string {
 }
 
 export function getBlogPostURL(postId: string): string {
-    return `${BLOG_URL}${postId}/`;
+    if (postId.startsWith('release:')) {
+        return `${GITHUB_URL}/releases/tag/${postId.slice('release:'.length)}`;
+    }
+    return `${BLOG_URL}${postId}`;
 }

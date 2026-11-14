@@ -15,7 +15,7 @@ function sendLogToBG(level: 'info' | 'warn' | 'assert', ...args: any[]) {
 
 export function logInfo(...args: any[]): void {
     if (__DEBUG__) {
-        console.info('DARK READER', ...args);
+        console.info('NYX', ...args);
         sendLogToBG('info', ...args);
     }
 }
@@ -24,14 +24,14 @@ export function logWarn(...args: any[]): void {
     if (__DEBUG__) {
         // console.warn is slow in Chrome
         // console.warn(...args);
-        console.log('DARK READER', ...args);
+        console.log('NYX', ...args);
         sendLogToBG('warn', ...args);
     }
 }
 
 export function logInfoCollapsed(title: string, ...args: any[]): void {
     if (__DEBUG__) {
-        console.groupCollapsed(`DARK READER ${title}`);
+        console.groupCollapsed(`NYX ${title}`);
         console.log(...args);
         console.groupEnd();
     }
@@ -39,7 +39,7 @@ export function logInfoCollapsed(title: string, ...args: any[]): void {
 
 function logAssert(...args: any[]): void {
     if ((__TEST__ || __DEBUG__)) {
-        console.assert(false, 'DARK READER', ...args);
+        console.assert(false, 'NYX', ...args);
         sendLogToBG('assert', ...args);
     }
 }

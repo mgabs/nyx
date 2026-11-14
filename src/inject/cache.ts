@@ -1,9 +1,9 @@
 import type {ImageDetails} from './dynamic-theme/image';
 
-const STORAGE_KEY_WAS_ENABLED_FOR_HOST = '__darkreader__wasEnabledForHost';
-const STORAGE_KEY_IMAGE_DETAILS_LIST = '__darkreader__imageDetails_v2_list';
-const STORAGE_KEY_IMAGE_DETAILS_PREFIX = '__darkreader__imageDetails_v2_';
-const STORAGE_KEY_CSS_FETCH_PREFIX = '__darkreader__cssFetch_';
+const STORAGE_KEY_WAS_ENABLED_FOR_HOST = '__nyx__wasEnabledForHost';
+const STORAGE_KEY_IMAGE_DETAILS_LIST = '__nyx__imageDetails_v2_list';
+const STORAGE_KEY_IMAGE_DETAILS_PREFIX = '__nyx__imageDetails_v2_';
+const STORAGE_KEY_CSS_FETCH_PREFIX = '__nyx__cssFetch_';
 
 export function wasEnabledForHost(): boolean | null {
     try {

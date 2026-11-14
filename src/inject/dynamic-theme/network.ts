@@ -14,8 +14,8 @@ const resolvers = new Map<string, (data: string) => void>();
 const rejectors = new Map<string, (reason?: any) => void>();
 
 export async function bgFetch(request: FetchRequest): Promise<string> {
-    if ((window as any).DarkReader?.Plugins?.fetch) {
-        return (window as any).DarkReader.Plugins.fetch(request);
+    if ((window as any).Nyx?.Plugins?.fetch) {
+        return (window as any).Nyx.Plugins.fetch(request);
     }
     const parsedURL = new URL(request.url);
     if (parsedURL.origin !== request.origin && shouldIgnoreCors(parsedURL)) {

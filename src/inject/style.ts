@@ -4,10 +4,10 @@ export function createOrUpdateStyle(css: string, type: string): void {
     createNodeAsap({
         selectNode: () => document.getElementById('dark-reader-style')!,
         createNode: (target) => {
-            document.documentElement.setAttribute('data-darkreader-mode', type);
+            document.documentElement.setAttribute('data-nyx-mode', type);
             const style = document.createElement('style');
             style.id = 'dark-reader-style';
-            style.classList.add('darkreader');
+            style.classList.add('nyx');
             style.type = 'text/css';
             style.textContent = css;
             target.appendChild(style);
@@ -29,5 +29,5 @@ export function createOrUpdateStyle(css: string, type: string): void {
 
 export function removeStyle(): void {
     removeNode(document.getElementById('dark-reader-style'));
-    document.documentElement.removeAttribute('data-darkreader-mode');
+    document.documentElement.removeAttribute('data-nyx-mode');
 }
