@@ -1,6 +1,6 @@
 {
   "name": "Nyx",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Instant Dark Mode for the Web. Zero White Flash.",
   "scripts": {
     "postinstall": "patch-package --error-on-fail",
