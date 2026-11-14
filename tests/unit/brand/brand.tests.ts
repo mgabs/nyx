@@ -120,4 +120,68 @@ describe('Brand Identity & MIT Attribution Specification', () => {
             expect(licenseRaw).toContain('THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND');
         });
     });
+
+    describe('REQ-BRAND-6: Nyx Owl Icon Assets & Manifest Wiring', () => {
+        const readPngSize = async (relPath: string) => {
+            const buf = await fs.readFile(rootPath(relPath));
+            // PNG signature + IHDR width/height at bytes 16..24
+            expect(buf.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+            return {
+                width: buf.readUInt32BE(16),
+                height: buf.readUInt32BE(20),
+            };
+        };
+
+        test.each([
+            ['src/icons/nyx_16.png', 16],
+            ['src/icons/nyx_48.png', 48],
+            ['src/icons/nyx_128.png', 128],
+            ['src/icons/nyx_active_19.png', 19],
+            ['src/icons/nyx_active_38.png', 38],
+            ['src/icons/nyx_active_light_19.png', 19],
+            ['src/icons/nyx_active_light_38.png', 38],
+            ['src/ui/assets/images/nyx-icon-256x256.png', 256],
+        ])('%s must exist as a %ix%i PNG', async (relPath, size) => {
+            const dims = await readPngSize(relPath);
+            expect(dims).toEqual({width: size, height: size});
+        });
+
+        test('src/icons/ must contain zero legacy dr_*.png files and manifests/IconManager must reference nyx_*.png', async () => {
+            const iconFiles = await fs.readdir(rootPath('src/icons'));
+            expect(iconFiles.filter((f) => f.startsWith('dr_'))).toEqual([]);
+
+            const manifestRaw = await fs.readFile(rootPath('src/manifest.json'), 'utf8');
+            const mv3Raw = await fs.readFile(rootPath('src/manifest-chrome-mv3.json'), 'utf8');
+            const iconManagerRaw = await fs.readFile(rootPath('src/background/icon-manager.ts'), 'utf8');
+
+            for (const raw of [manifestRaw, mv3Raw, iconManagerRaw]) {
+                expect(raw).not.toContain('dr_');
+                expect(raw).toContain('nyx_');
+            }
+        });
+    });
+
+    describe('REQ-POPUP-3: Obsidian + Silver + Amber UI Palette', () => {
+        test('theme.less, md3-tokens.less, compatibility.js, and nyx-type.svg use Obsidian/Silver/Amber and drop legacy slate/coral', async () => {
+            const themeRaw = await fs.readFile(rootPath('src/ui/theme.less'), 'utf8');
+            const md3Raw = await fs.readFile(rootPath('src/ui/popup/md3-tokens.less'), 'utf8');
+            const compatRaw = await fs.readFile(rootPath('src/ui/popup/compatibility.js'), 'utf8');
+            const typeSvgRaw = await fs.readFile(rootPath('src/ui/assets/images/nyx-type.svg'), 'utf8');
+
+            expect(themeRaw).toContain('#111114');
+            expect(themeRaw).toContain('#c4c4cc');
+            expect(themeRaw).toContain('#f59e0b');
+            expect(md3Raw).toContain('#111114');
+            expect(md3Raw).toContain('#c4c4cc');
+            expect(md3Raw).toContain('#f59e0b');
+            expect(compatRaw).toContain('#f59e0b');
+            expect(typeSvgRaw.toLowerCase()).toContain('#f59e0b');
+
+            for (const raw of [themeRaw, md3Raw, compatRaw, typeSvgRaw]) {
+                expect(raw.toLowerCase()).not.toContain('#141e24');
+                expect(raw.toLowerCase()).not.toContain('#e96c4c');
+                expect(raw.toLowerCase()).not.toContain('#53a1b3');
+            }
+        });
+    });
 });
