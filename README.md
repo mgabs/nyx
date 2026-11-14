@@ -1,5 +1,5 @@
-<p align="center"><a href="https://darkreader.org" target="_blank" rel="noreferrer noopener"><img width="250" alt="Dark Reader's mascot" src="https://raw.githubusercontent.com/darkreader/darkreader.github.io/master/images/darkreader-mascot.svg"></a></p>
-<p align="center">Dark Reader <strong>analyzes</strong> web pages and aims to <strong>reduce eyestrain</strong> while browsing the web.</p>
+<p align="center"><a href="https://github.com/mgabs/nyx" target="_blank" rel="noreferrer noopener"><img width="128" alt="Nyx Owl icon" src="src/icons/nyx_128.png"></a></p>
+<p align="center">Nyx <strong>adapts</strong> web pages to a consistent dark palette with <strong>zero white flash</strong>.</p>
 <br/>
 <p align="center"><a rel="noreferrer noopener" href="https://chromewebstore.google.com/detail/dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh"><img alt="Chrome Web Store" src="https://img.shields.io/badge/Chrome-141e24.svg?&style=for-the-badge&logo=google-chrome&logoColor=white"></a>  <a rel="noreferrer noopener" href="https://addons.mozilla.org/firefox/addon/darkreader/"><img alt="Firefox Add-ons" src="https://img.shields.io/badge/Firefox-141e24.svg?&style=for-the-badge&logo=firefox-browser&logoColor=white"></a>  <a rel="noreferrer noopener" href="https://darkreader.org/safari/"><img alt="Apple App Store" src="https://img.shields.io/badge/Safari-141e24.svg?&style=for-the-badge&logo=safari&logoColor=white"></a>  <a rel="noreferrer noopener" href="https://microsoftedge.microsoft.com/addons/detail/dark-reader/ifoakfbpdcdoeenechcleahebpibofpc/"><img alt="Edge Addons" src="https://img.shields.io/badge/Edge-141e24.svg?&style=for-the-badge&logo=microsoft-edge&logoColor=white"></a>  <a el="noreferrer noopener" href="https://addons.thunderbird.net/thunderbird/addon/darkreader"><img alt="Thunderbird" src="https://img.shields.io/badge/Thunderbird-141e24.svg?&style=for-the-badge&logo=thunderbird&logoColor=white"></a>
 
@@ -7,7 +7,14 @@
 <h3 align="center">Instant Dark Mode for the Web. Zero White Flash.</h3>
 <p align="center"><a href="https://github.com/mgabs/nyx">https://github.com/mgabs/nyx</a></p>
 <br/>
-<p align="center">Dark Reader is an <strong>open-source</strong> MIT-licensed <strong>browser extension</strong> designed to analyze web pages. Dark Reader will generate a dark mode that aims to <strong>reduce the eyestrain</strong> of the user. Dark Reader is <strong>feature-rich</strong> and is customizable in many ways throughout the UI.</p>
+<p align="center">Nyx is an <strong>open-source</strong> MIT-licensed <strong>browser extension</strong> that applies a consistent, comfortable dark color theme across the web with zero white flash.</p>
+
+## Color Theme (Nyx Owl)
+
+- **Default Dark Background:** `#181a1b`
+- **Default Dark Text:** `#e8e6e3`
+- **Adjustable Sliders:** Brightness, Contrast, Sepia, Grayscale, and custom background/text colors per site or globally.
+- **Theme Engines:** Supports `dynamicTheme`, `leanDynamicTheme` (consistent cross-site dark palette via `adoptedStyleSheets` with zero `<canvas>` image analysis), `staticTheme`, `cssFilter`, and `svgFilter`.
 <br/>
 <br/>
 
