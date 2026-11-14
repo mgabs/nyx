@@ -46,8 +46,9 @@ export default function NewsSection(props: ViewProps) {
     const store = context.getStore({
         expanded: false,
         didNewsSlideIn: false,
+        dismissed: false,
     });
-    const {expanded, didNewsSlideIn} = store;
+    const {expanded, didNewsSlideIn, dismissed} = store;
 
     const news = props.data.news;
     const latest = news && news.length > 0 ? news[0] : null;
@@ -61,6 +62,7 @@ export default function NewsSection(props: ViewProps) {
     function toggleNews() {
         if (expanded) {
             markLatestAsRead();
+            store.dismissed = true;
         }
         store.expanded = !expanded;
         store.didNewsSlideIn = didNewsSlideIn || !store.expanded;
@@ -68,10 +70,14 @@ export default function NewsSection(props: ViewProps) {
     }
 
     context.onRender(() => {
-        if (latest && !latest.read && !store.expanded && !store.didNewsSlideIn) {
+        if (latest && !latest.read && !dismissed && !store.expanded && !store.didNewsSlideIn) {
             setTimeout(toggleNews, 750);
         }
     });
+
+    if (!latest || latest.read || dismissed) {
+        return null;
+    }
 
     const birthdayExpired = (new Date(2024, 7, 2)).getTime();
     const birthdayNews = {

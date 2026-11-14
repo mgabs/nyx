@@ -473,6 +473,9 @@ export function createOrUpdateLeanTheme(
 }
 
 export function removeLeanTheme(): void {
+    if (!currentTheme && !emitter) {
+        return;
+    }
     removeDOMReadyListener(onDOMReady);
     cleanReadyStateCompleteListeners();
     stopWatching();

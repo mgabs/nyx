@@ -836,6 +836,8 @@ export function createOrUpdateDynamicThemeInternal(themeConfig: Theme, dynamicTh
             palette.background.forEach((color) => modifyBackgroundColor(color, theme!));
             palette.text.forEach((color) => modifyForegroundColor(color, theme!));
             palette.border.forEach((color) => modifyBorderColor(color, theme!));
+            prevTheme = theme;
+            prevFixes = fixes;
             return;
         }
 
@@ -998,6 +1000,9 @@ function setupDocumentPiPFontFix(): void {
 }
 
 export function removeDynamicTheme(): void {
+    if (!theme && !prevTheme && !staticStyleInjector) {
+        return;
+    }
     document.documentElement.removeAttribute(`data-nyx-mode`);
     document.documentElement.removeAttribute(`data-nyx-scheme`);
     cleanDynamicThemeCache();
@@ -1053,6 +1058,7 @@ export function cleanDynamicThemeCache(): void {
     cleanModificationCache();
     clearColorCache();
     releaseVariablesSheet();
+    theme = null;
     prevTheme = null;
     prevFixes = null;
     staticStyleInjector = null;
