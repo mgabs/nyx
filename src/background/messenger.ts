@@ -153,10 +153,10 @@ export default class Messenger {
 
     static reportChanges(data: ExtensionData): void {
         if (Messenger.changeListenerCount > 0) {
-            chrome.runtime.sendMessage<MessageBGtoUI>({
+            (chrome.runtime.sendMessage<MessageBGtoUI>({
                 type: MessageTypeBGtoUI.CHANGES,
                 data,
-            });
+            }) as unknown as Promise<unknown> | undefined)?.catch?.(() => { /* noop */ });
         }
     }
 }

@@ -25,7 +25,11 @@ export async function bgFetch(request: FetchRequest): Promise<string> {
         const id = generateUID();
         resolvers.set(id, resolve);
         rejectors.set(id, reject);
-        chrome.runtime.sendMessage<MessageCStoBG>({type: MessageTypeCStoBG.FETCH, data: request, id});
+        (chrome.runtime.sendMessage<MessageCStoBG>({type: MessageTypeCStoBG.FETCH, data: request, id}) as unknown as Promise<unknown> | undefined)?.catch?.((err) => {
+            resolvers.delete(id);
+            rejectors.delete(id);
+            reject(err);
+        });
     });
 }
 

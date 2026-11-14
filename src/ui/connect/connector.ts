@@ -64,11 +64,15 @@ export default class Connector implements ExtensionActions {
         }
     };
 
+    private sendMessage(message: MessageUItoBG): void {
+        (chrome.runtime.sendMessage<MessageUItoBG>(message) as unknown as Promise<unknown> | undefined)?.catch?.(() => { /* noop */ });
+    }
+
     subscribeToChanges(callback: (data: ExtensionData) => void): void {
         this.changeSubscribers.add(callback);
         if (this.changeSubscribers.size === 1) {
             chrome.runtime.onMessage.addListener(this.onChangesReceived);
-            chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.SUBSCRIBE_TO_CHANGES});
+            this.sendMessage({type: MessageTypeUItoBG.SUBSCRIBE_TO_CHANGES});
         }
     }
 
@@ -94,27 +98,27 @@ export default class Connector implements ExtensionActions {
     }
 
     changeSettings(settings: Partial<UserSettings>): void {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.CHANGE_SETTINGS, data: settings});
+        this.sendMessage({type: MessageTypeUItoBG.CHANGE_SETTINGS, data: settings});
     }
 
     setTheme(theme: Partial<Theme>): void {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.SET_THEME, data: theme});
+        this.sendMessage({type: MessageTypeUItoBG.SET_THEME, data: theme});
     }
 
     toggleActiveTab(): void {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.TOGGLE_ACTIVE_TAB, data: {}});
+        this.sendMessage({type: MessageTypeUItoBG.TOGGLE_ACTIVE_TAB, data: {}});
     }
 
     markNewsAsRead(ids: string[]): void {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.MARK_NEWS_AS_READ, data: ids});
+        this.sendMessage({type: MessageTypeUItoBG.MARK_NEWS_AS_READ, data: ids});
     }
 
     markNewsAsDisplayed(ids: string[]): void {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.MARK_NEWS_AS_DISPLAYED, data: ids});
+        this.sendMessage({type: MessageTypeUItoBG.MARK_NEWS_AS_DISPLAYED, data: ids});
     }
 
     loadConfig(options: {local: boolean}): void {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.LOAD_CONFIG, data: options});
+        this.sendMessage({type: MessageTypeUItoBG.LOAD_CONFIG, data: options});
     }
 
     async applyDevFixes(type: DevFixType, text: string): Promise<void> {
@@ -125,18 +129,18 @@ export default class Connector implements ExtensionActions {
     }
 
     resetDevFixes(type: DevFixType): void {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.RESET_DEV_FIXES, data: {type}});
+        this.sendMessage({type: MessageTypeUItoBG.RESET_DEV_FIXES, data: {type}});
     }
 
     async hideHighlights(ids: string[]): Promise<void> {
-        chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.HIDE_HIGHLIGHTS, data: ids});
+        this.sendMessage({type: MessageTypeUItoBG.HIDE_HIGHLIGHTS, data: ids});
     }
 
     disconnect(): void {
         if (this.changeSubscribers.size > 0) {
             this.changeSubscribers.clear();
             chrome.runtime.onMessage.removeListener(this.onChangesReceived);
-            chrome.runtime.sendMessage<MessageUItoBG>({type: MessageTypeUItoBG.UNSUBSCRIBE_FROM_CHANGES});
+            this.sendMessage({type: MessageTypeUItoBG.UNSUBSCRIBE_FROM_CHANGES});
         }
     }
 }

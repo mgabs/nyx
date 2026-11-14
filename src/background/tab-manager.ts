@@ -325,10 +325,10 @@ export default class TabManager {
             return;
         }
         if (__CHROMIUM_MV2__) {
-            chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message, documentId ? {documentId} : {frameId});
+            (chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message, documentId ? {documentId} : {frameId}) as unknown as Promise<unknown> | undefined)?.catch?.(() => { /* noop */ });
             return;
         }
-        chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message, {frameId});
+        (chrome.tabs.sendMessage<MessageBGtoCS>(tabId, message, {frameId}) as unknown as Promise<unknown> | undefined)?.catch?.(() => { /* noop */ });
     }
 
     private static onColorSchemeMessage(message: MessageCStoBG, sender: chrome.runtime.MessageSender) {
@@ -457,7 +457,7 @@ export default class TabManager {
                         runAt: 'document_start',
                         file: '/inject/index.js',
                         allFrames: true,
-                        matchAboutBlank: true,
+                        matchAboutBlank: false,
                     });
                 }
             });

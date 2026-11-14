@@ -95,23 +95,23 @@ if (__WATCH__) {
             }
             switch (message.type) {
                 case 'reload:css':
-                    chrome.runtime.sendMessage<DebugMessageBGtoUI>({type: DebugMessageTypeBGtoUI.CSS_UPDATE});
+                    (chrome.runtime.sendMessage<DebugMessageBGtoUI>({type: DebugMessageTypeBGtoUI.CSS_UPDATE}) as unknown as Promise<unknown> | undefined)?.catch?.(() => { /* noop */ });
                     break;
                 case 'reload:ui':
-                    chrome.runtime.sendMessage<DebugMessageBGtoUI>({type: DebugMessageTypeBGtoUI.UPDATE});
+                    (chrome.runtime.sendMessage<DebugMessageBGtoUI>({type: DebugMessageTypeBGtoUI.UPDATE}) as unknown as Promise<unknown> | undefined)?.catch?.(() => { /* noop */ });
                     break;
                 case 'reload:full':
                     chrome.tabs.query({}, (tabs) => {
                         const message: DebugMessageBGtoCS = {type: DebugMessageTypeBGtoCS.RELOAD};
                         // Some contexts are not considered to be tabs and can not receive regular messages
-                        chrome.runtime.sendMessage<DebugMessageBGtoCS>(message);
+                        (chrome.runtime.sendMessage<DebugMessageBGtoCS>(message) as unknown as Promise<unknown> | undefined)?.catch?.(() => { /* noop */ });
                         for (const tab of tabs) {
                             if (canInjectScript(tab.url)) {
                                 if (__CHROMIUM_MV3__) {
                                     chrome.tabs.sendMessage<DebugMessageBGtoCS>(tab.id!, message).catch(() => { /* noop */ });
                                     continue;
                                 }
-                                chrome.tabs.sendMessage<DebugMessageBGtoCS>(tab.id!, message);
+                                (chrome.tabs.sendMessage<DebugMessageBGtoCS>(tab.id!, message) as unknown as Promise<unknown> | undefined)?.catch?.(() => { /* noop */ });
                             }
                         }
                         chrome.runtime.reload();
