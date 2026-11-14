@@ -103,7 +103,7 @@ export default class CustomJestEnvironment extends TestEnvironment {
             ],
             enableExtensions: [extensionDir],
             executablePath,
-            headless: false,
+            headless: process.env.HEADLESS === '0' ? false : 'new',
             pipe: true,
         });
     }
@@ -135,7 +135,7 @@ export default class CustomJestEnvironment extends TestEnvironment {
             ],
             enableExtensions: [extensionDir],
             executablePath,
-            headless: false,
+            headless: process.env.HEADLESS === '0' ? false : 'new',
             pipe: true,
         });
     }
