@@ -27,6 +27,7 @@ export enum DebugMessageTypeBGtoUI {
 export enum MessageTypeBGtoCS {
     ADD_CSS_FILTER = 'bg-cs-add-css-filter',
     ADD_DYNAMIC_THEME = 'bg-cs-add-dynamic-theme',
+    ADD_LEAN_THEME = 'bg-cs-add-lean-theme',
     ADD_STATIC_THEME = 'bg-cs-add-static-theme',
     ADD_SVG_FILTER = 'bg-cs-add-svg-filter',
     CLEAN_UP = 'bg-cs-clean-up',

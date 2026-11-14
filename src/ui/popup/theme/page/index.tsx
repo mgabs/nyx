@@ -135,7 +135,7 @@ function FontGroup({theme, fonts, viewProps, change}: FontGroupsProps) {
 
     const custom = settings.customThemes.find((custom) => isURLInList(activeTab.url, custom.url));
     const engine = custom ? custom.theme.engine : settings.theme.engine;
-    const canExportTheme = engine === ThemeEngine.dynamicTheme && activeTab.id
+    const canExportTheme = (engine === ThemeEngine.dynamicTheme || engine === ThemeEngine.leanDynamicTheme) && activeTab.id
         && !isDarkThemeDetected && !isInDarkList && !isProtected && isInjected !== false
         && isURLEnabled(activeTab.url, settings, activeTab, isAllowedFileSchemeAccess);
 

@@ -292,6 +292,7 @@ export default class TabManager {
             const themeMessageTypes: MessageTypeBGtoCS[] = [
                 MessageTypeBGtoCS.ADD_CSS_FILTER,
                 MessageTypeBGtoCS.ADD_DYNAMIC_THEME,
+                MessageTypeBGtoCS.ADD_LEAN_THEME,
                 MessageTypeBGtoCS.ADD_STATIC_THEME,
                 MessageTypeBGtoCS.ADD_SVG_FILTER,
             ];

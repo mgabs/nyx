@@ -9,6 +9,7 @@ import {writeEnabledForHost} from './cache';
 import {runDarkThemeDetector, stopDarkThemeDetector} from './detector';
 import {createOrUpdateDynamicTheme, removeDynamicTheme, cleanDynamicThemeCache} from './dynamic-theme';
 import {collectCSS} from './dynamic-theme/css-collection';
+import {createOrUpdateLeanTheme, removeLeanTheme, serializeLeanCSS} from './lean-theme';
 import {createOrUpdateStyle, removeStyle} from './style';
 import {createOrUpdateSVGFilter, removeSVGFilter} from './svg-filter';
 import {logWarn, logInfoCollapsed} from './utils/log';
@@ -114,6 +115,7 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
         case MessageTypeBGtoCS.ADD_STATIC_THEME: {
             const {css, detectDarkTheme, detectorHints} = message.data;
             removeDynamicTheme();
+            removeLeanTheme();
             createOrUpdateStyle(css, message.type === MessageTypeBGtoCS.ADD_STATIC_THEME ? 'static' : 'filter');
             writeEnabledForHost(true);
             if (detectDarkTheme) {
@@ -129,6 +131,7 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
         case MessageTypeBGtoCS.ADD_SVG_FILTER: {
             const {css, svgMatrix, svgReverseMatrix, detectDarkTheme, detectorHints} = message.data;
             removeDynamicTheme();
+            removeLeanTheme();
             createOrUpdateSVGFilter(svgMatrix, svgReverseMatrix);
             createOrUpdateStyle(css, 'filter');
             writeEnabledForHost(true);
@@ -146,6 +149,7 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
         case MessageTypeBGtoCS.ADD_DYNAMIC_THEME: {
             const {theme, fixes, isIFrame, detectDarkTheme, detectorHints} = message.data;
             removeStyle();
+            removeLeanTheme();
             createOrUpdateDynamicTheme(theme, fixes, isIFrame);
             writeEnabledForHost(true);
             if (detectDarkTheme) {
@@ -163,14 +167,37 @@ function onMessage(message: MessageBGtoCS | MessageUItoCS | DebugMessageBGtoCS) 
             }
             break;
         }
+        case MessageTypeBGtoCS.ADD_LEAN_THEME: {
+            const {theme, fixes, isIFrame, detectDarkTheme, detectorHints} = message.data;
+            removeStyle();
+            removeSVGFilter();
+            removeDynamicTheme();
+            createOrUpdateLeanTheme(theme, fixes, isIFrame);
+            writeEnabledForHost(true);
+            if (detectDarkTheme) {
+                runDarkThemeDetector((hasDarkTheme) => {
+                    if (hasDarkTheme) {
+                        removeLeanTheme();
+                        onDarkThemeDetected();
+                    }
+                }, detectorHints);
+            }
+            if (__TEST__) {
+                nyxDynamicThemeStateForTesting = 'ready';
+                sendMessageForTesting('nyx-dynamic-theme-ready');
+                sendMessageForTesting(`nyx-dynamic-theme-ready-${document.location.pathname}`);
+            }
+            break;
+        }
         case MessageTypeUItoCS.EXPORT_CSS:
-            collectCSS().then((collectedCSS) => sendMessage({type: MessageTypeCStoUI.EXPORT_CSS_RESPONSE, data: collectedCSS}));
+            collectCSS(serializeLeanCSS()).then((collectedCSS) => sendMessage({type: MessageTypeCStoUI.EXPORT_CSS_RESPONSE, data: collectedCSS}));
             break;
         case MessageTypeBGtoCS.UNSUPPORTED_SENDER:
         case MessageTypeBGtoCS.CLEAN_UP:
             removeStyle();
             removeSVGFilter();
             removeDynamicTheme();
+            removeLeanTheme();
             stopDarkThemeDetector();
             writeEnabledForHost(false);
             break;

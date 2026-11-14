@@ -22,6 +22,7 @@ export default function Body(props: DevtoolsProps): Malevic.Child {
     const {theme} = getCurrentThemePreset({data, actions});
     const defaultTabId: string = {
         [ThemeEngine.dynamicTheme]: 'dynamic-editor',
+        [ThemeEngine.leanDynamicTheme]: 'dynamic-editor',
         [ThemeEngine.staticTheme]: 'static-editor',
         [ThemeEngine.cssFilter]: 'filter-editor',
         [ThemeEngine.svgFilter]: 'filter-editor',

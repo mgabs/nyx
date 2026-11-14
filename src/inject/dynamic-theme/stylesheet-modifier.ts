@@ -4,10 +4,10 @@ import {createAsyncTasksQueue} from '../../utils/throttle';
 
 import {iterateCSSRules, iterateCSSDeclarations, isMediaRule, isLayerRule, isContainerRule, isStyleRule} from './css-rules';
 import {themeCacheKeys} from './modify-colors';
-import type {ModifiableCSSDeclaration, ModifiableCSSRule} from './modify-css';
+import type {ImageURLModifierFactory, ModifiableCSSDeclaration, ModifiableCSSRule} from './modify-css';
 import {getModifiableCSSDeclaration} from './modify-css';
-import {variablesStore} from './variables';
-import type {CSSVariableModifier} from './variables';
+import {variablesStore as defaultVariablesStore} from './variables';
+import type {CSSVariableModifier, VariablesStore} from './variables';
 
 function getThemeKey(theme: Theme) {
     let resultKey = '';
@@ -42,23 +42,62 @@ export interface CSSBuilder {
     };
 }
 
-export function createStyleSheetModifier(): StyleSheetModifier {
+export interface SharedRuleCache {
+    cssTextIds: Map<string, string>;
+    rulesModCache: Map<string, ModifiableCSSRule | null>;
+    maxEntries: number;
+    cssTextCounter: number;
+}
+
+export interface StyleSheetModifierOptions {
+    sharedCache?: SharedRuleCache;
+    variablesStore?: VariablesStore;
+    imageURLModifier?: ImageURLModifierFactory | null;
+}
+
+export function createSharedRuleCache(maxEntries = 4000): SharedRuleCache {
+    return {
+        cssTextIds: new Map<string, string>(),
+        rulesModCache: new Map<string, ModifiableCSSRule | null>(),
+        maxEntries,
+        cssTextCounter: 0,
+    };
+}
+
+function isSharedRuleCache(value: SharedRuleCache | StyleSheetModifierOptions | undefined): value is SharedRuleCache {
+    return Boolean(value && 'rulesModCache' in value && 'cssTextIds' in value);
+}
+
+export function createStyleSheetModifier(optionsOrCache?: SharedRuleCache | StyleSheetModifierOptions): StyleSheetModifier {
+    const options: StyleSheetModifierOptions = isSharedRuleCache(optionsOrCache)
+        ? {sharedCache: optionsOrCache}
+        : (optionsOrCache ?? {});
+    const sharedCache = options.sharedCache;
+    const activeVariablesStore = options.variablesStore ?? defaultVariablesStore;
+    const imageURLModifier = options.imageURLModifier;
+
     let renderId = 0;
 
     let cssTextCounter = 0;
-    const cssTextIds = new Map<string, string>();
+    const cssTextIds = sharedCache ? sharedCache.cssTextIds : new Map<string, string>();
 
     function getCSSTextKey(cssText: string) {
         const existing = cssTextIds.get(cssText);
         if (existing !== undefined) {
             return existing;
         }
-        let n = ++cssTextCounter;
+        let n = sharedCache ? ++sharedCache.cssTextCounter : ++cssTextCounter;
         let key = '';
         do {
             key = String.fromCharCode(n & 0xFFFF) + key;
             n >>>= 16;
         } while (n > 0);
+        if (sharedCache && cssTextIds.size >= sharedCache.maxEntries * 2) {
+            const oldestKey = cssTextIds.keys().next().value;
+            if (oldestKey !== undefined) {
+                cssTextIds.delete(oldestKey);
+            }
+        }
         cssTextIds.set(cssText, key);
         return key;
     }
@@ -79,7 +118,7 @@ export function createStyleSheetModifier(): StyleSheetModifier {
     }
 
     const rulesTextCache = new Set<string>();
-    const rulesModCache = new Map<string, ModifiableCSSRule>();
+    const rulesModCache = sharedCache ? sharedCache.rulesModCache : new Map<string, ModifiableCSSRule | null>();
     const varTypeChangeCleaners = new Set<() => void>();
     let prevFilterKey: string | null = null;
     let hasNonLoadedLink = false;
@@ -88,12 +127,26 @@ export function createStyleSheetModifier(): StyleSheetModifier {
         return hasNonLoadedLink && !wasRebuilt;
     }
 
+    function setCachedRule(key: string, modRule: ModifiableCSSRule | null) {
+        if (sharedCache) {
+            if (rulesModCache.has(key)) {
+                rulesModCache.delete(key);
+            } else if (rulesModCache.size >= sharedCache.maxEntries) {
+                const oldestKey = rulesModCache.keys().next().value;
+                if (oldestKey !== undefined) {
+                    rulesModCache.delete(oldestKey);
+                }
+            }
+        }
+        rulesModCache.set(key, modRule);
+    }
+
     function modifySheet(options: ModifySheetOptions) {
         const rules = options.sourceCSSRules;
         const {theme, ignoreImageAnalysis, force, prepareSheet, isAsyncCancelled} = options;
 
-        let rulesChanged = (rulesModCache.size === 0);
-        const notFoundCacheKeys = new Set(rulesModCache.keys());
+        let rulesChanged = sharedCache ? (rulesTextCache.size === 0) : (rulesModCache.size === 0);
+        const notFoundCacheKeys = new Set(sharedCache ? rulesTextCache : rulesModCache.keys());
         const themeKey = getThemeKey(theme);
         const themeChanged = (themeKey !== prevFilterKey);
 
@@ -114,6 +167,14 @@ export function createStyleSheetModifier(): StyleSheetModifier {
 
             if (textDiffersFromPrev) {
                 rulesChanged = true;
+                if (sharedCache && rulesModCache.has(key)) {
+                    const cachedRule = rulesModCache.get(key) ?? null;
+                    setCachedRule(key, cachedRule);
+                    if (cachedRule) {
+                        modRules.push(cachedRule);
+                    }
+                    return;
+                }
             } else {
                 modRules.push(rulesModCache.get(key)!);
                 return;
@@ -128,7 +189,7 @@ export function createStyleSheetModifier(): StyleSheetModifier {
 
             const modDecs: ModifiableCSSDeclaration[] = [];
             rule.style && iterateCSSDeclarations(rule.style, (property, value) => {
-                const mod = getModifiableCSSDeclaration(property, value, rule, variablesStore, ignoreImageAnalysis, isAsyncCancelled);
+                const mod = getModifiableCSSDeclaration(property, value, rule, activeVariablesStore, ignoreImageAnalysis, isAsyncCancelled, imageURLModifier);
                 if (mod) {
                     modDecs.push(mod);
                 }
@@ -140,14 +201,16 @@ export function createStyleSheetModifier(): StyleSheetModifier {
                 modRule = {selector: rule.selectorText, declarations: modDecs, parentRule};
                 modRules.push(modRule);
             }
-            rulesModCache.set(key, modRule!);
+            setCachedRule(key, modRule);
         }, () => {
             hasNonLoadedLink = true;
         });
 
         notFoundCacheKeys.forEach((key) => {
             rulesTextCache.delete(key);
-            rulesModCache.delete(key);
+            if (!sharedCache) {
+                rulesModCache.delete(key);
+            }
         });
         prevFilterKey = themeKey;
 

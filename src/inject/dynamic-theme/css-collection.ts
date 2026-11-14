@@ -39,8 +39,16 @@ _______|_______/__/ ____ \\__\\__|___\\__\\__|___\\__\\____
 /*! Nyx generated CSS | Licensed under MIT https://github.com/mgabs/nyx/blob/main/LICENSE */
 `;
 
-export async function collectCSS(): Promise<string> {
+export async function collectCSS(leanCSS?: string): Promise<string> {
     const css = [banner];
+
+    if (leanCSS) {
+        const formattedLeanCSS = formatCSS(leanCSS);
+        css.push('/* Lean Dynamic Theme CSS */');
+        css.push(await replaceBlobs(formattedLeanCSS));
+        css.push('');
+        return css.join('\n');
+    }
 
     function addStaticCSS(selector: string, comment: string) {
         const staticStyle = document.querySelector(selector);

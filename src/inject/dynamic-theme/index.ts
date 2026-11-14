@@ -19,6 +19,7 @@ import {getStyleInjectionMode, injectStyleAway, removeStyleContainer} from './in
 import {overrideInlineStyle, getInlineOverrideStyle, watchForInlineStyles, stopWatchingForInlineStyles, INLINE_STYLE_SELECTOR} from './inline-style';
 import {changeMetaThemeColorWhenAvailable, restoreMetaThemeColor} from './meta-theme-color';
 import {modifyBackgroundColor, modifyBorderColor, modifyForegroundColor} from './modify-colors';
+import './image-modifier';
 import {getModifiedUserAgentStyle, getModifiedFallbackStyle, cleanModificationCache, getSelectionColor, setFilterSelectorHandler} from './modify-css';
 import {clearColorPalette, getColorPalette, registerVariablesSheet, releaseVariablesSheet} from './palette';
 import {mediaFilterSelectors, cleanFilterSelectors, addFilterSelector} from './selectors';

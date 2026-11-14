@@ -6,7 +6,7 @@ import {getParenthesesRange} from '../../utils/text';
 import {iterateCSSRules, iterateCSSDeclarations} from './css-rules';
 import {modifyBackgroundColor, modifyBorderColor, modifyForegroundColor} from './modify-colors';
 import {getBgImageModifier, getShadowModifierWithInfo, isFilterCompatibleProp, pushFilterSelector} from './modify-css';
-import type {CSSValueModifier, FilterType} from './modify-css';
+import type {CSSValueModifier, FilterType, ImageURLModifierFactory} from './modify-css';
 
 export interface ModifiedVarDeclaration {
     property: string;
@@ -45,6 +45,11 @@ export class VariablesStore {
     private notifyingVarFilterTypes = new Set<string>();
     private varsChanged = false;
     private onRootVariableDefined: () => void;
+    private imageURLModifier: ImageURLModifierFactory | null | undefined;
+
+    constructor(options?: {imageURLModifier?: ImageURLModifierFactory | null}) {
+        this.imageURLModifier = options?.imageURLModifier;
+    }
 
     clear(): void {
         this.varTypes.clear();
@@ -210,6 +215,7 @@ export class VariablesStore {
                         ignoredImgSelectors,
                         isCancelled,
                         pushFilter,
+                        this.imageURLModifier,
                     );
                     modifiedValue = typeof bgModifier === 'function' ? bgModifier(theme) : bgModifier!;
                     declarations.push({

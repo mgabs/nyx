@@ -747,10 +747,13 @@ export class Extension {
                         },
                     };
                 }
-                case ThemeEngine.dynamicTheme: {
+                case ThemeEngine.dynamicTheme:
+                case ThemeEngine.leanDynamicTheme: {
                     const fixes = getDynamicThemeFixesFor(url, ConfigManager.DYNAMIC_THEME_FIXES_RAW!, ConfigManager.DYNAMIC_THEME_FIXES_INDEX!, UserStorage.settings.enableForPDF);
                     return {
-                        type: MessageTypeBGtoCS.ADD_DYNAMIC_THEME,
+                        type: theme.engine === ThemeEngine.leanDynamicTheme
+                            ? MessageTypeBGtoCS.ADD_LEAN_THEME
+                            : MessageTypeBGtoCS.ADD_DYNAMIC_THEME,
                         data: {
                             theme,
                             fixes,

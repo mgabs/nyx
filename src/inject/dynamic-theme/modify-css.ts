@@ -7,14 +7,10 @@ import {clamp} from '../../utils/math';
 import {isCSSColorSchemePropSupported, isLayerRuleSupported} from '../../utils/platform';
 import {getMatches} from '../../utils/text';
 import {getAbsoluteURL} from '../../utils/url';
-import {readImageDetailsCache, writeImageDetailsCache} from '../cache';
-import {logWarn, logInfo} from '../utils/log';
+import {logWarn} from '../utils/log';
 
 import {cssURLRegex, getCSSURLValue, getCSSBaseBath, getRuleMediaText} from './css-rules';
-import type {ImageDetails} from './image';
-import {getImageDetails, getFilteredImageURL, getSolidColorImageURL, cleanImageProcessingCache, requestBlobURLCheck, isBlobURLCheckResultReady, tryConvertDataURLToBlobURL} from './image';
 import {modifyBackgroundColor, modifyBorderColor, modifyForegroundColor, modifyGradientColor, modifyShadowColor, clearColorModificationCache} from './modify-colors';
-import {getSheetScope} from './style-scope';
 import type {CSSVariableModifier, VariablesStore} from './variables';
 
 
@@ -43,19 +39,26 @@ export interface ModifiableCSSRule {
     declarations: ModifiableCSSDeclaration[];
 }
 
-function getPriority(ruleStyle: CSSStyleDeclaration, property: string) {
-    return Boolean(ruleStyle && ruleStyle.getPropertyPriority(property));
+export type ImageURLModifierFactory = (
+    urlValue: string,
+    rule: CSSStyleRule,
+    isCancelled: () => boolean,
+    pushFilter: ((type: FilterType) => void) | null,
+) => CSSValueModifier;
+
+let defaultImageURLModifier: ImageURLModifierFactory | null = null;
+let defaultImageCacheCleaner: (() => void) | null = null;
+
+export function registerImageURLModifier(
+    factory: ImageURLModifierFactory,
+    cacheCleaner?: () => void,
+): void {
+    defaultImageURLModifier = factory;
+    defaultImageCacheCleaner = cacheCleaner ?? null;
 }
 
-function canFilterImage(url: string): boolean {
-    if (url.startsWith('data:')) {
-        return true;
-    }
-    try {
-        return new URL(url).origin === location.origin;
-    } catch {
-        return false;
-    }
+function getPriority(ruleStyle: CSSStyleDeclaration, property: string) {
+    return Boolean(ruleStyle && ruleStyle.getPropertyPriority(property));
 }
 
 const bgPropsToCopy = [
@@ -72,6 +75,7 @@ export function getModifiableCSSDeclaration(
     variablesStore: VariablesStore,
     ignoreImageSelectors: string[],
     isCancelled: () => boolean,
+    imageURLModifier: ImageURLModifierFactory | null | undefined = defaultImageURLModifier,
 ): ModifiableCSSDeclaration | null {
     let modifier: ModifiableCSSDeclaration['value'] | null = null;
     if (property.startsWith('--')) {
@@ -110,7 +114,7 @@ export function getModifiableCSSDeclaration(
         const pushFilter = selectorText
             ? (type: FilterType) => pushFilterSelector(selectorText, type, media)
             : null;
-        modifier = getBgImageModifier(value, rule, ignoreImageSelectors, isCancelled, pushFilter);
+        modifier = getBgImageModifier(value, rule, ignoreImageSelectors, isCancelled, pushFilter, imageURLModifier);
     } else if (property.includes('shadow')) {
         modifier = getShadowModifier(value);
     } else if (bgPropsToCopy.includes(property) && value !== 'initial') {
@@ -342,10 +346,6 @@ function getColorModifier(prop: string, value: string, rule: CSSStyleRule): stri
     return (theme) => modifyForegroundColor(rgb, theme);
 }
 
-const imageDetailsCache = new Map<string, ImageDetails>();
-const awaitingForImageLoading = new Map<string, Array<(imageDetails: ImageDetails | null) => void>>();
-let didTryLoadCache = false;
-
 function shouldIgnoreImage(selectorText: string, selectors: string[]) {
     if (!selectorText || selectors.length === 0) {
         return false;
@@ -418,12 +418,37 @@ export function checkImageSelectors(node: Element | Document | ShadowRoot): void
     }
 }
 
+export function queueImageSelectorCheck(selector: string): Promise<void> {
+    return new Promise<void>((resolve) => {
+        if (imageSelectorQueue.has(selector)) {
+            imageSelectorQueue.get(selector)!.push(resolve);
+        } else {
+            imageSelectorQueue.set(selector, [resolve]);
+        }
+    });
+}
+
+function getPassthroughURLModifier(urlValue: string, rule: CSSStyleRule): CSSValueModifier {
+    let url = getCSSURLValue(urlValue);
+    const isURLEmpty = url.length === 0;
+    if (!isURLEmpty) {
+        const {parentStyleSheet} = rule;
+        const ownerNode = parentStyleSheet?.ownerNode;
+        const baseURL = (parentStyleSheet && parentStyleSheet.href) ?
+            getCSSBaseBath(parentStyleSheet.href) :
+            ownerNode?.baseURI || location.origin;
+        url = getAbsoluteURL(baseURL, url);
+    }
+    return () => isURLEmpty ? "url('')" : `url("${url}")`;
+}
+
 export function getBgImageModifier(
     value: string,
     rule: CSSStyleRule,
     ignoreImageSelectors: string[],
     isCancelled: () => boolean,
     pushFilter: ((type: FilterType) => void) | null = null,
+    imageURLModifier: ImageURLModifierFactory | null | undefined = defaultImageURLModifier,
 ): string | CSSValueModifier | null {
     try {
         if (shouldIgnoreImage(rule.selectorText, ignoreImageSelectors)) {
@@ -487,153 +512,6 @@ export function getBgImageModifier(
             };
         };
 
-        const getURLModifier = (urlValue: string) => {
-            if (!didTryLoadCache) {
-                didTryLoadCache = true;
-                readImageDetailsCache(imageDetailsCache);
-            }
-
-            let url = getCSSURLValue(urlValue);
-            const isURLEmpty = url.length === 0;
-            const {parentStyleSheet} = rule;
-            const ownerNode = parentStyleSheet?.ownerNode;
-            const scope = (parentStyleSheet && getSheetScope(parentStyleSheet)) ?? document;
-            const baseURL = (parentStyleSheet && parentStyleSheet.href) ?
-                getCSSBaseBath(parentStyleSheet.href) :
-                ownerNode?.baseURI || location.origin;
-            url = getAbsoluteURL(baseURL, url);
-
-            return async (theme: Theme): Promise<string | null> => {
-                if (isURLEmpty) {
-                    return "url('')";
-                }
-
-                let selector = rule.selectorText;
-                if (selector) {
-                    if (selector.includes('::before')) {
-                        selector = selector.replaceAll('::before', '');
-                    }
-                    if (selector.includes('::after')) {
-                        selector = selector.replaceAll('::after', '');
-                    }
-                    if (!scope.querySelector(selector)) {
-                        await new Promise<void>((resolve) => {
-                            if (imageSelectorQueue.has(selector)) {
-                                imageSelectorQueue.get(selector)!.push(resolve);
-                            } else {
-                                imageSelectorQueue.set(selector, [resolve]);
-                            }
-                        });
-                    }
-                }
-
-                let imageDetails: ImageDetails | null = null;
-                if (imageDetailsCache.has(url)) {
-                    imageDetails = imageDetailsCache.get(url)!;
-                } else {
-                    try {
-                        if (!isBlobURLCheckResultReady()) {
-                            await requestBlobURLCheck();
-                        }
-                        if (awaitingForImageLoading.has(url)) {
-                            const awaiters = awaitingForImageLoading.get(url)!;
-                            imageDetails = await new Promise<ImageDetails | null>((resolve) => awaiters.push(resolve));
-                            if (!imageDetails) {
-                                return null;
-                            }
-                        } else {
-                            awaitingForImageLoading.set(url, []);
-                            imageDetails = await getImageDetails(url);
-                            imageDetailsCache.set(url, imageDetails);
-                            if (!url.startsWith('data:')) {
-                                const parsedURL = new URL(url);
-                                if (parsedURL.origin === location.origin) {
-                                    writeImageDetailsCache(url, imageDetails);
-                                }
-                            }
-                            awaitingForImageLoading.get(url)!.forEach((resolve) => resolve(imageDetails));
-                            awaitingForImageLoading.delete(url);
-                        }
-                        if (isCancelled()) {
-                            return null;
-                        }
-                    } catch (err) {
-                        logWarn(err);
-                        if (awaitingForImageLoading.has(url)) {
-                            awaitingForImageLoading.get(url)!.forEach((resolve) => resolve(null));
-                            awaitingForImageLoading.delete(url);
-                        }
-                    }
-                }
-                if (imageDetails) {
-                    const bgImageValue = getBgImageValue(imageDetails, theme);
-                    if (bgImageValue) {
-                        return bgImageValue;
-                    }
-                }
-                if (url.startsWith('data:')) {
-                    const blobURL = await tryConvertDataURLToBlobURL(url);
-                    if (blobURL) {
-                        return `url("${blobURL}")`;
-                    }
-                }
-                return `url("${url}")`;;
-            };
-        };
-
-        const isSafeToInvert = () => {
-            const repeat = (rule.style.backgroundRepeat || '').toLowerCase();
-            const size = (rule.style.backgroundSize || '').toLowerCase();
-            const isTiled = repeat.length > 0 && repeat !== 'no-repeat' && !repeat.includes('no-repeat');
-            const isStretched = size.includes('cover') || size.includes('contain') || size.includes('100%');
-            return !isTiled && !isStretched;
-        };
-
-        const getBgImageValue = (imageDetails: ImageDetails, theme: Theme) => {
-            const {isDark, isLight, isTransparent, isLarge, solidColor, width} = imageDetails;
-            let result: string | null = null;
-            const logSrc = imageDetails.src.startsWith('data:') ? 'data:' : imageDetails.src;
-            if (isLarge && isLight && !isTransparent && theme.mode === 1) {
-                logInfo(`Hiding large light image ${logSrc}`);
-                result = 'none';
-            } else if (isDark && isTransparent && theme.mode === 1 && width > 2) {
-                logInfo(`Inverting dark image ${logSrc}`);
-                if (canFilterImage(imageDetails.src)) {
-                    const inverted = getFilteredImageURL(imageDetails, {...theme, sepia: clamp(theme.sepia + 10, 0, 100)});
-                    result = `url("${inverted}")`;
-                } else if (isSafeToInvert()) {
-                    pushFilter?.('invert');
-                }
-            } else if (isLight && !isTransparent && theme.mode === 1) {
-                if (solidColor) {
-                    logInfo(`Replacing image with a solid color ${logSrc}`);
-                    const darkColor = modifyBackgroundColor(solidColor, theme, false);
-                    const solid = getSolidColorImageURL(imageDetails, darkColor);
-                    result = `url("${solid}")`;
-                } else if (canFilterImage(imageDetails.src)) {
-                    logInfo(`Inverting light image ${logSrc}`);
-                    const inverted = getFilteredImageURL(imageDetails, theme);
-                    result = `url("${inverted}")`;
-                } else if (isSafeToInvert()) {
-                    pushFilter?.('invert');
-                }
-            } else if (theme.mode === 0 && isLight && imageDetails.dataURL) {
-                logInfo(`Applying filter to image ${logSrc}`);
-                if (canFilterImage(imageDetails.src)) {
-                    const filtered = getFilteredImageURL(imageDetails, {...theme, brightness: clamp(theme.brightness - 10, 5, 200), sepia: clamp(theme.sepia + 10, 0, 100)});
-                    result = `url("${filtered}")`;
-                } else {
-                    pushFilter?.('dim');
-                }
-            } else {
-                if (theme.mode === 1 && !canFilterImage(imageDetails.src)) {
-                    pushFilter?.('none');
-                }
-                logInfo(`Not modifying the image ${logSrc}`);
-            }
-            return result;
-        };
-
         const modifiers: Array<CSSValueModifier | null> = [];
 
         let matchIndex = 0;
@@ -661,7 +539,7 @@ export function getBgImageModifier(
             prevHasComma = hasComma || false;
 
             if (type === 'url') {
-                modifiers.push(getURLModifier(match));
+                modifiers.push(imageURLModifier ? imageURLModifier(match, rule, isCancelled, pushFilter) : getPassthroughURLModifier(match, rule));
             } else if (type === 'gradient') {
                 modifiers.push(getGradientModifier({match, index, typeGradient: typeGradient as string, hasComma: hasComma || false, offset}));
             }
@@ -779,9 +657,7 @@ function getVariableDependantModifier(
 
 export function cleanModificationCache(): void {
     clearColorModificationCache();
-    imageDetailsCache.clear();
-    cleanImageProcessingCache();
-    awaitingForImageLoading.clear();
+    defaultImageCacheCleaner?.();
     imageSelectorQueue.clear();
     classObserver?.disconnect();
     classObserver = null;

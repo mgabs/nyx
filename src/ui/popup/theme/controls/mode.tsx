@@ -14,6 +14,7 @@ export default function Mode(props: {mode: ThemeEngine; onChange: (mode: ThemeEn
 
     const modes = [
         {id: ThemeEngine.dynamicTheme, content: getLocalMessage('engine_dynamic')},
+        {id: ThemeEngine.leanDynamicTheme, content: 'Lean Dynamic'},
         {id: ThemeEngine.cssFilter, content: getLocalMessage('engine_filter')},
         {id: ThemeEngine.svgFilter, content: getLocalMessage('engine_filter_plus')},
         {id: ThemeEngine.staticTheme, content: getLocalMessage('engine_static')},

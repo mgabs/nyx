@@ -206,7 +206,7 @@ export function validateTheme(theme: Partial<Theme> | null | undefined): ThemeVa
     validateProperty(theme, 'useFont', isBoolean, DEFAULT_THEME);
     validateProperty(theme, 'fontFamily', isNonEmptyString, DEFAULT_THEME);
     validateProperty(theme, 'textStroke', isNumberBetween(0, 1), DEFAULT_THEME);
-    validateProperty(theme, 'engine', isOneOf('dynamicTheme', 'staticTheme', 'cssFilter', 'svgFilter'), DEFAULT_THEME);
+    validateProperty(theme, 'engine', isOneOf('dynamicTheme', 'leanDynamicTheme', 'staticTheme', 'cssFilter', 'svgFilter'), DEFAULT_THEME);
     validateProperty(theme, 'stylesheet', isString, DEFAULT_THEME);
     validateProperty(theme, 'darkSchemeBackgroundColor', isRegExpMatch(/^#[0-9a-f]{6}$/i), DEFAULT_THEME);
     validateProperty(theme, 'darkSchemeTextColor', isRegExpMatch(/^#[0-9a-f]{6}$/i), DEFAULT_THEME);

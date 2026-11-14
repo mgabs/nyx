@@ -1,7 +1,7 @@
 # Nyx Blueprint
 
 ## System Overview
-Nyx (Dark Reader) is a browser extension and standalone page-theming library that analyzes web pages and applies dark/dimmed themes via four engines (`dynamicTheme`, `cssFilter`, `svgFilter`, `staticTheme`) across Chromium MV2/MV3, Firefox, Safari, Edge, and Thunderbird targets.
+Nyx (Dark Reader) is a browser extension and standalone page-theming library that analyzes web pages and applies dark/dimmed themes via five engines (`dynamicTheme`, `leanDynamicTheme`, `cssFilter`, `svgFilter`, `staticTheme`) across Chromium MV2/MV3, Firefox, Safari, Edge, and Thunderbird targets.
 
 ## Global Invariants
 - **Compile-time flags & Plus aliasing**: `tasks/bundle-js.js` injects `__PLUS__`, `__CHROMIUM_MV2__`, `__CHROMIUM_MV3__`, `__FIREFOX_MV2__`, `__THUNDERBIRD__`, `__PORT__`, `__DEBUG__`, `__WATCH__`, `__TEST__`, and `__LOG__`, and aliases `@plus/*` to `./plus/*` (Plus builds) or `./stubs/*` (non-Plus builds). `src/stubs/` must mirror all `@plus/*` exports.
@@ -44,16 +44,17 @@ Nyx (Dark Reader) is a browser extension and standalone page-theming library tha
 
 ### `src/generators/` (+ `utils/`)
 Pure CSS/config generation and parsing (no DOM, storage, or network side effects; uses `WeakMap` cache in `utils/parse.ts`):
-- `theme-engines.ts`: `ThemeEngine` enum (`cssFilter`, `svgFilter`, `staticTheme`, `dynamicTheme`).
+- `theme-engines.ts`: `ThemeEngine` enum (`cssFilter`, `svgFilter`, `staticTheme`, `dynamicTheme`, `leanDynamicTheme`).
 - `css-filter.ts`, `svg-filter.ts`, `static-theme.ts`, `dynamic-theme.ts`, `detector-hints.ts`, `text-style.ts`: stylesheet generators and site-fix parsers/formatters. Merging always combines wildcard `*` common entries with the longest matching URL pattern.
 - `utils/`: site-fix parsing/formatting/indexing and 5x5 color matrix math.
 
-### `src/inject/` (+ `dynamic-theme/`, `utils/`)
+### `src/inject/` (+ `dynamic-theme/`, `lean-theme/`, `utils/`)
 - `index.ts`: content-script entrypoint handling `DOCUMENT_CONNECT`, theme application, `EXPORT_CSS`, `CLEAN_UP`, and `pagehide`/`freeze`/`resume`.
 - `fallback.ts`: pre-paint `.darkreader--fallback` injector when `prefers-color-scheme: dark` matches and `wasEnabledForHost() !== false`.
 - `detector.ts`: heuristic + hint-based dark-theme detector (temporarily disables Dark Reader sheets while sampling computed colors).
 - `color-scheme-watcher.ts`, `style.ts`, `svg-filter.ts`, `cache.ts`: system scheme watching, `#dark-reader-style` / `#dark-reader-svg` management, and `sessionStorage` caching.
 - `dynamic-theme/` (+ `watch/`): real-time page analyzer/rewriter for stylesheets, `adoptedStyleSheets` (`adopted-style-manger.ts`), CSS custom properties (`variables.ts`, `palette.ts`), inline styles (`inline-style.ts`), SVG/images, `<meta name="theme-color">`, and color modification (`modify-colors.ts`, `modify-css.ts`).
+- `lean-theme/`: low-overhead `leanDynamicTheme` engine (`adopted-emitter.ts`, `style-manager.ts`, `inline-style.ts`, `index.ts`) targeting Chrome 119+ and Firefox 128+. Emits styles solely via `Document.adoptedStyleSheets` and open `ShadowRoot.adoptedStyleSheets` (`replaceSync()`), uses an isolated `VariablesStore` with microtask/rAF-coalesced `MutationObserver` batching, shares a bounded `ModifiableCSSRule` cache across SPA navigations, and decouples `image.ts` (`<canvas>` image analysis skipped).
 - `utils/`: DOM, shadow-root, and logging helpers.
 
 ### `src/stubs/` (+ `dynamic/`, `popup/`, `utils/`)
