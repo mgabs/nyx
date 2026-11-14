@@ -11,8 +11,6 @@ export enum MessageTypeUItoBG {
     LOAD_CONFIG = 'ui-bg-load-config',
     APPLY_DEV_FIXES = 'ui-bg-apply-dev-fixes',
     RESET_DEV_FIXES = 'ui-bg-reset-dev-fixes',
-    START_ACTIVATION = 'ui-bg-start-activation',
-    RESET_ACTIVATION = 'ui-bg-reset-activation',
     COLOR_SCHEME_CHANGE = 'ui-bg-color-scheme-change',
     HIDE_HIGHLIGHTS = 'ui-bg-hide-highlights'
 }

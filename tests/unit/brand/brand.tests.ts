@@ -184,4 +184,31 @@ describe('Brand Identity & MIT Attribution Specification', () => {
             }
         });
     });
+
+    describe('REQ-BRAND-3 & REQ-BRAND-6: Drop Legacy Settings Activation', () => {
+        test('options body omits ActivationTab and legacy activation files are deleted', async () => {
+            const optionsBody = await fs.readFile(rootPath('src/ui/options/body/body.tsx'), 'utf8');
+            expect(optionsBody).not.toContain('ActivationTab');
+            expect(optionsBody).not.toContain('id="activation"');
+            expect(optionsBody).not.toContain('KeyIcon');
+
+            await expect(fs.access(rootPath('src/ui/options/activation/activation-tab.tsx'))).rejects.toThrow();
+            await expect(fs.access(rootPath('src/ui/icons/key-icon.tsx'))).rejects.toThrow();
+            await expect(fs.access(rootPath('src/ui/assets/images/nyx-thumb-up.svg'))).rejects.toThrow();
+        });
+
+        test('definitions, connector, messenger, and extension omit startActivation and resetActivation', async () => {
+            const files = [
+                'src/definitions.d.ts',
+                'src/ui/connect/connector.ts',
+                'src/background/messenger.ts',
+                'src/background/extension.ts',
+            ];
+            for (const rel of files) {
+                const raw = await fs.readFile(rootPath(rel), 'utf8');
+                expect(raw).not.toContain('startActivation');
+                expect(raw).not.toContain('resetActivation');
+            }
+        });
+    });
 });

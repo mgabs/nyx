@@ -38,8 +38,6 @@ export interface ExtensionActions {
     loadConfig(options: {local: boolean}): void;
     applyDevFixes(type: DevFixType, text: string): Promise<void>;
     resetDevFixes(type: DevFixType): void;
-    startActivation(email: string, key: string): void;
-    resetActivation(): void;
     hideHighlights(ids: string[]): void;
 }
 

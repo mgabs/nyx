@@ -19,8 +19,6 @@ export interface ExtensionAdapter {
     loadConfig: (options: {local: boolean}) => Promise<void>;
     applyDevFixes: (type: DevFixType, text: string) => Error | null;
     resetDevFixes: (type: DevFixType) => void;
-    startActivation: (email: string, key: string) => Promise<void>;
-    resetActivation: () => Promise<void>;
     hideHighlights: (ids: string[]) => Promise<void>;
     waitUntilReady: () => Promise<void>;
 }
@@ -144,12 +142,6 @@ export default class Messenger {
             }
             case MessageTypeUItoBG.RESET_DEV_FIXES:
                 Messenger.adapter.resetDevFixes(data.type);
-                break;
-            case MessageTypeUItoBG.START_ACTIVATION:
-                Messenger.adapter.startActivation(data.email, data.key);
-                break;
-            case MessageTypeUItoBG.RESET_ACTIVATION:
-                Messenger.adapter.resetActivation();
                 break;
             case MessageTypeUItoBG.HIDE_HIGHLIGHTS:
                 Messenger.adapter.hideHighlights(data);
