@@ -274,7 +274,7 @@ export class Extension {
             TabManager.updateContentScript({runOnProtectedPages: UserStorage.settings.enableForProtectedPages});
         }
 
-        UserStorage.settings.fetchNews && Newsmaker.subscribe();
+        UserStorage.settings.fetchNews && Newsmaker.subscribe(Extension.reportChanges);
         Extension.startBarrier!.resolve();
     }
 

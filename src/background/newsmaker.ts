@@ -30,6 +30,7 @@ export default class Newsmaker {
     private static stateManager: StateManager<NewsmakerState>;
     private static latest: News[];
     private static latestTimestamp: number | null;
+    private static onNewsUpdate: (() => void) | null = null;
 
     private static init() {
         if (Newsmaker.initialized) {
@@ -68,8 +69,11 @@ export default class Newsmaker {
         }
     };
 
-    static subscribe(): void {
+    static subscribe(onUpdate?: () => void): void {
         Newsmaker.init();
+        if (onUpdate) {
+            Newsmaker.onNewsUpdate = onUpdate;
+        }
         if ((Newsmaker.latestTimestamp === null) || (Newsmaker.latestTimestamp + Newsmaker.UPDATE_INTERVAL < Date.now())) {
             Newsmaker.updateNews();
         }
@@ -83,14 +87,16 @@ export default class Newsmaker {
         chrome.alarms.clear(Newsmaker.ALARM_NAME);
     }
 
-    private static async updateNews(): Promise<void> {
+    static async updateNews(): Promise<void> {
         Newsmaker.init();
+        await Newsmaker.stateManager.loadState();
         const news = await Newsmaker.getNews();
         if (Array.isArray(news)) {
             Newsmaker.latest = news;
             Newsmaker.latestTimestamp = Date.now();
             Newsmaker.onUpdate();
             await Newsmaker.stateManager.saveState();
+            Newsmaker.onNewsUpdate?.();
         }
     }
 

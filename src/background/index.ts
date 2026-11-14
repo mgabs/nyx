@@ -7,7 +7,7 @@ import {isFirefox} from '../utils/platform';
 
 import {Extension} from './extension';
 import {makeChromiumHappy} from './make-chromium-happy';
-import {setNewsForTesting} from './newsmaker';
+import Newsmaker, {setNewsForTesting} from './newsmaker';
 import {ASSERT} from './utils/log';
 import {sendLog} from './utils/sendLog';
 
@@ -188,7 +188,7 @@ if (__TEST__) {
                 }
                 case 'setNews':
                     setNewsForTesting(message.data);
-                    respond();
+                    Newsmaker.updateNews().then(() => respond());
                     break;
                 case 'firefox-getColorScheme': {
                     ASSERT('Firefox-specific function', isFirefox);
