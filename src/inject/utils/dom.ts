@@ -139,7 +139,7 @@ export function watchForNodePosition<T extends Node>(
         // important nodes to keep.
         if (mode === 'head' && !parent!.isConnected) {
             parent = document.head;
-            // TODO: Set correct prevSibling, which needs to be the last `.darkreader` in <head> that isn't .darkeader--sync or .darkreader--cors.
+            // TODO: Set correct prevSibling, which needs to be the last `.nyx` in <head> that isn't .darkeader--sync or .nyx--cors.
         }
 
         logWarn('Restoring node position', node, prevSibling, parent);

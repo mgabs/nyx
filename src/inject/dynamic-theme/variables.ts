@@ -761,19 +761,19 @@ function iterateVarDependencies(value: string, iterator: (varName: string) => vo
 }
 
 function wrapBgColorVariableName(name: string) {
-    return `--darkreader-bg${name}`;
+    return `--nyx-bg${name}`;
 }
 
 function wrapTextColorVariableName(name: string) {
-    return `--darkreader-text${name}`;
+    return `--nyx-text${name}`;
 }
 
 function wrapBorderColorVariableName(name: string) {
-    return `--darkreader-border${name}`;
+    return `--nyx-border${name}`;
 }
 
 function wrapBgImgVariableName(name: string) {
-    return `--darkreader-bgimg${name}`;
+    return `--nyx-bgimg${name}`;
 }
 
 function isVariable(property: string) {
@@ -810,9 +810,9 @@ function isFallbackResolved(modified: string) {
                 fallback.startsWith('rgba(') ||
                 fallback.startsWith('hsl(') ||
                 fallback.startsWith('hsla(') ||
-                fallback.startsWith('var(--darkreader-bg--') ||
-                fallback.startsWith('var(--darkreader-background-') ||
-                (hasDoubleNestedBrackets && fallback.includes('var(--darkreader-background-'))
+                fallback.startsWith('var(--nyx-bg--') ||
+                fallback.startsWith('var(--nyx-background-') ||
+                (hasDoubleNestedBrackets && fallback.includes('var(--nyx-background-'))
             );
         }
         return fallback.match(/^(#[0-9a-f]+)|([a-z]+)$/i);

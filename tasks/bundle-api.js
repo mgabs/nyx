@@ -44,7 +44,7 @@ async function bundleAPIModule({debug, watch}, moduleType, dest) {
                 inlineSources: debug ? true : false,
                 noEmitOnError: watch ? false : true,
                 outDir: absolutePath('.'),
-                cacheDir: debug ? `${fs.realpathSync(os.tmpdir())}/darkreader_api_typescript_cache` : undefined,
+                cacheDir: debug ? `${fs.realpathSync(os.tmpdir())}/nyx_api_typescript_cache` : undefined,
             }),
             // @ts-expect-error This expression is not callable
             rollupPluginReplace({
@@ -61,20 +61,20 @@ async function bundleAPIModule({debug, watch}, moduleType, dest) {
     });
     watchFiles = bundle.watchFiles;
     await bundle.write({
-        banner: `/**\n * Dark Reader v${await getVersion()}\n * https://darkreader.org/\n */\n`,
+        banner: `/**\n * Nyx v${await getVersion()}\n * https://github.com/mgabs/nyx\n */\n`,
         // TODO: Consider removing next line
         esModule: true,
         file: dest,
         strict: true,
         format: moduleType,
-        name: 'DarkReader',
+        name: 'Nyx',
         sourcemap: debug ? 'inline' : false,
     });
 }
 
 async function bundleAPI({debug, watch}) {
-    await bundleAPIModule({debug, watch}, 'umd', 'darkreader.js');
-    await bundleAPIModule({debug, watch}, 'esm', 'darkreader.mjs');
+    await bundleAPIModule({debug, watch}, 'umd', 'nyx.js');
+    await bundleAPIModule({debug, watch}, 'esm', 'nyx.mjs');
 }
 
 const bundleAPITask = createTask(

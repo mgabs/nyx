@@ -192,7 +192,7 @@ export function createStyleSheetModifier(): StyleSheetModifier {
             );
             const viewTransitionSelector = selector.includes('::view-transition-');
             if (emptyIsWhereSelector || viewTransitionSelector) {
-                selectorText = '.darkreader-unsupported-selector';
+                selectorText = '.nyx-unsupported-selector';
             }
             // ::picker(select) becomes ::picker,
             // but cannot be parsed later (Chrome bug)
@@ -279,7 +279,7 @@ export function createStyleSheetModifier(): StyleSheetModifier {
                 const initialIndex = readyDeclarations.length;
                 let oldDecs: ReadyDeclaration[] = [];
                 if (varDecs.length === 0) {
-                    const tempDec = {property: `--darkreader-placeholder-${varKey}`, value: 'none', important: false, sourceValue, varKey};
+                    const tempDec = {property: `--nyx-placeholder-${varKey}`, value: 'none', important: false, sourceValue, varKey};
                     readyDeclarations.push(tempDec);
                     oldDecs = [tempDec];
                 }

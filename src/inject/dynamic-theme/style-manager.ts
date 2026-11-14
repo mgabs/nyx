@@ -93,7 +93,7 @@ export function shouldManageStyle(element: Node | null): boolean {
                 !shouldIgnoreCSSURL(element.href)
             )
         ) &&
-        !element.classList.contains('darkreader') &&
+        !element.classList.contains('nyx') &&
         !ignoredMedia.includes(element.media.toLowerCase()) &&
         !element.classList.contains('stylus')
     );
@@ -138,10 +138,10 @@ export function manageStyle(element: StyleElement, {update, loadingStart, loadin
     if (inMode === 'next') {
         const prevStyles: HTMLStyleElement[] = [];
         let next: Element | null = element;
-        while ((next = next.nextElementSibling) && next.matches('.darkreader')) {
+        while ((next = next.nextElementSibling) && next.matches('.nyx')) {
             prevStyles.push(next as HTMLStyleElement);
         }
-        syncStyle = prevStyles.find((el) => el.matches('.darkreader--sync') && !syncStyleSet.has(el)) || null;
+        syncStyle = prevStyles.find((el) => el.matches('.nyx--sync') && !syncStyleSet.has(el)) || null;
     }
 
     let syncStylePositionWatcher: ReturnType<typeof watchForNodePosition> | null = null;
@@ -245,8 +245,8 @@ export function manageStyle(element: StyleElement, {update, loadingStart, loadin
         syncStyle = element instanceof SVGStyleElement ?
             document.createElementNS('http://www.w3.org/2000/svg', 'style') :
             document.createElement('style');
-        syncStyle.classList.add('darkreader');
-        syncStyle.classList.add('darkreader--sync');
+        syncStyle.classList.add('nyx');
+        syncStyle.classList.add('nyx--sync');
         syncStyle.media = 'screen';
         if (element.title) {
             syncStyle.title = element.title;

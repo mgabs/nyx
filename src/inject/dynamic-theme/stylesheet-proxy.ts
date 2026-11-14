@@ -1,7 +1,7 @@
 type OverrideFactory<T, P extends keyof T> = (native: T[P] & ((...args: any[]) => any)) => (this: T, ...args: Parameters<typeof native>) => ReturnType<typeof native>;
 
 export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElementRegistryProxy: boolean): void {
-    document.dispatchEvent(new CustomEvent('__darkreader__inlineScriptsAllowed'));
+    document.dispatchEvent(new CustomEvent('__nyx__inlineScriptsAllowed'));
 
     const cleaners: Array<() => void> = [];
 
@@ -24,8 +24,8 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
         disableWPDarkMode();
     }
 
-    documentEventListener('__darkreader__cleanUp', cleanUp);
-    documentEventListener('__darkreader__disableConflictingPlugins', disableConflictingPlugins);
+    documentEventListener('__nyx__cleanUp', cleanUp);
+    documentEventListener('__nyx__disableConflictingPlugins', disableConflictingPlugins);
 
     function overrideProperty<T, P extends keyof T>(cls: {prototype: T}, prop: P, overrides: Record<string, OverrideFactory<T, P>>) {
         const proto = cls.prototype;
@@ -47,16 +47,16 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
     }
 
     function isDRElement(element?: Element) {
-        return element?.classList?.contains('darkreader');
+        return element?.classList?.contains('nyx');
     }
 
     function isDRSheet(sheet: CSSStyleSheet) {
         return isDRElement(sheet.ownerNode as Element);
     }
 
-    const updateSheetEvent = new CustomEvent('__darkreader__updateSheet');
-    const adoptedSheetChangeEvent = new CustomEvent('__darkreader__adoptedStyleSheetChange');
-    const shadowDomAttachingEvent = new CustomEvent('__darkreader__shadowDomAttaching', {bubbles: true});
+    const updateSheetEvent = new CustomEvent('__nyx__updateSheet');
+    const adoptedSheetChangeEvent = new CustomEvent('__nyx__adoptedStyleSheetChange');
+    const shadowDomAttachingEvent = new CustomEvent('__nyx__shadowDomAttaching', {bubbles: true});
     const adoptedSheetOwners = new WeakMap<CSSStyleSheet, Set<Document | ShadowRoot>>();
     const adoptedDeclarationSheets = new WeakMap<CSSStyleDeclaration, CSSStyleSheet>();
 
@@ -132,7 +132,7 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
     });
 
     // Reference:
-    // https://github.com/darkreader/darkreader/issues/6480#issuecomment-897696175
+    // https://github.com/mgabs/nyx/issues/6480#issuecomment-897696175
     const shouldWrapHTMLElement = location.hostname === 'baidu.com' || location.hostname.endsWith('.baidu.com');
     if (shouldWrapHTMLElement) {
         override(Element, 'getElementsByTagName', (native) => function (tagName: string): NodeListOf<HTMLElement> {
@@ -160,7 +160,7 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
     }
 
     // Reference:
-    // https://github.com/darkreader/darkreader/issues/10300#issuecomment-1317445632
+    // https://github.com/mgabs/nyx/issues/10300#issuecomment-1317445632
     const shouldProxyChildNodes = [
         'brilliant.org',
         'www.vy.no',
@@ -178,11 +178,11 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
 
     function resolveCustomElement(tag: string) {
         customElements.whenDefined(tag).then(() => {
-            document.dispatchEvent(new CustomEvent('__darkreader__isDefined', {detail: {tag}}));
+            document.dispatchEvent(new CustomEvent('__nyx__isDefined', {detail: {tag}}));
         });
     }
 
-    documentEventListener('__darkreader__addUndefinedResolver', (e: CustomEvent<{tag: string}>) => resolveCustomElement(e.detail.tag));
+    documentEventListener('__nyx__addUndefinedResolver', (e: CustomEvent<{tag: string}>) => resolveCustomElement(e.detail.tag));
 
     if (enableCustomElementRegistryProxy) {
         override(CustomElementRegistry, 'define', (native) => function (name: string, constructor: any, options: any) {
@@ -195,7 +195,7 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
 
     function checkBlobURLSupport() {
         if (blobURLAllowed != null) {
-            document.dispatchEvent(new CustomEvent('__darkreader__blobURLCheckResponse', {detail: {blobURLAllowed}}));
+            document.dispatchEvent(new CustomEvent('__nyx__blobURLCheckResponse', {detail: {blobURLAllowed}}));
             return;
         }
 
@@ -219,10 +219,10 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
     }
 
     function sendBlobURLCheckResponse() {
-        document.dispatchEvent(new CustomEvent('__darkreader__blobURLCheckResponse', {detail: {blobURLAllowed}}));
+        document.dispatchEvent(new CustomEvent('__nyx__blobURLCheckResponse', {detail: {blobURLAllowed}}));
     }
 
-    documentEventListener('__darkreader__blobURLCheckRequest', checkBlobURLSupport);
+    documentEventListener('__nyx__blobURLCheckRequest', checkBlobURLSupport);
 
     if (enableStyleSheetsProxy) {
         overrideProperty(Document, 'styleSheets', {
@@ -267,7 +267,7 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
 
     const adoptedSheetsSourceProxies = new WeakMap<CSSStyleSheet[], CSSStyleSheet[]>();
     const adoptedSheetsProxySources = new WeakMap<CSSStyleSheet[], CSSStyleSheet[]>();
-    const adoptedSheetsChangeEvent = new CustomEvent('__darkreader__adoptedStyleSheetsChange');
+    const adoptedSheetsChangeEvent = new CustomEvent('__nyx__adoptedStyleSheetsChange');
     const adoptedSheetOverrideCache = new WeakSet<CSSStyleSheet>();
     const adoptedSheetsSnapshots = new WeakMap<Document | ShadowRoot, CSSStyleSheet[]>();
 
@@ -278,7 +278,7 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
         if (adoptedSheetOverrideCache.has(sheet)) {
             return true;
         }
-        if (sheet.cssRules.length > 0 && (sheet.cssRules[0] as CSSStyleRule).selectorText?.startsWith('#__darkreader')) {
+        if (sheet.cssRules.length > 0 && (sheet.cssRules[0] as CSSStyleRule).selectorText?.startsWith('#__nyx')) {
             adoptedSheetOverrideCache.add(sheet);
             return true;
         }
@@ -351,7 +351,7 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
         });
     });
 
-    const adoptedDeclarationChangeEvent = new CustomEvent('__darkreader__adoptedStyleDeclarationChange');
+    const adoptedDeclarationChangeEvent = new CustomEvent('__nyx__adoptedStyleDeclarationChange');
     (['setProperty', 'removeProperty'] as Array<keyof CSSStyleDeclaration>).forEach((key) => {
         override(CSSStyleDeclaration, key, (native) => {
             return function (...args: any[]) {

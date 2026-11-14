@@ -6,8 +6,8 @@ if (
     document.documentElement instanceof HTMLHtmlElement &&
     matchMedia('(prefers-color-scheme: dark)').matches &&
     wasEnabledForHost() !== false &&
-    !document.querySelector('.darkreader--fallback') &&
-    !document.querySelector('.darkreader') &&
+    !document.querySelector('.nyx--fallback') &&
+    !document.querySelector('.nyx') &&
     !(__FIREFOX_MV2__ && window !== top)
 ) {
     const css = [
@@ -21,14 +21,14 @@ if (
         '    transition: none !important;',
         '}',
         // MS Learn High Contrast issue
-        // https://github.com/darkreader/darkreader/issues/3618
+        // https://github.com/mgabs/nyx/issues/3618
         'div[style*="background-color: rgb(135, 135, 135)"] {',
         '    background-color: #878787 !important;',
         '}',
     ].join('\n');
     const fallback = document.createElement('style');
-    fallback.classList.add('darkreader');
-    fallback.classList.add('darkreader--fallback');
+    fallback.classList.add('nyx');
+    fallback.classList.add('nyx--fallback');
     fallback.media = 'screen';
     fallback.textContent = css;
 
@@ -57,7 +57,7 @@ if (__FIREFOX_MV2__ && (location.host === 'teams.live.com' || location.host === 
         Object.defineProperty(CSSStyleSheet.prototype, 'cssRules', {
             ...descriptor,
             get: function () {
-                if (this.ownerNode?.classList?.contains('darkreader')) {
+                if (this.ownerNode?.classList?.contains('nyx')) {
                     return [];
                 }
                 return descriptor.get!.call(this) as CSSStyleSheet[];

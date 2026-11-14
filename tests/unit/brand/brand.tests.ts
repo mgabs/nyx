@@ -49,8 +49,46 @@ describe('Brand Identity & MIT Attribution Specification', () => {
         test('src/utils/links.ts links point to github.com/mgabs/nyx', async () => {
             const linksRaw = await fs.readFile(rootPath('src/utils/links.ts'), 'utf8');
 
+            expect(linksRaw).toContain("export const HOMEPAGE_URL = 'https://github.com/mgabs/nyx';");
             expect(linksRaw).toContain("export const GITHUB_URL = 'https://github.com/mgabs/nyx';");
             expect(linksRaw).toContain("export const DEVTOOLS_DOCS_URL = 'https://github.com/mgabs/nyx/blob/main/CONTRIBUTING.md';");
+            expect(linksRaw).toContain("export const NEWS_URL = 'https://raw.githubusercontent.com/mgabs/nyx/main/docs/news.json';");
+            expect(linksRaw).not.toContain('darkreader.org');
+            expect(linksRaw).not.toContain('DONATE_URL');
+            expect(linksRaw).not.toContain('TWITTER_URL');
+            expect(linksRaw).not.toContain('UNINSTALL_URL');
+        });
+
+        test('docs/news.json contains valid Nyx news items', async () => {
+            const newsRaw = await fs.readFile(rootPath('docs/news.json'), 'utf8');
+            const news = JSON.parse(newsRaw);
+
+            expect(Array.isArray(news)).toBe(true);
+            expect(news.length).toBeGreaterThan(0);
+            expect(news[0]).toEqual(expect.objectContaining({
+                id: expect.any(String),
+                date: expect.any(String),
+                url: expect.stringContaining('https://github.com/mgabs/nyx'),
+                headline: expect.any(String),
+            }));
+        });
+
+        test('package.json exports standalone API as nyx.js and nyx.mjs', async () => {
+            const packageJsonRaw = await fs.readFile(rootPath('package.json'), 'utf8');
+            const pkg = JSON.parse(packageJsonRaw);
+
+            expect(pkg.main).toBe('nyx.js');
+            expect(pkg.module).toBe('nyx.mjs');
+        });
+
+        test('popup body omits DonateGroup, uses Nyx wordmark, and exports Nyx-${url}.css', async () => {
+            const bodyRaw = await fs.readFile(rootPath('src/ui/popup/body/index.tsx'), 'utf8');
+            const exportRaw = await fs.readFile(rootPath('src/ui/popup/theme/controls/export-theme.tsx'), 'utf8');
+
+            expect(bodyRaw).not.toContain('DonateGroup');
+            expect(bodyRaw).not.toContain('Dark Reader');
+            expect(bodyRaw).toContain('Nyx');
+            expect(exportRaw).toContain('`Nyx-${url}.css`');
         });
 
         test('README.md header identifies as Nyx with repository link to github.com/mgabs/nyx', async () => {

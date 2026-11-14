@@ -92,7 +92,7 @@ describe('Style override', () => {
             const style = document.querySelector('.testcase-style')!;
             style.nextSibling!.remove();
             await new Promise((resolve) => setTimeout(resolve));
-            return (style.nextSibling as HTMLStyleElement).classList.contains('darkreader--sync');
+            return (style.nextSibling as HTMLStyleElement).classList.contains('nyx--sync');
         })).resolves.toBe(true);
     });
 
@@ -124,7 +124,7 @@ describe('Style override', () => {
             if (product === 'edge') {
                 return true;
             }
-            return (style.nextSibling as HTMLStyleElement).classList.contains('darkreader--sync');
+            return (style.nextSibling as HTMLStyleElement).classList.contains('nyx--sync');
         }, product)).resolves.toBe(true);
 
         await expectStyles([
@@ -163,7 +163,7 @@ describe('Style override', () => {
             if (product === 'edge') {
                 return false;
             }
-            return sibling.isConnected && !((sibling as HTMLStyleElement).classList.contains('darkreader--sync'));
+            return sibling.isConnected && !((sibling as HTMLStyleElement).classList.contains('nyx--sync'));
         }, product)).resolves.toBe(false);
 
         await expectStyles([
@@ -214,7 +214,7 @@ describe('Style override', () => {
         await expect(pageUtils.evaluateScript(async () => {
             const style = document.querySelector('.testcase-style')!;
             return (style.nextSibling as HTMLStyleElement).sheet!.cssRules[0].cssText;
-        })).resolves.toBe('body { background-color: var(--darkreader-background-ffc0cb, #590010); }');
+        })).resolves.toBe('body { background-color: var(--nyx-background-ffc0cb, #590010); }');
     });
 
     it('should react to a new style', async () => {
@@ -249,7 +249,7 @@ describe('Style override', () => {
 
         await expect(pageUtils.evaluateScript(async () => {
             const styleElement = document.querySelector('.testcase-style')!;
-            return (styleElement.nextSibling as HTMLStyleElement).sheet!.cssRules.length === 2 && (styleElement.nextSibling as HTMLStyleElement).classList.contains('darkreader--sync');
+            return (styleElement.nextSibling as HTMLStyleElement).sheet!.cssRules.length === 2 && (styleElement.nextSibling as HTMLStyleElement).classList.contains('nyx--sync');
         })).resolves.toBe(true);
     });
 
@@ -342,8 +342,8 @@ describe('Style override', () => {
         });
 
         await pageUtils.evaluateScript(() => {
-            document.dispatchEvent(new CustomEvent('__darkreader__cleanUp'));
-            document.dispatchEvent(new CustomEvent('__darkreader__stylesheetProxy__arg', {
+            document.dispatchEvent(new CustomEvent('__nyx__cleanUp'));
+            document.dispatchEvent(new CustomEvent('__nyx__stylesheetProxy__arg', {
                 detail: {enableStyleSheetsProxy: true, enableCustomElementRegistryProxy: true},
             }));
         });

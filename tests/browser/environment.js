@@ -439,7 +439,7 @@ export default class CustomJestEnvironment extends TestEnvironment {
                 }
 
                 async function applyDevtoolsConfig(type, fixes) {
-                    const promise = awaitForEvent('darkreader-dynamic-theme-ready');
+                    const promise = awaitForEvent('nyx-dynamic-theme-ready');
                     await Promise.all([
                         sendToDevTools(type, fixes),
                         promise,

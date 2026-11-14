@@ -44,9 +44,9 @@ describe('STYLE ELEMENTS', () => {
 
         expect(override.cssRules.length).toBe(2);
         expect((override.cssRules[0] as CSSStyleRule).selectorText).toBe('body');
-        expect((override.cssRules[0] as CSSStyleRule).style.getPropertyValue('background-color')).toBe('var(--darkreader-background-ffffff, #000000)');
+        expect((override.cssRules[0] as CSSStyleRule).style.getPropertyValue('background-color')).toBe('var(--nyx-background-ffffff, #000000)');
         expect((override.cssRules[1] as CSSStyleRule).selectorText).toBe('h1');
-        expect((override.cssRules[1] as CSSStyleRule).style.getPropertyValue('color')).toBe('var(--darkreader-text-000000, #ffffff)');
+        expect((override.cssRules[1] as CSSStyleRule).style.getPropertyValue('color')).toBe('var(--nyx-text-000000, #ffffff)');
     });
 
     it('should override User Agent style', async () => {
@@ -126,7 +126,7 @@ describe('STYLE ELEMENTS', () => {
             const style = document.querySelector('.testcase-style')!;
             style.nextSibling!.remove();
             await timeout(0);
-            expect((style.nextSibling as HTMLStyleElement).classList.contains('darkreader--sync')).toBe(true);
+            expect((style.nextSibling as HTMLStyleElement).classList.contains('nyx--sync')).toBe(true);
         }
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(141, 141, 141)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
@@ -148,7 +148,7 @@ describe('STYLE ELEMENTS', () => {
         container.append(style);
         await timeout(0);
         if (!__PLUS__) {
-            expect((style.nextSibling as HTMLStyleElement).classList.contains('darkreader--sync')).toBe(true);
+            expect((style.nextSibling as HTMLStyleElement).classList.contains('nyx--sync')).toBe(true);
         }
         expect(getComputedStyle(container.querySelector('h1')!).backgroundColor).toBe('rgb(102, 102, 102)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
@@ -169,7 +169,7 @@ describe('STYLE ELEMENTS', () => {
         await timeout(0);
         if (!__PLUS__) {
             expect(sibling!.isConnected).toBe(false);
-            expect(document.querySelector('.darkreader--sync')).toBe(null);
+            expect(document.querySelector('.nyx--sync')).toBe(null);
         }
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(255, 255, 255)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 255, 255)');
@@ -188,7 +188,7 @@ describe('STYLE ELEMENTS', () => {
         style.sheet!.insertRule('body { background-color: pink }');
         await timeout(0);
         if (!__PLUS__) {
-            expect((style.nextSibling as HTMLStyleElement).sheet!.cssRules[0].cssText).toBe('body { background-color: var(--darkreader-background-ffc0cb, #320009); }');
+            expect((style.nextSibling as HTMLStyleElement).sheet!.cssRules[0].cssText).toBe('body { background-color: var(--nyx-background-ffc0cb, #320009); }');
         }
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(141, 141, 141)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
@@ -227,7 +227,7 @@ describe('STYLE ELEMENTS', () => {
             const newStyle: HTMLStyleElement = document.querySelector('.testcase-style')!;
             const nextSibling = newStyle.nextSibling as HTMLStyleElement;
             expect(nextSibling.sheet!.cssRules.length).toBe(2);
-            expect(nextSibling.classList.contains('darkreader--sync')).toBe(true);
+            expect(nextSibling.classList.contains('nyx--sync')).toBe(true);
         }
         expect(getComputedStyle(document.querySelector('h1')!).color).toBe('rgb(255, 198, 208)');
         expect(getComputedStyle(document.querySelector('h1 strong')!).color).toBe('rgb(255, 174, 26)');

@@ -149,8 +149,8 @@ describe('Different paths in URL patterns', () => {
             [['iframe#blue', 'h1'], 'color', 'rgb(0, 0, 128)'],
         ]);
 
-        const redPromise = awaitForEvent('darkreader-dynamic-theme-ready-/red.html');
-        const bluePromise = awaitForEvent('darkreader-dynamic-theme-ready-/blue.html');
+        const redPromise = awaitForEvent('nyx-dynamic-theme-ready-/red.html');
+        const bluePromise = awaitForEvent('nyx-dynamic-theme-ready-/blue.html');
         await Promise.all([
             redPromise,
             bluePromise,

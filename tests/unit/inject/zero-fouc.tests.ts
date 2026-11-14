@@ -25,8 +25,8 @@ describe('Zero-FOUC Instant Paint (REQ-FOUC-1, NFR-FOUC-1)', () => {
             head: mockHead,
             body: null,
             querySelector: (selector: string) => {
-                if (selector === '.darkreader--root') {
-                    return appendedChildren.find((c) => c.classList?.has('darkreader--root')) || null;
+                if (selector === '.nyx--root') {
+                    return appendedChildren.find((c) => c.classList?.has('nyx--root')) || null;
                 }
                 return null;
             },
@@ -56,8 +56,8 @@ describe('Zero-FOUC Instant Paint (REQ-FOUC-1, NFR-FOUC-1)', () => {
         const style = injectEarlyRootStyle(mockDoc);
 
         expect(style).not.toBeNull();
-        expect(style!.classList.contains('darkreader')).toBe(true);
-        expect(style!.classList.contains('darkreader--root')).toBe(true);
+        expect(style!.classList.contains('nyx')).toBe(true);
+        expect(style!.classList.contains('nyx--root')).toBe(true);
         expect(style!.textContent).toBe('html, body { background: #181a1b !important; color: #e8e6e3 !important; }');
         expect(appendedChildren).toContain(style);
     });
@@ -80,9 +80,9 @@ describe('Zero-FOUC Instant Paint (REQ-FOUC-1, NFR-FOUC-1)', () => {
         expect(injectEarlyRootStyle(null as any)).toBeNull();
     });
 
-    it('removeEarlyRootStyle removes .darkreader--root style', () => {
+    it('removeEarlyRootStyle removes .nyx--root style', () => {
         const style = injectEarlyRootStyle(mockDoc);
-        expect(mockDoc.querySelector('.darkreader--root')).toBe(style);
+        expect(mockDoc.querySelector('.nyx--root')).toBe(style);
 
         let removed = false;
         style!.remove = () => {

@@ -9,6 +9,6 @@ export function AppVersion(): Malevic.Child {
         appVersion = chrome.runtime.getManifest().version;
     }
     return (
-        <label class="darkreader-version">{getLocalMessage('version')} {appVersion}</label>
+        <label class="nyx-version">{getLocalMessage('version')} {appVersion}</label>
     );
 }

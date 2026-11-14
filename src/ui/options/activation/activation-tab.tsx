@@ -2,7 +2,7 @@ import {m} from 'malevic';
 import {getContext} from 'malevic/dom';
 
 import type {ViewProps} from '../../../definitions';
-import {DONATE_URL} from '../../../utils/links';
+import {HOMEPAGE_URL} from '../../../utils/links';
 // import {getLocalMessage} from '../../../utils/locales';
 import {Button, ControlGroup, TextBox} from '../../controls';
 
@@ -43,7 +43,7 @@ export function ActivationTab(props: ViewProps): Malevic.Child {
                     </ControlGroup.Control>
                 </ControlGroup>
                 <div class="activation__thumb-up">
-                    <img src="../assets/images/darkreader-thumb-up.svg" />
+                    <img src="../assets/images/nyx-thumb-up.svg" />
                 </div>
             </div>
         );
@@ -74,7 +74,7 @@ export function ActivationTab(props: ViewProps): Malevic.Child {
     >
         <ControlGroup>
             <ControlGroup.Control class="activation__get-code-control">
-                <a href={DONATE_URL} target="_blank" rel="noopener noreferrer">
+                <a href={HOMEPAGE_URL} target="_blank" rel="noopener noreferrer">
                     Get activation code
                 </a>
             </ControlGroup.Control>

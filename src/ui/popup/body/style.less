@@ -51,9 +51,10 @@ body {
     }
 
     .m-logo {
-        background-image: url('../assets/images/darkreader-type.svg');
+        background-image: url('../assets/images/nyx-type.svg');
         background-position: center;
-        background-size: 100%;
+        background-repeat: no-repeat;
+        background-size: contain;
         display: inline-block;
         grid-area: logo;
         height: @popup-content-width / 10;
@@ -110,76 +111,7 @@ body {
         }
     }
 
-    .m-donate-group {
-        align-items: stretch;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .m-donate-button {
-        align-items: center;
-        background-color: black;
-        border: @size-border solid @color-border;
-        box-sizing: border-box;
-        display: inline-flex;
-        height: @size-control-inner + 2 * @size-border;
-        isolation: isolate;
-        justify-content: center;
-        text-decoration: none;
-        transition: @time-slow background-color;
-        position: relative;
-        width: 100%;
-
-        &__text {
-            color: @color-control-fore;
-            display: inline-block;
-            font-weight: bold;
-            height: @size-control-inner;
-            line-height: @size-control-inner;
-            -moz-user-select: none;
-            user-select: none;
-        }
-
-        &__darkreader {
-            color: @color-heading;
-            text-transform: uppercase;
-            -webkit-text-stroke: 0.0625rem;
-        }
-
-        &__icon {
-            display: none;
-            isolation: isolate;
-
-            &::before,
-            &::after {
-                border-radius: 50%;
-                content: "";
-                display: inline-block;
-                height: 1rem;
-                mix-blend-mode: screen;
-                position: absolute;
-                top: 0.375rem;
-                width: 1rem;
-            }
-    
-            &::before {
-                background-color: @color-heading;
-                left: 0.375rem;
-            }
-    
-            &::after {
-                background-color: @color-fore;
-                left: 1rem;
-            }
-        }
-
-        &:hover {
-            background-color: @color-back;
-        }
-    }
-
-    .m-donate-description,
-    .darkreader-version {
+    .nyx-version {
         display: inline-block;
         font-size: @size-text-small;
         line-height: @size-text-small-height;
@@ -189,7 +121,7 @@ body {
         width: 100%;
     }
 
-    .darkreader-version {
+    .nyx-version {
         bottom: 0;
         margin-bottom: 0.125rem;
         position: absolute;
@@ -198,7 +130,7 @@ body {
 }
 
 .mobile {
-    .darkreader-version {
+    .nyx-version {
         position: relative;
     }
 }
@@ -259,7 +191,7 @@ body {
 }
 
 .firefox {
-    .darkreader-version {
+    .nyx-version {
         display: none;
     }
 }

@@ -137,11 +137,11 @@ export default class Newsmaker {
         }
         try {
             const response = await fetch(NEWS_URL, {cache: 'no-cache'});
-            const $news: Array<Omit<News, 'read' | 'url'> & {date: string}> = await response.json();
+            const $news: Array<Omit<News, 'read' | 'url'> & {date: string; url?: string}> = await response.json();
             const readNews = await Newsmaker.getReadNews();
             const displayedNews = await Newsmaker.getDisplayedNews();
             const news: News[] = $news.map((n) => {
-                const url = getBlogPostURL(n.id);
+                const url = n.url || getBlogPostURL(n.id);
                 const read = Newsmaker.wasRead(n.id, readNews);
                 const displayed = Newsmaker.wasDisplayed(n.id, displayedNews);
                 return {...n, url, read, displayed};

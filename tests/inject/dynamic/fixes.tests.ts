@@ -16,17 +16,18 @@ beforeEach(() => {
 afterEach(() => {
     removeDynamicTheme();
     container.innerHTML = '';
+    removeNode(document.head.querySelector('meta[name="nyx-lock"]'));
     removeNode(document.head.querySelector('meta[name="darkreader-lock"]'));
 });
 
 describe('FIXES', () => {
     it('should add custom attributes to root element', () => {
         createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
-        expect(document.documentElement.getAttribute(`data-darkreader-mode`)).toBe('dynamic');
-        expect(document.documentElement.getAttribute('data-darkreader-scheme')).toBe('dark');
+        expect(document.documentElement.getAttribute(`data-nyx-mode`)).toBe('dynamic');
+        expect(document.documentElement.getAttribute('data-nyx-scheme')).toBe('dark');
 
         createOrUpdateDynamicTheme({...DEFAULT_THEME, mode: FilterMode.light}, null, false);
-        expect(document.documentElement.getAttribute('data-darkreader-scheme')).toBe('dimmed');
+        expect(document.documentElement.getAttribute('data-nyx-scheme')).toBe('dimmed');
     });
 
     it('should invert selectors', async () => {
@@ -84,7 +85,7 @@ describe('FIXES', () => {
     });
 
     it('should ignore styling when darkreader-lock detected', async () => {
-        document.head.innerHTML = '<meta name="darkreader-lock">',
+        document.head.innerHTML = '<meta name="darkreader-lock">';
         container.innerHTML = multiline(
             '<style>',
             '    body {',
@@ -97,7 +98,21 @@ describe('FIXES', () => {
         expect(getComputedStyle(document.body).backgroundColor).toBe('rgb(255, 192, 203)');
     });
 
-    it('should ignore styling when delayed darkreader-lock detected', async () => {
+    it('should ignore styling when nyx-lock detected', async () => {
+        document.head.innerHTML = '<meta name="nyx-lock">';
+        container.innerHTML = multiline(
+            '<style>',
+            '    body {',
+            '        background-color: pink !important;',
+            '    }',
+            '</style>',
+        );
+        createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
+
+        expect(getComputedStyle(document.body).backgroundColor).toBe('rgb(255, 192, 203)');
+    });
+
+    it('should ignore styling when delayed nyx-lock detected', async () => {
         container.innerHTML = multiline(
             '<style>',
             '    body {',
@@ -109,7 +124,7 @@ describe('FIXES', () => {
 
         expect(getComputedStyle(container).backgroundColor).toBe('rgb(89, 0, 16)');
         const metaElement: HTMLMetaElement = document.createElement('meta');
-        metaElement.name = 'darkreader-lock';
+        metaElement.name = 'nyx-lock';
         document.head.appendChild(metaElement);
         await timeout(100);
 

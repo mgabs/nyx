@@ -116,7 +116,7 @@ describe('watchForInlineStyles batching and teardown (REQ-PERF-3, REQ-PERF-4)', 
         const attrObserver = mockObservers[0];
         const elA = {id: 'A'} as any;
 
-        attrObserver.callback([{target: elA, attributeName: 'data-darkreader-inline-color'} as any], attrObserver as any);
+        attrObserver.callback([{target: elA, attributeName: 'data-nyx-inline-color'} as any], attrObserver as any);
         await flushMicrotasks();
 
         expect(changed).toEqual([]);

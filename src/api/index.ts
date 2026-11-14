@@ -8,7 +8,7 @@ import {isMatchMediaChangeEventListenerSupported} from '../utils/platform';
 
 import {setFetchMethod as setFetch} from './fetch';
 
-let isDarkReaderEnabled = false;
+let isNyxEnabled = false;
 const isIFrame = (() => {
     try {
         return window.self !== window.top;
@@ -27,16 +27,16 @@ export function enable(themeOptions: Partial<Theme> | null = {}, fixes: DynamicT
     // TODO: replace with createOrUpdateDynamicTheme() and make fixes signature
     // DynamicThemeFix | DynamicThemeFix[]
     createOrUpdateDynamicThemeInternal(theme, fixes, isIFrame);
-    isDarkReaderEnabled = true;
+    isNyxEnabled = true;
 }
 
 export function isEnabled(): boolean {
-    return isDarkReaderEnabled;
+    return isNyxEnabled;
 }
 
 export function disable(): void {
     removeDynamicTheme();
-    isDarkReaderEnabled = false;
+    isNyxEnabled = false;
 }
 
 const darkScheme = typeof(matchMedia) === 'function' ? matchMedia('(prefers-color-scheme: dark)') : undefined;

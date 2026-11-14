@@ -370,8 +370,8 @@ export class Extension {
         chrome.contextMenus.removeAll(() => {
             Extension.registeredContextMenus = false;
             chrome.contextMenus.create({
-                id: 'DarkReader-top',
-                title: 'Dark Reader',
+                id: 'Nyx-top',
+                title: 'Nyx',
             }, () => {
                 if (chrome.runtime.lastError) {
                     // Failed to create the context menu
@@ -382,17 +382,17 @@ export class Extension {
                 const msgSwitchEngine = chrome.i18n.getMessage('theme_generation_mode');
                 chrome.contextMenus.create({
                     id: 'toggle',
-                    parentId: 'DarkReader-top',
+                    parentId: 'Nyx-top',
                     title: msgToggle || 'Toggle everywhere',
                 });
                 chrome.contextMenus.create({
                     id: 'addSite',
-                    parentId: 'DarkReader-top',
+                    parentId: 'Nyx-top',
                     title: msgAddSite || 'Toggle for current site',
                 });
                 chrome.contextMenus.create({
                     id: 'switchEngine',
-                    parentId: 'DarkReader-top',
+                    parentId: 'Nyx-top',
                     title: msgSwitchEngine || 'Switch engine',
                 });
                 Extension.registeredContextMenus = true;

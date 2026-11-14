@@ -123,8 +123,8 @@ export function ConfigEditor(props: ConfigEditorProps): Malevic.Child {
             </div>
             <p class="description">
                 Read about this tool <strong><a href={DEVTOOLS_DOCS_URL} target="_blank" rel="noopener noreferrer">here</a></strong>.
-                If a <strong>popular</strong> website looks incorrect
-                e-mail to <strong>support@darkreader.org</strong>
+                If a <strong>popular</strong> website looks incorrect,
+                open an issue in the <strong>Nyx</strong> repository.
             </p>
             {dialog}
         </div>

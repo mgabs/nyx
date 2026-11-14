@@ -262,7 +262,7 @@ let isBlobURLSupported: boolean | null = null;
 let canUseProxy = false;
 let blobURLCheckRequested = false;
 const blobURLCheckAwaiters: Array<() => void> = [];
-document.addEventListener('__darkreader__inlineScriptsAllowed', () => canUseProxy = true, {once: true});
+document.addEventListener('__nyx__inlineScriptsAllowed', () => canUseProxy = true, {once: true});
 
 export async function requestBlobURLCheck(): Promise<void> {
     if (!canUseProxy) {
@@ -274,13 +274,13 @@ export async function requestBlobURLCheck(): Promise<void> {
     blobURLCheckRequested = true;
 
     await new Promise<void>((resolve) => {
-        document.addEventListener('__darkreader__blobURLCheckResponse', ((e: CustomEvent) => {
+        document.addEventListener('__nyx__blobURLCheckResponse', ((e: CustomEvent) => {
             isBlobURLSupported = e.detail.blobURLAllowed;
             resolve();
             blobURLCheckAwaiters.forEach((r) => r());
             blobURLCheckAwaiters.splice(0);
         }) as EventListener, {once: true});
-        document.dispatchEvent(new CustomEvent('__darkreader__blobURLCheckRequest'));
+        document.dispatchEvent(new CustomEvent('__nyx__blobURLCheckRequest'));
     });
 }
 
@@ -308,11 +308,11 @@ export function getFilteredImageURL({dataURL, width, height, useViewBox, src}: I
     const svg = [
         `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ${size}>`,
         '<defs>',
-        '<filter id="darkreader-image-filter">',
+        '<filter id="nyx-image-filter">',
         `<feColorMatrix type="matrix" values="${matrix}" />`,
         '</filter>',
         '</defs>',
-        `<image width="${width}" height="${height}" filter="url(#darkreader-image-filter)" xlink:href="${dataURL}" />`,
+        `<image width="${width}" height="${height}" filter="url(#nyx-image-filter)" xlink:href="${dataURL}" />`,
         '</svg>',
     ].join('');
 

@@ -71,7 +71,7 @@ export function registerColor(type: ColorType, parsed: RGBA, value: string): str
         registeredColors.set(hex, registered);
     }
 
-    const variable = `--darkreader-${type}-${hex.replace('#', '')}`;
+    const variable = `--nyx-${type}-${hex.replace('#', '')}`;
     registered[type] = {variable, value};
     if ((variablesSheet?.cssRules[0] as CSSStyleRule)?.style) {
         (variablesSheet?.cssRules[0] as CSSStyleRule).style.setProperty(variable, value);

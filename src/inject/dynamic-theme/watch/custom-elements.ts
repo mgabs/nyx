@@ -47,13 +47,13 @@ export function collectUndefinedElements(root: ParentNode): void {
 }
 
 let canOptimizeUsingProxy = false;
-document.addEventListener('__darkreader__inlineScriptsAllowed', () => {
+document.addEventListener('__nyx__inlineScriptsAllowed', () => {
     canOptimizeUsingProxy = true;
 }, {once: true, passive: true});
 
 const unhandledShadowHosts = new Set<Element>();
 
-document.addEventListener('__darkreader__shadowDomAttaching', ((e: CustomEvent) => {
+document.addEventListener('__nyx__shadowDomAttaching', ((e: CustomEvent) => {
     const host = (e.target as HTMLElement);
     if (unhandledShadowHosts.size === 0) {
         queueMicrotask(() => {
@@ -97,7 +97,7 @@ async function customElementsWhenDefined(tag: string): Promise<void> {
             } else {
                 resolvers.set(tag, [resolve]);
             }
-            document.dispatchEvent(new CustomEvent('__darkreader__addUndefinedResolver', {detail: {tag}}));
+            document.dispatchEvent(new CustomEvent('__nyx__addUndefinedResolver', {detail: {tag}}));
         } else {
             const checkIfDefined = () => {
                 const elements = undefinedGroups.get(tag);
@@ -122,5 +122,5 @@ export function watchWhenCustomElementsDefined(callback: (elements: Element[]) =
 export function unsubscribeFromDefineCustomElements(): void {
     elementsDefinitionCallback = null;
     undefinedGroups.clear();
-    document.removeEventListener('__darkreader__isDefined', handleIsDefined as EventListener);
+    document.removeEventListener('__nyx__isDefined', handleIsDefined as EventListener);
 }

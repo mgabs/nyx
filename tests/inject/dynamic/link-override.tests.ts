@@ -84,7 +84,7 @@ describe('LINK STYLES', () => {
         );
         createOrUpdateDynamicTheme(theme, null, false);
 
-        await waitForEvent('__darkreader__test__dynamicUpdateComplete');
+        await waitForEvent('__nyx__test__dynamicUpdateComplete');
         expect(getComputedStyle(container.querySelector('h1')!).backgroundColor).toBe('rgb(102, 102, 102)');
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(255, 255, 255)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
@@ -103,7 +103,7 @@ describe('LINK STYLES', () => {
         );
         createOrUpdateDynamicTheme(theme, null, false);
 
-        await waitForEvent('__darkreader__test__dynamicUpdateComplete');
+        await waitForEvent('__nyx__test__dynamicUpdateComplete');
         expect(getComputedStyle(container.querySelector('h1')!).backgroundColor).toBe('rgb(102, 102, 102)');
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(255, 255, 255)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
@@ -121,7 +121,7 @@ describe('LINK STYLES', () => {
             '<h1><strong>Cross-origin import</strong> link override</h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__dynamicUpdateComplete');
+        await waitForEvent('__nyx__test__dynamicUpdateComplete');
         expect(getComputedStyle(container.querySelector('h1')!).backgroundColor).toBe('rgb(102, 102, 102)');
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(255, 255, 255)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
@@ -142,7 +142,7 @@ describe('LINK STYLES', () => {
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 0, 0)');
 
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__dynamicUpdateComplete');
+        await waitForEvent('__nyx__test__dynamicUpdateComplete');
         expect(getComputedStyle(container.querySelector('h1')!).backgroundColor).toBe('rgb(102, 102, 102)');
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(255, 255, 255)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
@@ -162,14 +162,14 @@ describe('LINK STYLES', () => {
         const h1 = document.querySelector('h1')!;
         expect(getComputedStyle(h1).backgroundColor).toBe('rgb(102, 102, 102)');
         if (!__PLUS__) {
-            expect(selectTestStyleLink().nextElementSibling!.classList.contains('darkreader--sync')).toBe(true);
+            expect(selectTestStyleLink().nextElementSibling!.classList.contains('nyx--sync')).toBe(true);
         }
         link.disabled = true;
         await timeout(0);
         if (__PLUS__) {
             expect(getComputedStyle(h1).backgroundColor).toBe('rgba(0, 0, 0, 0)');
         } else {
-            expect(selectTestStyleLink().nextElementSibling!.classList.contains('darkreader--sync')).toBe(false);
+            expect(selectTestStyleLink().nextElementSibling!.classList.contains('nyx--sync')).toBe(false);
         }
     });
     it("Shouldn't wait on link that won't be loaded", async () => {
@@ -190,7 +190,7 @@ describe('LINK STYLES', () => {
         const h1 = document.querySelector('h1')!;
         expect(getComputedStyle(h1).backgroundColor).toBe('rgb(102, 102, 102)');
         if (!__PLUS__) {
-            expect(document.querySelector('.darkreader--fallback')!.textContent).toBe('');
+            expect(document.querySelector('.nyx--fallback')!.textContent).toBe('');
         }
     });
 
@@ -207,7 +207,7 @@ describe('LINK STYLES', () => {
         );
         createOrUpdateDynamicTheme(theme, null, false);
 
-        await waitForEvent('__darkreader__test__dynamicUpdateComplete');
+        await waitForEvent('__nyx__test__dynamicUpdateComplete');
         expect(getComputedStyle(container.querySelector('h1')!).backgroundColor).toBe('rgb(102, 102, 102)');
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(255, 255, 255)');
         expect(getComputedStyle(container.querySelector('h1 strong')!).color).toBe('rgb(255, 26, 26)');
@@ -227,7 +227,7 @@ describe('LINK STYLES', () => {
         );
         createOrUpdateDynamicTheme(theme, null, false);
 
-        await waitForEvent('__darkreader__test__dynamicUpdateComplete');
+        await waitForEvent('__nyx__test__dynamicUpdateComplete');
         await timeout(1000);
         expect(getComputedStyle(container.querySelector('h1')!).backgroundColor).toBe('rgb(102, 102, 102)');
         expect(getComputedStyle(container.querySelector('h1')!).color).toBe('rgb(255, 255, 255)');

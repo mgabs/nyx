@@ -27,7 +27,7 @@ describe('STYLE INJECTION', () => {
         document.documentElement.append(body);
         await timeout(0);
 
-        const container = body.querySelector('.darkreader-style-container');
+        const container = body.querySelector('.nyx-style-container');
         expect(container).not.toBeNull();
         expect(container!.lastElementChild).toBe(style);
         expect(style.sheet!.cssRules.length).toBe(1);
@@ -42,7 +42,7 @@ describe('STYLE INJECTION', () => {
         document.documentElement.append(firstBody);
         await timeout(0);
 
-        expect(firstBody.querySelector('.darkreader-style-container')).toBeNull();
+        expect(firstBody.querySelector('.nyx-style-container')).toBeNull();
         expect(discardedStyle.isConnected).toBe(false);
 
         firstBody.remove();
@@ -53,6 +53,6 @@ describe('STYLE INJECTION', () => {
         document.documentElement.append(secondBody);
         await timeout(0);
 
-        expect(secondBody.querySelector('.darkreader-style-container')?.lastElementChild).toBe(injectedStyle);
+        expect(secondBody.querySelector('.nyx-style-container')?.lastElementChild).toBe(injectedStyle);
     });
 });

@@ -19,12 +19,12 @@ export function injectEarlyRootStyle(doc: Document = document): HTMLStyleElement
     if (!doc || !doc.documentElement) {
         return null;
     }
-    const existing = doc.querySelector('.darkreader--root');
+    const existing = doc.querySelector('.nyx--root');
     if (existing) {
         return existing as HTMLStyleElement;
     }
     const rootStyle = doc.createElement('style');
-    rootStyle.classList.add('darkreader', 'darkreader--root');
+    rootStyle.classList.add('nyx', 'nyx--root');
     rootStyle.textContent = 'html, body { background: #181a1b !important; color: #e8e6e3 !important; }';
     (doc.documentElement || doc.head).appendChild(rootStyle);
     return rootStyle;
@@ -34,7 +34,7 @@ export function removeEarlyRootStyle(doc: Document = document): void {
     if (!doc) {
         return;
     }
-    const rootStyle = doc.querySelector('.darkreader--root');
+    const rootStyle = doc.querySelector('.nyx--root');
     rootStyle?.remove();
 }
 
@@ -58,18 +58,18 @@ export function injectStyleAway(styleElement: HTMLStyleElement | SVGStyleElement
         return;
     }
 
-    let container: HTMLElement | null = document.body.querySelector('.darkreader-style-container');
+    let container: HTMLElement | null = document.body.querySelector('.nyx-style-container');
     if (!container) {
         container = document.createElement('div');
-        container.classList.add('darkreader');
-        container.classList.add('darkreader-style-container');
+        container.classList.add('nyx');
+        container.classList.add('nyx-style-container');
         container.style.display = 'none';
         document.body.append(container);
 
         containerObserver = new MutationObserver(() => {
             if (container?.nextElementSibling != null) {
                 // Prevent clearing style overrides after container move
-                (container.querySelectorAll('.darkreader--sync') as NodeListOf<HTMLStyleElement>).forEach((el) => {
+                (container.querySelectorAll('.nyx--sync') as NodeListOf<HTMLStyleElement>).forEach((el) => {
                     if (el.sheet!.cssRules.length > 0) {
                         let cssText = '';
                         for (const rule of el.sheet!.cssRules) {
@@ -93,5 +93,5 @@ export function removeStyleContainer() {
     bodyObserver = null;
     stylesWaitingForBody.clear();
     containerObserver?.disconnect();
-    document.querySelector('.darkreader-style-container')?.remove();
+    document.querySelector('.nyx-style-container')?.remove();
 }

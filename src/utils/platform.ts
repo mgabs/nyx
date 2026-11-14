@@ -49,7 +49,7 @@ export const isMatchMediaChangeEventListenerSupported = __CHROMIUM_MV3__ || (
 export const isLayerRuleSupported = typeof CSSLayerBlockRule === 'function';
 export const isContainerRuleSupported = typeof CSSContainerRule === 'function';
 // Return true if browser is known to have a bug with Media Queries, specifically Chromium on Linux and Kiwi on Android
-// We assume that if we are on Android, then we are running in Kiwi since it is the only mobile browser we can install Dark Reader in
+// We assume that if we are on Android, then we are running in Kiwi since it is the only mobile browser we can install Nyx in
 export const isMatchMediaChangeEventListenerBuggy = !__TEST__ && !__FIREFOX_MV2__ && !__THUNDERBIRD__ && (__CHROMIUM_MV2__ || __CHROMIUM_MV3__) && (
     ((isNavigatorDefined && navigator.userAgentData) && ['Linux', 'Android'].includes(navigator.userAgentData.platform))
     || platform.startsWith('linux'));

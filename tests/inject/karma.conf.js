@@ -51,7 +51,7 @@ export function configureKarma(config, env) {
                     typescript,
                     outDir: 'build/tests',
                     tsconfig: absolutePath('tests/inject/tsconfig.json'),
-                    cacheDir: `${fs.realpathSync(os.tmpdir())}/darkreader_typescript_test_cache`,
+                    cacheDir: `${fs.realpathSync(os.tmpdir())}/nyx_typescript_test_cache`,
                     paths: {
                         '@plus/*': [plus ? 'plus/*' : 'stubs/*'],
                     },

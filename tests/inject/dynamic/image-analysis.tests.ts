@@ -180,7 +180,7 @@ describe('IMAGE ANALYSIS', () => {
             '<h1>Dark icon <i></i></h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await waitForEvent('__nyx__test__asyncQueueComplete');
         await timeout(500);
         const bgImageValue = getComputedStyle(container.querySelector('i')!).backgroundImage;
         const info = await getBgImageInfo(bgImageValue);
@@ -224,7 +224,7 @@ describe('IMAGE ANALYSIS', () => {
             '<h1>Light background</h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await waitForEvent('__nyx__test__asyncQueueComplete');
         const bgImageValue = getComputedStyle(container.querySelector('h1')!).backgroundImage;
         expect(bgImageValue).toBe('none');
     });
@@ -259,7 +259,7 @@ describe('IMAGE ANALYSIS', () => {
             '<h1>Weird color <strong>Power</strong>!</h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await waitForEvent('__nyx__test__asyncQueueComplete');
         expect(getComputedStyle(container.querySelector('h1')!).backgroundImage).toMatch(/^url\("blob:.*"\), linear-gradient\(rgb\(204, 0, 0\), rgb\(0, 0, 0\)\)$/);
     });
 
@@ -271,7 +271,7 @@ describe('IMAGE ANALYSIS', () => {
             '<h1>Weird color <strong>Power</strong>!</h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await waitForEvent('__nyx__test__asyncQueueComplete');
         expect(getComputedStyle(container.querySelector('h1')!).backgroundImage).toMatch(/^url\("blob:.*"\)$/);
     });
 
@@ -283,7 +283,7 @@ describe('IMAGE ANALYSIS', () => {
             '<h1>Weird color <strong>Power</strong>!</h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await waitForEvent('__nyx__test__asyncQueueComplete');
         await timeout(500);
         expect(getComputedStyle(container.querySelector('h1')!).backgroundImage).toMatch(/^linear-gradient\(rgb\(204, 0, 0\), rgb\(0, 0, 0\)\), url\("blob:.*"\)$/);
     });
@@ -296,7 +296,7 @@ describe('IMAGE ANALYSIS', () => {
             '<h1>Weird color <strong>Power</strong>!</h1>',
         );
         createOrUpdateDynamicTheme(theme, null, false);
-        await waitForEvent('__darkreader__test__asyncQueueComplete');
+        await waitForEvent('__nyx__test__asyncQueueComplete');
         expect(getComputedStyle(container.querySelector('h1')!).backgroundImage).toMatch(/^url\(""\), url\(""\), url\("blob:.*"\)$/);
     });
 
@@ -326,7 +326,7 @@ describe('IMAGE ANALYSIS', () => {
                 '<h1>Icon <i></i></h1>',
             );
             createOrUpdateDynamicTheme(theme, null, false);
-            await waitForEvent('__darkreader__test__asyncQueueComplete');
+            await waitForEvent('__nyx__test__asyncQueueComplete');
             const filter = getComputedStyle(container.querySelector('i')!).filter;
             expect(filter).toBe('invert(1) hue-rotate(180deg) contrast(0.9)');
         });
@@ -346,7 +346,7 @@ describe('IMAGE ANALYSIS', () => {
                 '<h1>Icon <i></i></h1>',
             );
             createOrUpdateDynamicTheme(theme, null, false);
-            await waitForEvent('__darkreader__test__asyncQueueComplete');
+            await waitForEvent('__nyx__test__asyncQueueComplete');
             const filter = getComputedStyle(container.querySelector('i')!).filter;
             expect(filter).toBe('none');
         });
@@ -371,7 +371,7 @@ describe('IMAGE ANALYSIS', () => {
                 '<h1>Icon <i></i></h1>',
             );
             createOrUpdateDynamicTheme(theme, null, false);
-            await waitForEvent('__darkreader__test__asyncQueueComplete');
+            await waitForEvent('__nyx__test__asyncQueueComplete');
             const filter = getComputedStyle(container.querySelector('i')!).filter;
             expect(filter).toBe('invert(1) hue-rotate(180deg) contrast(0.9)');
         });

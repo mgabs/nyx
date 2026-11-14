@@ -128,13 +128,13 @@ it('URL is enabled', () => {
         {isProtected: false, isInDarkList: false},
     )).toBe(true);
     expect(isURLEnabled(
-        'https://darkreader.org/',
+        'https://github.com/mgabs/nyx/',
         fillUserSettings({disabledFor: [], enabledFor: [], enabledByDefault: true}),
         {isProtected: false, isInDarkList: true},
     )).toBe(false);
     expect(isURLEnabled(
-        'https://darkreader.org/',
-        fillUserSettings({disabledFor: [], enabledFor: ['darkreader.org'], enabledByDefault: false}),
+        'https://nyx.org/',
+        fillUserSettings({disabledFor: [], enabledFor: ['nyx.org'], enabledByDefault: false}),
         {isProtected: false, isInDarkList: true},
     )).toBe(true);
     expect(isURLEnabled(
@@ -335,18 +335,18 @@ it('URL is enabled', () => {
 
     // Temporary Dark Sites list fix
     expect(isURLEnabled(
-        'https://darkreader.org/',
-        fillUserSettings({disabledFor: [], enabledFor: ['darkreader.org'], enabledByDefault: true}),
+        'https://nyx.org/',
+        fillUserSettings({disabledFor: [], enabledFor: ['nyx.org'], enabledByDefault: true}),
         {isProtected: false, isInDarkList: true},
     )).toBe(true);
     expect(isURLEnabled(
-        'https://darkreader.org/',
+        'https://nyx.org/',
         fillUserSettings({disabledFor: [], enabledFor: [], enabledByDefault: true}),
         {isProtected: false, isInDarkList: true},
     )).toBe(false);
     expect(isURLEnabled(
         'https://google.com/',
-        fillUserSettings({disabledFor: [], enabledFor: ['darkreader.org'], enabledByDefault: true}),
+        fillUserSettings({disabledFor: [], enabledFor: ['nyx.org'], enabledByDefault: true}),
         {isProtected: false, isInDarkList: false},
     )).toBe(true);
     expect(isURLEnabled(

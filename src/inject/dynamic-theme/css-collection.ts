@@ -33,10 +33,10 @@ _______|_______/__/ ____ \\__\\__|___\\__\\__|___\\__\\____
 |  |__/  /|  ____/  /__\\  \\ |  |   )  |  ____|  |__/  /
 |  ____  \\|  |__/  ______  \\|  |__/  /|  |___|  ____  \\
 |__|   \\__\\____/__/      \\__\\_______/ |______|__|   \\__\\
-                https://darkreader.org
+                https://github.com/mgabs/nyx
 */
 
-/*! Dark reader generated CSS | Licensed under MIT https://github.com/darkreader/darkreader/blob/main/LICENSE */
+/*! Nyx generated CSS | Licensed under MIT https://github.com/mgabs/nyx/blob/main/LICENSE */
 `;
 
 export async function collectCSS(): Promise<string> {
@@ -51,14 +51,14 @@ export async function collectCSS(): Promise<string> {
         }
     }
 
-    addStaticCSS('.darkreader--fallback', 'Fallback Style');
-    addStaticCSS('.darkreader--user-agent', 'User-Agent Style');
-    addStaticCSS('.darkreader--text', 'Text Style');
-    addStaticCSS('.darkreader--invert', 'Invert Style');
-    addStaticCSS('.darkreader--variables', 'Variables Style');
+    addStaticCSS('.nyx--fallback', 'Fallback Style');
+    addStaticCSS('.nyx--user-agent', 'User-Agent Style');
+    addStaticCSS('.nyx--text', 'Text Style');
+    addStaticCSS('.nyx--invert', 'Invert Style');
+    addStaticCSS('.nyx--variables', 'Variables Style');
 
     const modifiedCSS: string[] = [];
-    (document.querySelectorAll('.darkreader--sync') as NodeListOf<HTMLStyleElement>).forEach((element) => {
+    (document.querySelectorAll('.nyx--sync') as NodeListOf<HTMLStyleElement>).forEach((element) => {
         forEach(element.sheet!.cssRules, (rule) => {
             rule && rule.cssText && modifiedCSS.push(rule.cssText);
         });
@@ -71,7 +71,7 @@ export async function collectCSS(): Promise<string> {
         css.push('');
     }
 
-    addStaticCSS('.darkreader--override', 'Override Style');
+    addStaticCSS('.nyx--override', 'Override Style');
 
     return css.join('\n');
 }

@@ -26,102 +26,102 @@ interface Overrides {
 
 const overrides: Overrides = {
     'background-color': {
-        customProp: '--darkreader-inline-bgcolor',
+        customProp: '--nyx-inline-bgcolor',
         cssProp: 'background-color',
-        dataAttr: 'data-darkreader-inline-bgcolor',
+        dataAttr: 'data-nyx-inline-bgcolor',
     },
     'background-image': {
-        customProp: '--darkreader-inline-bgimage',
+        customProp: '--nyx-inline-bgimage',
         cssProp: 'background-image',
-        dataAttr: 'data-darkreader-inline-bgimage',
+        dataAttr: 'data-nyx-inline-bgimage',
     },
     'border-color': {
-        customProp: '--darkreader-inline-border',
+        customProp: '--nyx-inline-border',
         cssProp: 'border-color',
-        dataAttr: 'data-darkreader-inline-border',
+        dataAttr: 'data-nyx-inline-border',
     },
     'border-bottom-color': {
-        customProp: '--darkreader-inline-border-bottom',
+        customProp: '--nyx-inline-border-bottom',
         cssProp: 'border-bottom-color',
-        dataAttr: 'data-darkreader-inline-border-bottom',
+        dataAttr: 'data-nyx-inline-border-bottom',
     },
     'border-left-color': {
-        customProp: '--darkreader-inline-border-left',
+        customProp: '--nyx-inline-border-left',
         cssProp: 'border-left-color',
-        dataAttr: 'data-darkreader-inline-border-left',
+        dataAttr: 'data-nyx-inline-border-left',
     },
     'border-right-color': {
-        customProp: '--darkreader-inline-border-right',
+        customProp: '--nyx-inline-border-right',
         cssProp: 'border-right-color',
-        dataAttr: 'data-darkreader-inline-border-right',
+        dataAttr: 'data-nyx-inline-border-right',
     },
     'border-top-color': {
-        customProp: '--darkreader-inline-border-top',
+        customProp: '--nyx-inline-border-top',
         cssProp: 'border-top-color',
-        dataAttr: 'data-darkreader-inline-border-top',
+        dataAttr: 'data-nyx-inline-border-top',
     },
     'box-shadow': {
-        customProp: '--darkreader-inline-boxshadow',
+        customProp: '--nyx-inline-boxshadow',
         cssProp: 'box-shadow',
-        dataAttr: 'data-darkreader-inline-boxshadow',
+        dataAttr: 'data-nyx-inline-boxshadow',
     },
     'color': {
-        customProp: '--darkreader-inline-color',
+        customProp: '--nyx-inline-color',
         cssProp: 'color',
-        dataAttr: 'data-darkreader-inline-color',
+        dataAttr: 'data-nyx-inline-color',
     },
     'fill': {
-        customProp: '--darkreader-inline-fill',
+        customProp: '--nyx-inline-fill',
         cssProp: 'fill',
-        dataAttr: 'data-darkreader-inline-fill',
+        dataAttr: 'data-nyx-inline-fill',
     },
     'stroke': {
-        customProp: '--darkreader-inline-stroke',
+        customProp: '--nyx-inline-stroke',
         cssProp: 'stroke',
-        dataAttr: 'data-darkreader-inline-stroke',
+        dataAttr: 'data-nyx-inline-stroke',
     },
     'outline-color': {
-        customProp: '--darkreader-inline-outline',
+        customProp: '--nyx-inline-outline',
         cssProp: 'outline-color',
-        dataAttr: 'data-darkreader-inline-outline',
+        dataAttr: 'data-nyx-inline-outline',
     },
     'stop-color': {
-        customProp: '--darkreader-inline-stopcolor',
+        customProp: '--nyx-inline-stopcolor',
         cssProp: 'stop-color',
-        dataAttr: 'data-darkreader-inline-stopcolor',
+        dataAttr: 'data-nyx-inline-stopcolor',
     },
 };
 
 const shorthandOverrides: Overrides = {
     'background': {
-        customProp: '--darkreader-inline-bg',
+        customProp: '--nyx-inline-bg',
         cssProp: 'background',
-        dataAttr: 'data-darkreader-inline-bg',
+        dataAttr: 'data-nyx-inline-bg',
     },
     'border': {
-        customProp: '--darkreader-inline-border-short',
+        customProp: '--nyx-inline-border-short',
         cssProp: 'border',
-        dataAttr: 'data-darkreader-inline-border-short',
+        dataAttr: 'data-nyx-inline-border-short',
     },
     'border-bottom': {
-        customProp: '--darkreader-inline-border-bottom-short',
+        customProp: '--nyx-inline-border-bottom-short',
         cssProp: 'border-bottom',
-        dataAttr: 'data-darkreader-inline-border-bottom-short',
+        dataAttr: 'data-nyx-inline-border-bottom-short',
     },
     'border-left': {
-        customProp: '--darkreader-inline-border-left-short',
+        customProp: '--nyx-inline-border-left-short',
         cssProp: 'border-left',
-        dataAttr: 'data-darkreader-inline-border-left-short',
+        dataAttr: 'data-nyx-inline-border-left-short',
     },
     'border-right': {
-        customProp: '--darkreader-inline-border-right-short',
+        customProp: '--nyx-inline-border-right-short',
         cssProp: 'border-right',
-        dataAttr: 'data-darkreader-inline-border-right-short',
+        dataAttr: 'data-nyx-inline-border-right-short',
     },
     'border-top': {
-        customProp: '--darkreader-inline-border-top-short',
+        customProp: '--nyx-inline-border-top-short',
         cssProp: 'border-top',
-        dataAttr: 'data-darkreader-inline-border-top-short',
+        dataAttr: 'data-nyx-inline-border-top-short',
     },
 };
 
@@ -141,7 +141,7 @@ export function getInlineOverrideStyle(): string {
             '}',
         ].join('\n');
     }).concat([
-        '[data-darkreader-inline-invert] {',
+        '[data-nyx-inline-invert] {',
         '    filter: invert(100%) hue-rotate(180deg);',
         '}',
     ]).join('\n');
@@ -519,7 +519,7 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
 
         function setAsyncValue(promise: Promise<string | null>, sourceValue: string) {
             promise.then((value) => {
-                if (value && targetCSSProp === 'background' && value.startsWith('var(--darkreader-bg--')) {
+                if (value && targetCSSProp === 'background' && value.startsWith('var(--nyx-bg--')) {
                     setStaticValue(value);
                 }
                 if (value && targetCSSProp === 'background-image') {
@@ -566,16 +566,16 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
             svgInversionCache.add(svg);
             const analyzeSVGAsImage = () => {
                 let svgString = svg.outerHTML;
-                svgString = svgString.replaceAll('<style class="darkreader darkreader--sync" media="screen"></style>', '');
+                svgString = svgString.replaceAll('<style class="nyx nyx--sync" media="screen"></style>', '');
                 const dataURL = `data:image/svg+xml;base64,${btoa(svgString)}`;
                 getImageDetails(dataURL).then((details) => {
                     if (
                         (details.isDark && details.isTransparent) ||
                         (details.isLarge && details.isLight && !details.isTransparent)
                     ) {
-                        svg.setAttribute('data-darkreader-inline-invert', '');
+                        svg.setAttribute('data-nyx-inline-invert', '');
                     } else {
-                        svg.removeAttribute('data-darkreader-inline-invert');
+                        svg.removeAttribute('data-nyx-inline-invert');
                     }
                 });
             };
