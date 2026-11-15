@@ -27,7 +27,7 @@ export default function Body(props: DevtoolsProps): Malevic.Child {
         [ThemeEngine.cssFilter]: 'filter-editor',
         [ThemeEngine.svgFilter]: 'filter-editor',
     }[theme.engine];
-    const store = context.getStore({errorText: '', activeTabId: defaultTabId});
+    const store = context.getStore({activeTabId: defaultTabId});
 
     function onTabChange(tabId: string) {
         store.activeTabId = tabId;
@@ -144,11 +144,13 @@ export default function Body(props: DevtoolsProps): Malevic.Child {
                         }}
                     />
                 </TabPanel.Tab>
-                <TabPanel.Tab id="advanced" label="Advanced">
-                    <div class="buttons">
-                        {__PLUS__ ? <Button class="preview-design-button" onclick={toggleNewestDesign}>{previewNewestButtonText}</Button> : null}
-                    </div>
-                </TabPanel.Tab>
+                {__PLUS__ ? (
+                    <TabPanel.Tab id="advanced" label="Advanced">
+                        <div class="buttons">
+                            <Button class="preview-design-button" onclick={toggleNewestDesign}>{previewNewestButtonText}</Button>
+                        </div>
+                    </TabPanel.Tab>
+                ) : null}
             </TabPanel>
             <Overlay />
         </body>

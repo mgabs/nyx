@@ -16,6 +16,8 @@ export function ConfigEditorTabs(props: ConfigEditorProps): Malevic.Child {
         context.refresh();
     }
 
+    const defaultsText = props.devtools.defaults?.[props.type] || '';
+
     return (
         <div class="config-editor-tabs">
             <TabPanel isVertical activeTabId={store.activeTabId} onTabChange={onTabChange}>
@@ -28,6 +30,16 @@ export function ConfigEditorTabs(props: ConfigEditorProps): Malevic.Child {
                 </TabPanel.Tab>
                 <TabPanel.Tab id="per-site-editor" label="Per Site Editor">
                     <PerSiteConfigEditor {...props} />
+                </TabPanel.Tab>
+                <TabPanel.Tab id="defaults-viewer" label="View Defaults">
+                    <div class="config-editor">
+                        <textarea
+                            class="editor"
+                            readonly
+                            spellcheck="false"
+                            value={defaultsText}
+                        />
+                    </div>
                 </TabPanel.Tab>
             </TabPanel>
         </div>

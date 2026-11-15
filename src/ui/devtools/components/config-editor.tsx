@@ -2,7 +2,6 @@ import {m} from 'malevic';
 import {getContext} from 'malevic/dom';
 
 import {DEVTOOLS_DOCS_URL} from '../../../utils/links';
-import {isFirefox} from '../../../utils/platform';
 import {Button, MessageBox} from '../../controls';
 
 interface ConfigEditorProps {
@@ -12,6 +11,8 @@ interface ConfigEditorProps {
     reset?: () => void;
     delete?: () => void;
 }
+
+const boundTabListeners = new WeakSet<HTMLTextAreaElement>();
 
 export function ConfigEditor(props: ConfigEditorProps): Malevic.Child {
     const context = getContext();
@@ -30,23 +31,18 @@ export function ConfigEditor(props: ConfigEditorProps): Malevic.Child {
             textNode.value = props.text;
         }
 
-        node.addEventListener('keydown', ({key, preventDefault}) => {
-            if (key === 'Tab') {
-                preventDefault();
+        if (boundTabListeners.has(node)) {
+            return;
+        }
+        boundTabListeners.add(node);
+
+        node.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
                 const indent = ' '.repeat(4);
-                if (isFirefox) {
-                    // https://bugzilla.mozilla.org/show_bug.cgi?id=1220696
-                    const start = node.selectionStart;
-                    const end = node.selectionEnd;
-                    const before = node.value.substring(0, start);
-                    const after = node.value.substring(end);
-                    node.focus();
-                    node.value = `${before}${indent}${after}`;
-                    const cursorPos = start + indent.length;
-                    node.setSelectionRange(cursorPos, cursorPos);
-                } else {
-                    document.execCommand('insertText', false, indent);
-                }
+                const start = node.selectionStart;
+                const end = node.selectionEnd;
+                node.setRangeText(indent, start, end, 'end');
             }
         });
     }
@@ -68,11 +64,25 @@ export function ConfigEditor(props: ConfigEditorProps): Malevic.Child {
         context.refresh();
     }
 
+    function hideDialog(): void {
+        store.dialogMessage = '';
+        store.dialogAction = null;
+        context.refresh();
+    }
+
     function reset(): void {
         store.dialogMessage = '';
         store.dialogAction = null;
         store.errorText = '';
         props.reset!();
+        context.refresh();
+    }
+
+    function remove(): void {
+        store.dialogMessage = '';
+        store.dialogAction = null;
+        store.errorText = '';
+        props.delete!();
         context.refresh();
     }
 
@@ -86,14 +96,8 @@ export function ConfigEditor(props: ConfigEditorProps): Malevic.Child {
     function showDeleteDialog() {
         showDialog(
             'Are you sure you want to delete the fix?',
-            props.delete!,
+            remove,
         );
-    }
-
-    function hideDialog(): void {
-        store.dialogMessage = '';
-        store.dialogAction = null;
-        context.refresh();
     }
 
     const dialog = store.dialogMessage && store.dialogAction ? (

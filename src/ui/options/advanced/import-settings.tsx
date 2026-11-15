@@ -1,10 +1,12 @@
 import {m} from 'malevic';
 import {getContext} from 'malevic/dom';
 
-import type {UserSettings, ViewProps} from '../../../definitions';
-import {validateSettings} from '../../../utils/validation';
+import type {DevFixType, ExportedSettings, ViewProps} from '../../../definitions';
+import {validateDevToolsOverrides, validateSettings} from '../../../utils/validation';
 import {Button, ControlGroup, MessageBox} from '../../controls';
 import {openFile} from '../../utils';
+
+const DEV_FIX_TYPES: DevFixType[] = ['detector', 'dynamic', 'filter', 'static'];
 
 export function ImportSettings(props: ViewProps): Malevic.Child {
     const context = getContext();
@@ -48,17 +50,32 @@ export function ImportSettings(props: ViewProps): Malevic.Child {
     ) : null;
 
     function importSettings() {
-        openFile({extensions: ['json']}, (result: string) => {
+        hideWarningDialog();
+        openFile({extensions: ['json']}, async (result: string) => {
             try {
-                const content: UserSettings = JSON.parse(result);
+                const content: ExportedSettings = JSON.parse(result);
                 const {settings, errors} = validateSettings(content);
-                const count = errors.length;
+                const devToolsResult = validateDevToolsOverrides(content.devTools);
+                const allErrors = errors.concat(devToolsResult.errors);
+                const count = allErrors.length;
                 if (count) {
-                    console.error('Could not validate imported settings', errors, result, content);
-                    showDialog(`The given file has incorrect JSON: ${count > 1 ? `${count} errors, including ${errors[0]}` : errors[0]}`);
+                    console.error('Could not validate imported settings', allErrors, result, content);
+                    showDialog(`The given file has incorrect JSON: ${count > 1 ? `${count} errors, including ${allErrors[0]}` : allErrors[0]}`);
                     return;
                 }
                 props.actions.changeSettings(settings);
+                if (content.devTools !== undefined) {
+                    await Promise.all(
+                        DEV_FIX_TYPES.map((type) => {
+                            const text = devToolsResult.devTools[type];
+                            if (text) {
+                                return props.actions.applyDevFixes(type, text);
+                            }
+                            props.actions.resetDevFixes(type);
+                            return Promise.resolve();
+                        }),
+                    );
+                }
                 showDialog('Settings imported');
             } catch (err) {
                 console.error(err);
@@ -75,9 +92,9 @@ export function ImportSettings(props: ViewProps): Malevic.Child {
                     class="advanced__import-settings-button"
                 >
                     Import Settings
-                    {dialog}
-                    {warningDialog}
                 </Button>
+                {dialog}
+                {warningDialog}
             </ControlGroup.Control>
             <ControlGroup.Description>
                 Open settings from a JSON file

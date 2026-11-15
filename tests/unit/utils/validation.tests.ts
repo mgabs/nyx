@@ -2,7 +2,7 @@ import {DEFAULT_SETTINGS, DEFAULT_THEME} from '../../../src/defaults';
 import type {Theme, UserSettings} from '../../../src/definitions';
 import {ThemeEngine} from '../../../src/generators/theme-engines';
 import {AutomationMode} from '../../../src/utils/automation';
-import {validateSettings, validateTheme} from '../../../src/utils/validation';
+import {validateDevToolsOverrides, validateSettings, validateTheme} from '../../../src/utils/validation';
 
 test('Settings Validation', () => {
     const defaultTheme = JSON.parse(JSON.stringify(DEFAULT_THEME));
@@ -215,4 +215,26 @@ test('Settings Validation', () => {
     validation = validateSettings(legacySet);
     expect(validation.errors).toEqual([]);
     expect('previewNewDesign' in DEFAULT_SETTINGS).toBe(false);
+});
+
+test('DevTools overrides validation', () => {
+    expect(validateDevToolsOverrides(undefined)).toEqual({devTools: {}, errors: []});
+    expect(validateDevToolsOverrides(null).errors.length).toBeGreaterThan(0);
+    expect(validateDevToolsOverrides([]).errors.length).toBeGreaterThan(0);
+
+    const invalidType = validateDevToolsOverrides({unknown: 'foo'});
+    expect(invalidType.errors.length).toBeGreaterThan(0);
+
+    const nonString = validateDevToolsOverrides({dynamic: 123});
+    expect(nonString.errors.length).toBeGreaterThan(0);
+
+    const valid = validateDevToolsOverrides({
+        dynamic: 'example.com\n\nCSS\nh1 {\n    color: blue;\n}',
+        filter: 'example.com\n\nINVERT\nimg',
+        static: 'example.com\n\nCSS\nbody {\n    color: #fff;\n}',
+        detector: 'example.com\n\nTARGET\nhtml\n\nMATCH\n.dark',
+    });
+    expect(valid.errors).toEqual([]);
+    expect(valid.devTools.dynamic).toContain('example.com');
+    expect(valid.devTools.detector).toContain('example.com');
 });

@@ -1,12 +1,26 @@
 import {m} from 'malevic';
 
-import type {ViewProps} from '../../../definitions';
+import type {DevFixType, ExportedSettings, ViewProps} from '../../../definitions';
 import {Button, ControlGroup} from '../../controls';
 import {saveFile} from '../../utils';
 
+const DEV_FIX_TYPES: DevFixType[] = ['detector', 'dynamic', 'filter', 'static'];
+
 export function ExportSettings(props: ViewProps): Malevic.Child {
-    function exportSettings() {
-        saveFile('Dark-Reader-Settings.json', JSON.stringify(props.data.settings, null, 4));
+    async function exportSettings() {
+        const devToolsData = await props.actions.getDevToolsData?.();
+        const devTools: Partial<Record<DevFixType, string>> = {};
+        if (devToolsData) {
+            DEV_FIX_TYPES.forEach((type) => {
+                if (devToolsData[type]) {
+                    devTools[type] = devToolsData[type];
+                }
+            });
+        }
+        const payload: ExportedSettings = Object.keys(devTools).length > 0
+            ? {...props.data.settings, devTools}
+            : props.data.settings;
+        saveFile('Nyx-Settings.json', JSON.stringify(payload, null, 4));
     }
 
     return (

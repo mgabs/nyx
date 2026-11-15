@@ -21,6 +21,7 @@ export function ResetSettings(props: ViewProps): Malevic.Child {
     function reset() {
         context.store.isDialogVisible = false;
         props.actions.changeSettings(DEFAULT_SETTINGS);
+        context.refresh();
     }
 
     const dialog = context.store.isDialogVisible ? (
@@ -36,8 +37,8 @@ export function ResetSettings(props: ViewProps): Malevic.Child {
             <ControlGroup.Control>
                 <ResetButton onClick={showDialog}>
                     Reset settings
-                    {dialog}
                 </ResetButton>
+                {dialog}
             </ControlGroup.Control>
             <ControlGroup.Description>
                 Restore settings to defaults

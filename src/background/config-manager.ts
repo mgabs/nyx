@@ -1,4 +1,9 @@
 import {DEFAULT_COLORSCHEME} from '../defaults';
+import {formatInversionFixes, parseInversionFixes} from '../generators/css-filter';
+import {formatDetectorHints, parseDetectorHints} from '../generators/detector-hints';
+import {formatDynamicThemeFixes, parseDynamicThemeFixes} from '../generators/dynamic-theme';
+import {formatStaticThemes, parseStaticThemes} from '../generators/static-theme';
+import {mergeSiteFixes} from '../generators/utils/overrides';
 import {indexSitesFixesConfig} from '../generators/utils/parse';
 import type {SiteFixesIndex} from '../generators/utils/parse';
 import type {ParsedColorSchemeConfig} from '../utils/colorscheme-parser';
@@ -207,25 +212,45 @@ export default class ConfigManager {
     }
 
     static handleDetectorHints(): void {
-        const $hints = ConfigManager.overrides.detectorHints || ConfigManager.raw.detectorHints || '';
+        const $hints = mergeSiteFixes(
+            ConfigManager.raw.detectorHints || '',
+            ConfigManager.overrides.detectorHints || '',
+            parseDetectorHints,
+            formatDetectorHints,
+        );
         ConfigManager.DETECTOR_HINTS_INDEX = indexSitesFixesConfig($hints);
         ConfigManager.DETECTOR_HINTS_RAW = $hints;
     }
 
     static handleDynamicThemeFixes(): void {
-        const $fixes = ConfigManager.overrides.dynamicThemeFixes || ConfigManager.raw.dynamicThemeFixes || '';
+        const $fixes = mergeSiteFixes(
+            ConfigManager.raw.dynamicThemeFixes || '',
+            ConfigManager.overrides.dynamicThemeFixes || '',
+            parseDynamicThemeFixes,
+            formatDynamicThemeFixes,
+        );
         ConfigManager.DYNAMIC_THEME_FIXES_INDEX = indexSitesFixesConfig($fixes);
         ConfigManager.DYNAMIC_THEME_FIXES_RAW = $fixes;
     }
 
     static handleInversionFixes(): void {
-        const $fixes = ConfigManager.overrides.inversionFixes || ConfigManager.raw.inversionFixes || '';
+        const $fixes = mergeSiteFixes(
+            ConfigManager.raw.inversionFixes || '',
+            ConfigManager.overrides.inversionFixes || '',
+            parseInversionFixes,
+            formatInversionFixes,
+        );
         ConfigManager.INVERSION_FIXES_INDEX = indexSitesFixesConfig($fixes);
         ConfigManager.INVERSION_FIXES_RAW = $fixes;
     }
 
     static handleStaticThemes(): void {
-        const $themes = ConfigManager.overrides.staticThemes || ConfigManager.raw.staticThemes || '';
+        const $themes = mergeSiteFixes(
+            ConfigManager.raw.staticThemes || '',
+            ConfigManager.overrides.staticThemes || '',
+            parseStaticThemes,
+            formatStaticThemes,
+        );
         ConfigManager.STATIC_THEMES_INDEX = indexSitesFixesConfig($themes);
         ConfigManager.STATIC_THEMES_RAW = $themes;
     }

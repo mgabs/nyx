@@ -21,7 +21,13 @@ export interface ExtensionData {
 
 export type DevFixType = 'detector' | 'dynamic' | 'filter' | 'static';
 
-export type DevToolsData = Record<DevFixType, string>;
+export type DevToolsData = Record<DevFixType, string> & {
+    defaults?: Record<DevFixType, string>;
+};
+
+export interface ExportedSettings extends UserSettings {
+    devTools?: Partial<Record<DevFixType, string>>;
+}
 
 export interface TabData {
     type: MessageTypeBGtoCS;
@@ -38,6 +44,7 @@ export interface ExtensionActions {
     loadConfig(options: {local: boolean}): void;
     applyDevFixes(type: DevFixType, text: string): Promise<void>;
     resetDevFixes(type: DevFixType): void;
+    getDevToolsData?(): Promise<DevToolsData>;
     hideHighlights(ids: string[]): void;
 }
 

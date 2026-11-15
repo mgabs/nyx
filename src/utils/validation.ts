@@ -1,5 +1,9 @@
 import {DEFAULT_SETTINGS, DEFAULT_THEME} from '../defaults';
-import type {UserSettings, Theme, ThemePreset, CustomSiteConfig, TimeSettings, LocationSettings, Automation} from '../definitions';
+import type {UserSettings, Theme, ThemePreset, CustomSiteConfig, TimeSettings, LocationSettings, Automation, DevFixType} from '../definitions';
+import {formatInversionFixes, parseInversionFixes} from '../generators/css-filter';
+import {formatDetectorHints, parseDetectorHints} from '../generators/detector-hints';
+import {formatDynamicThemeFixes, parseDynamicThemeFixes} from '../generators/dynamic-theme';
+import {formatStaticThemes, parseStaticThemes} from '../generators/static-theme';
 
 import {AutomationMode} from './automation';
 
@@ -220,4 +224,47 @@ export function validateTheme(theme: Partial<Theme> | null | undefined): ThemeVa
     validateProperty(theme, 'immediateModify', isBoolean, DEFAULT_THEME);
 
     return {errors, theme};
+}
+
+export interface DevToolsValidationResult {
+    devTools: Partial<Record<DevFixType, string>>;
+    errors: string[];
+}
+
+const DEVTOOLS_VALIDATORS: Record<DevFixType, {parse: (text: string) => any[]; format: (fixes: any[]) => string}> = {
+    detector: {parse: parseDetectorHints, format: formatDetectorHints},
+    dynamic: {parse: parseDynamicThemeFixes, format: formatDynamicThemeFixes},
+    filter: {parse: parseInversionFixes, format: formatInversionFixes},
+    static: {parse: parseStaticThemes, format: formatStaticThemes},
+};
+
+export function validateDevToolsOverrides(rawDevTools: unknown): DevToolsValidationResult {
+    if (rawDevTools === undefined) {
+        return {devTools: {}, errors: []};
+    }
+    if (!isPlainObject(rawDevTools)) {
+        return {devTools: {}, errors: ['DevTools overrides must be a plain object']};
+    }
+    const devTools: Partial<Record<DevFixType, string>> = {};
+    const errors: string[] = [];
+    for (const [key, value] of Object.entries(rawDevTools)) {
+        if (!(key in DEVTOOLS_VALIDATORS)) {
+            errors.push(`Unknown DevTools fix type: "${key}"`);
+            continue;
+        }
+        if (!isString(value)) {
+            errors.push(`Unexpected value for "devTools.${key}": expected string`);
+            continue;
+        }
+        const type = key as DevFixType;
+        if (value.trim()) {
+            try {
+                const {parse, format} = DEVTOOLS_VALIDATORS[type];
+                devTools[type] = format(parse(value));
+            } catch (err) {
+                errors.push(`Invalid "devTools.${key}": ${String(err)}`);
+            }
+        }
+    }
+    return {devTools, errors};
 }

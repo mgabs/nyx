@@ -20,7 +20,7 @@ The project LICENSE MUST retain full upstream copyright notice (`Copyright (c) 2
 - **THEN** both original copyright and Nyx contributor notices are present and intact.
 
 ### Requirement: REQ-BRAND-3 Settings and Developer Tools Identity
-The popup, Settings, and Developer Tools pages MUST identify as **Nyx**, including the popup `m-logo` SVG wordmark and link, `Nyx-${url}.css` theme export filename, compatibility warning text, background console welcome banner, Settings page title/wordmark, and Developer Tools page title/wordmark, without exposing Dark Reader support addresses or branding or the legacy paid-license `Activation` tab (`ActivationTab`, `startActivation`, `resetActivation`) while preserving upstream MIT attribution.
+The popup, Settings, and Developer Tools pages MUST identify as **Nyx**, including the popup `m-logo` SVG wordmark and link, `Nyx-${url}.css` theme export filename, `Nyx-Settings.json` settings export filename, compatibility warning text, background console welcome banner, Settings page title/wordmark, and Developer Tools page title/wordmark, without exposing Dark Reader support addresses or branding or the legacy paid-license `Activation` tab (`ActivationTab`, `startActivation`, `resetActivation`) while preserving upstream MIT attribution.
 
 #### Scenario: Opening extension settings or developer tools
 - **GIVEN** the extension is loaded in Chrome or Firefox
@@ -31,6 +31,11 @@ The popup, Settings, and Developer Tools pages MUST identify as **Nyx**, includi
 - **GIVEN** the user opens the Theme tab in the popup
 - **WHEN** the user exports the generated CSS
 - **THEN** the downloaded file is named `Nyx-${url}.css`
+
+#### Scenario: Exporting settings from Settings Advanced tab
+- **GIVEN** the user opens Settings -> Advanced
+- **WHEN** the user clicks Export Settings
+- **THEN** the downloaded file is named `Nyx-Settings.json`
 
 ### Requirement: REQ-BRAND-4 Independent Release Packages
 Release builds MUST use a Nyx-specific Mozilla extension ID and generate named Chrome MV3, Edge, Firefox, Thunderbird, and experimental unsigned Safari macOS packages. GitHub release publication MUST have explicit write permission and fail if an expected package is missing. Store signing and submission are separate from package generation.

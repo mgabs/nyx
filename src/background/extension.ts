@@ -438,17 +438,20 @@ export class Extension {
             dynamic,
             filter,
             staticThemesText,
+            defaults,
         ] = await Promise.all([
             DevTools.getDetectorHintsText(),
             DevTools.getDynamicThemeFixesText(),
             DevTools.getInversionFixesText(),
             DevTools.getStaticThemesText(),
+            DevTools.getDefaults(),
         ]);
         return {
             detector,
             dynamic,
             filter,
             static: staticThemesText,
+            defaults,
         };
     }
 
