@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Nyx",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "author": "Alexander Shutau",
     "description": "Instant Dark Mode for the Web. Zero White Flash.",
     "default_locale": "en",
