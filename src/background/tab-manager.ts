@@ -15,6 +15,7 @@ import {isPanel} from './utils/tab';
 
 declare const __CHROMIUM_MV2__: boolean;
 declare const __CHROMIUM_MV3__: boolean;
+declare const __FIREFOX_MV3__: boolean;
 declare const __THUNDERBIRD__: boolean;
 
 interface TabManagerOptions {
@@ -79,7 +80,7 @@ export default class TabManager {
         TabManager.onColorSchemeChange = onColorSchemeChange;
         TabManager.getTabMessage = getTabMessage;
         TabManager.waitUntilReady = waitUntilReady;
-        if (__CHROMIUM_MV3__) {
+        if (__CHROMIUM_MV3__ || __FIREFOX_MV3__) {
             TabManager.registerDeclarativePrePaint();
         }
 
@@ -442,10 +443,10 @@ export default class TabManager {
 
     static async updateContentScript(options: {runOnProtectedPages: boolean}): Promise<void> {
         (await queryTabs({discarded: false}))
-            .filter((tab) => __CHROMIUM_MV3__ || options.runOnProtectedPages || canInjectScript(tab.url))
+            .filter((tab) => __CHROMIUM_MV3__ || __FIREFOX_MV3__ || options.runOnProtectedPages || canInjectScript(tab.url))
             .filter((tab) => !TabManager.tabs[tab.id!])
             .forEach((tab) => {
-                if (__CHROMIUM_MV3__) {
+                if (__CHROMIUM_MV3__ || __FIREFOX_MV3__) {
                     chrome.scripting.executeScript({
                         target: {
                             tabId: tab.id!,
@@ -473,7 +474,7 @@ export default class TabManager {
         });
     }
 
-    static async registerDeclarativePrePaint(isMV3: boolean = typeof __CHROMIUM_MV3__ !== 'undefined' ? __CHROMIUM_MV3__ : false): Promise<void> {
+    static async registerDeclarativePrePaint(isMV3: boolean = (typeof __CHROMIUM_MV3__ !== 'undefined' && __CHROMIUM_MV3__) || (typeof __FIREFOX_MV3__ !== 'undefined' && __FIREFOX_MV3__)): Promise<void> {
         if (!isMV3) {
             return;
         }

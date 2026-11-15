@@ -6,21 +6,25 @@ import {createTask} from './task.js';
 import {readJSON, writeJSON} from './utils.js';
 
 export async function patchManifest(platform, debug, watch, test) {
-    const isMV2 = platform === PLATFORM.CHROMIUM_MV2 || platform === PLATFORM.CHROMIUM_MV2_PLUS;
-    const isMV3 = platform === PLATFORM.CHROMIUM_MV3 || platform === PLATFORM.CHROMIUM_MV3_PLUS;
-    const isPlus = platform === PLATFORM.CHROMIUM_MV2_PLUS || platform === PLATFORM.CHROMIUM_MV3_PLUS;
+    const isChromiumMV3 = platform === PLATFORM.CHROMIUM_MV3 || platform === PLATFORM.CHROMIUM_MV3_PLUS;
+    const isFirefoxMV3 = platform === PLATFORM.FIREFOX_MV3;
+    const isMV3 = isChromiumMV3 || isFirefoxMV3;
+    const isPlus = platform === PLATFORM.CHROMIUM_MV3_PLUS;
 
     const manifest = await readJSON(absolutePath('src/manifest.json'));
-    const manifestPatch = isMV2 ? {} : await readJSON(absolutePath(`src/manifest-${platform.replace('-plus', '')}.json`));
+    const manifestPatch = isChromiumMV3 ? {} : await readJSON(absolutePath(`src/manifest-${platform.replace('-plus', '')}.json`));
     const manifestExtras = isPlus ? await readJSON(absolutePath(`src/plus/manifest.json`)) : {};
     const patched = {...manifest, ...manifestPatch, ...manifestExtras};
     patched.name = 'Nyx';
     patched.description = 'Instant Dark Mode for the Web. Zero White Flash.';
-    if (debug && isMV3) {
-        patched.name = isPlus ? 'Nyx MV3 Plus' : 'Nyx MV3';
+    if (!isChromiumMV3) {
+        patched.minimum_chrome_version = undefined;
     }
-    if (isMV3) {
-        patched.browser_action = undefined;
+    if (!isMV3) {
+        patched.action = undefined;
+        patched.options_ui = undefined;
+        patched.content_security_policy = undefined;
+        patched.host_permissions = undefined;
     }
     if (debug) {
         patched.version = '1';
@@ -29,7 +33,7 @@ export async function patchManifest(platform, debug, watch, test) {
     if (debug && !test && isMV3) {
         patched.permissions.push('tabs');
     }
-    if (debug && (isMV2 || isMV3)) {
+    if (debug && isChromiumMV3) {
         patched.version_name = isPlus ? 'Debug Plus' : 'Debug';
     }
     // Needed to test settings export and CSS theme export via a download

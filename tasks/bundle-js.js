@@ -34,7 +34,7 @@ const jsEntries = [
         src: 'src/inject/dynamic-theme/mv3-proxy.ts',
         dest: 'inject/proxy.js',
         reloadType: reload.FULL,
-        platforms: [PLATFORM.CHROMIUM_MV3, PLATFORM.CHROMIUM_MV3_PLUS],
+        platforms: [PLATFORM.CHROMIUM_MV3, PLATFORM.CHROMIUM_MV3_PLUS, PLATFORM.FIREFOX_MV3],
     },
     {
         src: 'src/inject/fallback.ts',
@@ -45,7 +45,7 @@ const jsEntries = [
         src: 'src/inject/color-scheme-watcher.ts',
         dest: 'inject/color-scheme-watcher.js',
         reloadType: reload.FULL,
-        platforms: [PLATFORM.CHROMIUM_MV3, PLATFORM.CHROMIUM_MV3_PLUS],
+        platforms: [PLATFORM.CHROMIUM_MV3, PLATFORM.CHROMIUM_MV3_PLUS, PLATFORM.FIREFOX_MV3],
     },
     {
         src: 'src/ui/devtools/index.tsx',
@@ -77,7 +77,17 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
 
     let replace = {};
     switch (platform) {
-        case PLATFORM.FIREFOX_MV2:
+        case PLATFORM.FIREFOX_MV3:
+            replace = {
+                'chrome.browserAction.setIcon': 'chrome.action.setIcon',
+                'chrome.browserAction.setBadgeBackgroundColor': 'chrome.action.setBadgeBackgroundColor',
+                'chrome.browserAction.setBadgeText': 'chrome.action.setBadgeText',
+                ...(entry.src === 'src/ui/popup/index.tsx' ? {} : {
+                    'chrome.fontSettings.getFontList': `chrome['font' + 'Settings']['get' + 'Font' + 'List']`,
+                    'chrome.fontSettings': `chrome['font' + 'Settings']`,
+                }),
+            };
+            break;
         case PLATFORM.THUNDERBIRD:
             if (entry.src === 'src/ui/popup/index.tsx') {
                 break;
@@ -99,7 +109,7 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
 
     // See comment below
     // TODO(anton): remove this once Firefox supports tab.eval() via WebDriver BiDi
-    const mustRemoveEval = !test && (platform === PLATFORM.FIREFOX_MV2) && (entry.src === 'src/inject/index.ts');
+    const mustRemoveEval = !test && (platform === PLATFORM.FIREFOX_MV3) && (entry.src === 'src/inject/index.ts');
 
     const cacheId = `${entry.src}-${platform}-${debug}-${watch}-${log}-${test}`;
     const outDir = getDestDir({debug, platform});
@@ -134,7 +144,7 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
                 rootDir: absolutePath('.'),
                 typescript,
                 tsconfig: absolutePath('src/tsconfig.json'),
-                compilerOptions: (platform === PLATFORM.CHROMIUM_MV3 || platform === PLATFORM.CHROMIUM_MV3_PLUS) ? {
+                compilerOptions: (platform === PLATFORM.CHROMIUM_MV3 || platform === PLATFORM.CHROMIUM_MV3_PLUS || platform === PLATFORM.FIREFOX_MV3) ? {
                     target: 'ES2022',
                 } : undefined,
                 noImplicitAny: debug ? false : true,
@@ -146,7 +156,7 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
                 inlineSources: debug ? true : false,
                 noEmitOnError: watch ? false : true,
                 outDir,
-                paths: (platform === PLATFORM.CHROMIUM_MV2_PLUS || platform === PLATFORM.CHROMIUM_MV3_PLUS) ? {
+                paths: platform === PLATFORM.CHROMIUM_MV3_PLUS ? {
                     '@plus/*': ['./plus/*'],
                 } : {
                     '@plus/*': ['./stubs/*'],
@@ -157,11 +167,12 @@ async function bundleJS(/** @type {JSEntry} */entry, platform, debug, watch, log
                 preventAssignment: true,
                 ...replace,
                 __DEBUG__: debug,
-                __CHROMIUM_MV2__: platform === PLATFORM.CHROMIUM_MV2 || platform === PLATFORM.CHROMIUM_MV2_PLUS,
+                __CHROMIUM_MV2__: false,
                 __CHROMIUM_MV3__: platform === PLATFORM.CHROMIUM_MV3 || platform === PLATFORM.CHROMIUM_MV3_PLUS,
-                __FIREFOX_MV2__: platform === PLATFORM.FIREFOX_MV2,
+                __FIREFOX_MV2__: false,
+                __FIREFOX_MV3__: platform === PLATFORM.FIREFOX_MV3,
                 __THUNDERBIRD__: platform === PLATFORM.THUNDERBIRD,
-                __PLUS__: platform === PLATFORM.CHROMIUM_MV2_PLUS || platform === PLATFORM.CHROMIUM_MV3_PLUS,
+                __PLUS__: platform === PLATFORM.CHROMIUM_MV3_PLUS,
                 __PORT__: watch ? String(PORT) : '-1',
                 __TEST__: test,
                 __WATCH__: watch,
@@ -215,9 +226,7 @@ export function createBundleJSTask(jsEntries) {
         const connectedBrowsers = reload.getConnectedBrowsers();
         if (connectedBrowsers.includes('chrome')) {
             platforms.chrome = initialPlatforms.chrome;
-            platforms['chrome-mv3'] = initialPlatforms['chrome-mv3'];
             platforms['chrome-plus'] = initialPlatforms['chrome-plus'];
-            platforms['chrome-mv3-plus'] = initialPlatforms['chrome-mv3-plus'];
         }
         if (connectedBrowsers.includes('firefox')) {
             platforms.firefox = true;

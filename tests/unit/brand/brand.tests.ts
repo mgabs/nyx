@@ -14,19 +14,12 @@ describe('Brand Identity & MIT Attribution Specification', () => {
             expect(pkg.repository.url).toBe('https://github.com/mgabs/nyx');
         });
 
-        test('src/manifest.json must identify name as Nyx and tagline as Instant Dark Mode for the Web. Zero White Flash.', async () => {
+        test('src/manifest.json must identify name as Nyx, tagline as Instant Dark Mode for the Web. Zero White Flash., and action default_title as Nyx', async () => {
             const manifestRaw = await fs.readFile(rootPath('src/manifest.json'), 'utf8');
             const manifest = JSON.parse(manifestRaw);
 
             expect(manifest.name).toBe('Nyx');
             expect(manifest.description).toBe('Instant Dark Mode for the Web. Zero White Flash.');
-            expect(manifest.browser_action.default_title).toBe('Nyx');
-        });
-
-        test('src/manifest-chrome-mv3.json must have action default_title as Nyx', async () => {
-            const manifestRaw = await fs.readFile(rootPath('src/manifest-chrome-mv3.json'), 'utf8');
-            const manifest = JSON.parse(manifestRaw);
-
             expect(manifest.action.default_title).toBe('Nyx');
         });
 
@@ -41,9 +34,9 @@ describe('Brand Identity & MIT Attribution Specification', () => {
             const bundleManifestRaw = await fs.readFile(rootPath('tasks/bundle-manifest.js'), 'utf8');
 
             expect(bundleManifestRaw).toContain("'Nyx'");
+            expect(bundleManifestRaw).toContain("patched.name = 'Nyx'");
             expect(bundleManifestRaw).toContain('Instant Dark Mode for the Web. Zero White Flash.');
             expect(bundleManifestRaw).not.toContain("'Dark Reader MV3 Plus' : 'Dark Reader MV3'");
-            expect(bundleManifestRaw).toContain("'Nyx MV3 Plus' : 'Nyx MV3'");
         });
 
         test('src/utils/links.ts links point to github.com/mgabs/nyx', async () => {
@@ -151,10 +144,9 @@ describe('Brand Identity & MIT Attribution Specification', () => {
             expect(iconFiles.filter((f) => f.startsWith('dr_'))).toEqual([]);
 
             const manifestRaw = await fs.readFile(rootPath('src/manifest.json'), 'utf8');
-            const mv3Raw = await fs.readFile(rootPath('src/manifest-chrome-mv3.json'), 'utf8');
             const iconManagerRaw = await fs.readFile(rootPath('src/background/icon-manager.ts'), 'utf8');
 
-            for (const raw of [manifestRaw, mv3Raw, iconManagerRaw]) {
+            for (const raw of [manifestRaw, iconManagerRaw]) {
                 expect(raw).not.toContain('dr_');
                 expect(raw).toContain('nyx_');
             }
@@ -162,10 +154,9 @@ describe('Brand Identity & MIT Attribution Specification', () => {
     });
 
     describe('REQ-POPUP-3: Obsidian + Silver + Amber UI Palette', () => {
-        test('theme.less, md3-tokens.less, compatibility.js, and nyx-type.svg use Obsidian/Silver/Amber and drop legacy slate/coral', async () => {
+        test('theme.less, md3-tokens.less, and nyx-type.svg use Obsidian/Silver/Amber and drop legacy slate/coral', async () => {
             const themeRaw = await fs.readFile(rootPath('src/ui/theme.less'), 'utf8');
             const md3Raw = await fs.readFile(rootPath('src/ui/popup/md3-tokens.less'), 'utf8');
-            const compatRaw = await fs.readFile(rootPath('src/ui/popup/compatibility.js'), 'utf8');
             const typeSvgRaw = await fs.readFile(rootPath('src/ui/assets/images/nyx-type.svg'), 'utf8');
 
             expect(themeRaw).toContain('#111114');
@@ -174,10 +165,9 @@ describe('Brand Identity & MIT Attribution Specification', () => {
             expect(md3Raw).toContain('#111114');
             expect(md3Raw).toContain('#c4c4cc');
             expect(md3Raw).toContain('#f59e0b');
-            expect(compatRaw).toContain('#f59e0b');
             expect(typeSvgRaw.toLowerCase()).toContain('#f59e0b');
 
-            for (const raw of [themeRaw, md3Raw, compatRaw, typeSvgRaw]) {
+            for (const raw of [themeRaw, md3Raw, typeSvgRaw]) {
                 expect(raw.toLowerCase()).not.toContain('#141e24');
                 expect(raw.toLowerCase()).not.toContain('#e96c4c');
                 expect(raw.toLowerCase()).not.toContain('#53a1b3');

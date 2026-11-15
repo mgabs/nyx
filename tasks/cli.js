@@ -43,9 +43,8 @@ function printHelp() {
         '',
         'To narrow down the list of build targets (for efficiency):',
         '  --api          Library build (published to NPM)',
-        '  --chrome       MV2 for Chromium-based browsers (published to Chrome Web Store)',
-        '  --chrome-mv3   MV3 for Chromium-based browsers (will replace MV2 version eventually)',
-        '  --firefox      MV2 for Firefox (published to Mozilla Add-on store)',
+        '  --chrome       MV3 for Chromium-based browsers (published to Chrome Web Store)',
+        '  --firefox      MV3 for Firefox (published to Mozilla Add-on store)',
         '  --thunderbird  Thunderbird',
         '',
         'To specify type of build:',
@@ -127,7 +126,7 @@ async function checkoutHead() {
 function validateArguments(args) {
     const validationErrors = [];
 
-    const validFlags = ['--api', '--chrome', '--chrome-mv2', '--chrome-mv3', '--firefox', '--firefox-mv2', '--thunderbird', '--release', '--debug', '--watch', '--plus', '--log-info', '--log-warn', '--test'];
+    const validFlags = ['--api', '--chrome', '--firefox', '--firefox-mv3', '--thunderbird', '--release', '--debug', '--watch', '--plus', '--log-info', '--log-warn', '--test'];
     const invalidFlags = args.filter((flag) => !validFlags.includes(flag) && !flag.startsWith('--version='));
     invalidFlags.forEach((flag) => validationErrors.push(`Invalid flag ${flag}`));
 

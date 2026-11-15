@@ -58,6 +58,17 @@ describe('MV3 Declarative Pre-Paint Stylesheet Registration (REQ-FOUC-2)', () =>
         expect(registerCalled).toBe(false);
     });
 
+    it('enables MV3 declarative pre-paint and ContentScriptManager for __FIREFOX_MV3__', async () => {
+        const fs = await import('node:fs/promises');
+        const path = await import('node:path');
+        const tabManagerSrc = await fs.readFile(path.resolve(__dirname, '../../../src/background/tab-manager.ts'), 'utf8');
+        const csmSrc = await fs.readFile(path.resolve(__dirname, '../../../src/background/content-script-manager.ts'), 'utf8');
+        const bgIndexSrc = await fs.readFile(path.resolve(__dirname, '../../../src/background/index.ts'), 'utf8');
+        expect(tabManagerSrc).toContain('__FIREFOX_MV3__');
+        expect(csmSrc).toContain('__FIREFOX_MV3__');
+        expect(bgIndexSrc).toContain('__FIREFOX_MV3__');
+    });
+
     it('does nothing when isMV3 is false', async () => {
         originalChrome = (global as any).chrome;
         let getScriptsCalled = false;

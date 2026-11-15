@@ -53,6 +53,7 @@ async function bundleAPIModule({debug, watch}, moduleType, dest) {
                 __CHROMIUM_MV2__: false,
                 __CHROMIUM_MV3__: false,
                 __FIREFOX_MV2__: false,
+                __FIREFOX_MV3__: false,
                 __THUNDERBIRD__: false,
                 __TEST__: false,
                 __PLUS__: false,

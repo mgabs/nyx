@@ -37,12 +37,12 @@ jobs:
         run: make lint test-unit
 
       - name: Build Chrome, Firefox, Thunderbird, and Safari source
-        run: make build-release ARGS="--chrome --chrome-mv3 --firefox --thunderbird"
+        run: make build-release ARGS="--chrome --firefox --thunderbird"
 
       - name: Package Edge and verify store artifacts
         run: |
-          cp build/release/nyx-chrome-mv3.zip build/release/nyx-edge.zip
-          for package in nyx-chrome.zip nyx-chrome-mv3.zip nyx-edge.zip nyx-firefox.xpi nyx-thunderbird.xpi; do
+          cp build/release/nyx-chrome.zip build/release/nyx-edge.zip
+          for package in nyx-chrome.zip nyx-edge.zip nyx-firefox.xpi nyx-thunderbird.xpi; do
             test -s "build/release/$package"
             unzip -t "build/release/$package"
           done
@@ -118,7 +118,7 @@ jobs:
         with:
           fail_on_unmatched_files: true
           body: |
-            Chrome Web Store: nyx-chrome-mv3.zip
+            Chrome Web Store: nyx-chrome.zip
             Edge Add-ons: nyx-edge.zip (same Chromium MV3 build)
             Firefox Add-ons: nyx-firefox.xpi (unsigned)
             Thunderbird: nyx-thunderbird.xpi
@@ -130,7 +130,6 @@ jobs:
             Firefox requires Mozilla signing. Safari iOS/iPadOS is not included.
           files: |
             build/release/nyx-chrome.zip
-            build/release/nyx-chrome-mv3.zip
             build/release/nyx-edge.zip
             build/release/nyx-firefox.xpi
             build/release/nyx-thunderbird.xpi

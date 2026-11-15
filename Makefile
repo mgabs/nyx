@@ -1,4 +1,4 @@
-.PHONY: help install build build-release api debug lint lint-bundle test test-unit test-inject test-browser test-chrome test-chrome-mv3 test-firefox test-all test-dependencies bench check
+.PHONY: help install build build-release api debug lint lint-bundle test test-unit test-inject test-browser test-chrome test-firefox test-all test-dependencies bench check
 .DEFAULT_GOAL := help
 
 CHROME_BIN ?= $(shell \
@@ -50,11 +50,8 @@ test-inject: ## Run Karma inject tests (pass ARGS=...)
 test-browser: ## Run all browser e2e tests (Chrome, MV3, Firefox)
 	npm run test:browser
 
-test-chrome: ## Run Chrome MV2 browser tests
+test-chrome: ## Run Chrome MV3 browser tests
 	npm run test:chrome $(if $(ARGS),-- $(ARGS))
-
-test-chrome-mv3: ## Run Chrome MV3 browser tests
-	npm run test:chrome-mv3 $(if $(ARGS),-- $(ARGS))
 
 test-firefox: ## Run Firefox browser tests
 	npm run test:firefox $(if $(ARGS),-- $(ARGS))

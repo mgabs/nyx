@@ -44,6 +44,7 @@ interface SystemColorState extends Record<string, unknown> {
 
 declare const __CHROMIUM_MV2__: boolean;
 declare const __CHROMIUM_MV3__: boolean;
+declare const __FIREFOX_MV3__: boolean;
 declare const __THUNDERBIRD__: boolean;
 
 export class Extension {
@@ -219,7 +220,7 @@ export class Extension {
     private static wakeInterval: number = -1;
 
     private static runWakeDetector() {
-        if (__CHROMIUM_MV3__) {
+        if (__CHROMIUM_MV3__ || __FIREFOX_MV3__) {
             chrome.alarms.create(Extension.WAKEUP_ALARM_NAME, {periodInMinutes: 1});
             return;
         }
@@ -269,7 +270,7 @@ export class Extension {
 
         if (__THUNDERBIRD__) {
             TabManager.registerMailDisplayScript();
-        } else if (!__CHROMIUM_MV3__ || Extension.isFirstLoad) {
+        } else if (!(__CHROMIUM_MV3__ || __FIREFOX_MV3__) || Extension.isFirstLoad) {
             TabManager.updateContentScript({runOnProtectedPages: UserStorage.settings.enableForProtectedPages});
         }
 
@@ -324,7 +325,7 @@ export class Extension {
                         return nodeName === 'EMBED' && type === 'application/pdf';
                     }
 
-                    if (__CHROMIUM_MV3__) {
+                    if (__CHROMIUM_MV3__ || __FIREFOX_MV3__) {
                         return (await chrome.scripting.executeScript({
                             target: {tabId, frameIds: [frameId]},
                             func: detectPDF,
@@ -339,7 +340,7 @@ export class Extension {
                 }
 
                 const pdf = async () => isPDF(frameURL || await TabManager.getActiveTabURL());
-                if (((__CHROMIUM_MV2__ || __CHROMIUM_MV3__) && await scriptPDF(tabId!, frameId!)) || await pdf()) {
+                if (((__CHROMIUM_MV2__ || __CHROMIUM_MV3__ || __FIREFOX_MV3__) && await scriptPDF(tabId!, frameId!)) || await pdf()) {
                     Extension.changeSettings({enableForPDF: !UserStorage.settings.enableForPDF});
                 } else {
                     Extension.toggleActiveTab();

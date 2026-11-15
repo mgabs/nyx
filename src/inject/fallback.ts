@@ -1,6 +1,7 @@
 import {wasEnabledForHost} from './cache';
 
 declare const __FIREFOX_MV2__: boolean;
+declare const __FIREFOX_MV3__: boolean;
 
 if (
     document.documentElement instanceof HTMLHtmlElement &&
@@ -8,7 +9,7 @@ if (
     wasEnabledForHost() !== false &&
     !document.querySelector('.nyx--fallback') &&
     !document.querySelector('.nyx') &&
-    !(__FIREFOX_MV2__ && window !== top)
+    !((__FIREFOX_MV2__ || __FIREFOX_MV3__) && window !== top)
 ) {
     const css = [
         'html, body, body :not(iframe) {',
@@ -49,7 +50,7 @@ if (
     }
 }
 
-if (__FIREFOX_MV2__ && (location.host === 'teams.live.com' || location.host === 'teams.microsoft.com')) {
+if ((__FIREFOX_MV2__ || __FIREFOX_MV3__) && (location.host === 'teams.live.com' || location.host === 'teams.microsoft.com')) {
     // Microsoft Teams calls sheet.cssRules on extension styles and that
     // causes "Not allowed to access cross-origin stylesheet" in Firefox
     (() => {

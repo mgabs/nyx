@@ -60,6 +60,7 @@ export function configureKarma(config, env) {
                     preventAssignment: true,
                     __DEBUG__: false,
                     __FIREFOX_MV2__: false,
+                    __FIREFOX_MV3__: false,
                     __CHROMIUM_MV2__: false,
                     __CHROMIUM_MV3__: false,
                     __THUNDERBIRD__: false,

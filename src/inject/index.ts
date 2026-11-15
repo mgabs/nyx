@@ -25,6 +25,7 @@ declare const __CHROMIUM_MV2__: boolean;
 declare const __CHROMIUM_MV3__: boolean;
 declare const __THUNDERBIRD__: boolean;
 declare const __FIREFOX_MV2__: boolean;
+declare const __FIREFOX_MV3__: boolean;
 
 declare function cloneInto<T>(obj: T, scope: Window): T;
 
@@ -292,7 +293,7 @@ if (location.origin === HOMEPAGE_URL) {
         const result = await activateTheme(email, key);
         const detail = {result};
         document.dispatchEvent(new CustomEvent('__nyx_activationResult__', {
-            detail: __FIREFOX_MV2__ && typeof cloneInto === 'function' ? cloneInto(detail, window) : detail,
+            detail: (__FIREFOX_MV2__ || __FIREFOX_MV3__) && typeof cloneInto === 'function' ? cloneInto(detail, window) : detail,
         }));
     }, {once: true});
 }
@@ -345,7 +346,7 @@ if (__TEST__) {
         }));
     };
 
-    if (__FIREFOX_MV2__) {
+    if (__FIREFOX_MV2__ || __FIREFOX_MV3__) {
         socket.onmessage = (e) => {
             function respond(data: any) {
                 socket.send(JSON.stringify({id, data}));

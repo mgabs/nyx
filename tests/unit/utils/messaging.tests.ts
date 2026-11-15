@@ -70,7 +70,7 @@ describe('MV3 Messaging & about:blank Safety', () => {
     });
 
     test('manifests and TabManager disable about:blank content script injection', async () => {
-        for (const rel of ['src/manifest.json', 'src/manifest-chrome-mv3.json', 'src/manifest-firefox.json']) {
+        for (const rel of ['src/manifest.json', 'src/manifest-firefox.json', 'src/manifest-thunderbird.json']) {
             const manifest = JSON.parse(await fs.readFile(rootPath(rel), 'utf8'));
             for (const entry of manifest.content_scripts) {
                 expect(entry.match_about_blank).toBe(false);

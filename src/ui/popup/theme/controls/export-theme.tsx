@@ -9,6 +9,7 @@ import {saveFile} from '../../../utils';
 declare const __CHROMIUM_MV2__: boolean;
 declare const __CHROMIUM_MV3__: boolean;
 declare const __FIREFOX_MV2__: boolean;
+declare const __FIREFOX_MV3__: boolean;
 declare const __THUNDERBIRD__: boolean;
 
 export function ExportTheme({data}: ViewProps): Malevic.Child {
@@ -18,7 +19,7 @@ export function ExportTheme({data}: ViewProps): Malevic.Child {
         if (type === MessageTypeCStoUI.EXPORT_CSS_RESPONSE && sender.tab && sender.tab.id === tabId && (
             __CHROMIUM_MV3__ ? sender.documentId === documentId :
                 (__CHROMIUM_MV2__ ? (!sender.documentId || sender.documentId === documentId) :
-                    ((__FIREFOX_MV2__ || __THUNDERBIRD__) ? (!(sender as any).contextId || (sender as any).contextId === documentId) : true))
+                    ((__FIREFOX_MV2__ || __FIREFOX_MV3__ || __THUNDERBIRD__) ? (!(sender as any).contextId || (sender as any).contextId === documentId) : true))
         )) {
             const url = getURLHostOrProtocol(sender.tab!.url!).replace(/[^a-z0-1\-]/g, '-');
             saveFile(`Nyx-${url}.css`, data);

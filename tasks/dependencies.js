@@ -45,7 +45,7 @@ async function command(script) {
 }
 
 async function buildAll() {
-    await command('npm run build -- --release --api --chrome-mv2 --chrome-mv3 --firefox-mv2 --thunderbird');
+    await command('npm run build -- --release --api --chrome --firefox --thunderbird');
 }
 
 async function patchPackage(outdated) {
@@ -87,7 +87,7 @@ async function main() {
     log.ok('Built with new dependencies');
 
     await command('diff -r build-old/release/chrome build/release/chrome');
-    await command('diff -r build-old/release/chrome-mv3 build/release/chrome-mv3');
+    await command('diff -r build-old/release/chrome build/release/chrome');
     await command('diff -r build-old/release/firefox build/release/firefox');
     await command('diff -r build-old/release/thunderbird build/release/thunderbird');
     await command('diff nyx-old.js nyx.js');
