@@ -172,4 +172,34 @@ describe('lean-dynamic-theme unit tests', () => {
         expect(result).toContain('Lean Dynamic Theme CSS');
         expect(result).toContain('background-color: rgb(24, 26, 27)');
     });
+
+    test('createAdoptedEmitter tracks owned sheets and places dynamic sheets before override and inline', () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const {createAdoptedEmitter} = require('../../../src/inject/lean-theme/adopted-emitter');
+        const origCSSStyleSheet = (globalThis as unknown as {CSSStyleSheet?: unknown}).CSSStyleSheet;
+        class MockCSSStyleSheet {
+            cssRules: unknown[] = [];
+            replaceSync() {}
+        }
+        (globalThis as unknown as {CSSStyleSheet: unknown}).CSSStyleSheet = MockCSSStyleSheet;
+        try {
+            const fakeDoc = {adoptedStyleSheets: [] as unknown[]} as unknown as Document;
+            const emitter = createAdoptedEmitter();
+            const overrideSheet = emitter.setNamedSheet(fakeDoc, 'override', '.a{}', 'ending');
+            const inlineSheet = emitter.setNamedSheet(fakeDoc, 'inline', '.b{}', 'ending');
+            const dynSheet = emitter.createDynamicSheet(fakeDoc);
+            const externalSheet = new MockCSSStyleSheet() as unknown as CSSStyleSheet;
+
+            expect(emitter.ownsSheet(overrideSheet)).toBe(true);
+            expect(emitter.ownsSheet(inlineSheet)).toBe(true);
+            expect(emitter.ownsSheet(dynSheet)).toBe(true);
+            expect(emitter.ownsSheet(externalSheet)).toBe(false);
+
+            const sheets = (fakeDoc as unknown as {adoptedStyleSheets: unknown[]}).adoptedStyleSheets;
+            expect(sheets.indexOf(dynSheet)).toBeLessThan(sheets.indexOf(overrideSheet));
+            expect(sheets.indexOf(overrideSheet)).toBeLessThan(sheets.indexOf(inlineSheet));
+        } finally {
+            (globalThis as unknown as {CSSStyleSheet: unknown}).CSSStyleSheet = origCSSStyleSheet;
+        }
+    });
 });

@@ -19,10 +19,10 @@ import {getModifiedUserAgentStyle, getModifiedFallbackStyle, getSelectionColor} 
 import {clearColorPalette, registerVariablesSheet, releaseVariablesSheet} from '../dynamic-theme/palette';
 import {getManageableStyles, setIgnoredCSSURLs, shouldManageStyle} from '../dynamic-theme/style-manager';
 import type {StyleElement} from '../dynamic-theme/style-manager';
-import {createSharedRuleCache} from '../dynamic-theme/stylesheet-modifier';
+import {createSharedRuleCache, createStyleSheetModifier} from '../dynamic-theme/stylesheet-modifier';
 import {VariablesStore} from '../dynamic-theme/variables';
 
-import {createAdoptedEmitter} from './adopted-emitter';
+import {createAdoptedEmitter, getAdoptedSheets} from './adopted-emitter';
 import type {AdoptedEmitter} from './adopted-emitter';
 import {
     applyLeanInlineStyles,
@@ -38,6 +38,11 @@ const sharedRuleCache = createSharedRuleCache(4000);
 
 let emitter: AdoptedEmitter | null = null;
 const styleManagers = new Map<StyleElement, LeanStyleManager>();
+const adoptedSheetManagers = new Map<CSSStyleSheet, {
+    root: Document | ShadowRoot;
+    outSheet: CSSStyleSheet | null;
+    modifier: ReturnType<typeof createStyleSheetModifier>;
+}>();
 const shadowRootsObserved = new Set<ShadowRoot>();
 const shadowObservers = new Map<ShadowRoot, MutationObserver>();
 
@@ -50,6 +55,7 @@ let ignoredInlineSelectors: string[] = [];
 let domObserver: MutationObserver | null = null;
 const pendingAddedStyles = new Set<StyleElement>();
 const pendingRemovedStyles = new Set<StyleElement>();
+const pendingUpdatedManagers = new Set<LeanStyleManager>();
 const pendingInlineElements = new Set<HTMLElement>();
 const pendingShadowHosts = new Set<Element>();
 let pendingVariablesMatch = false;
@@ -108,7 +114,6 @@ function createStaticStyleOverrides(): void {
     activeEmitter.setNamedSheet(document, 'user-agent', getModifiedUserAgentStyle(currentTheme, currentIsIFrame, currentTheme.styleSystemControls), 'beginning');
     activeEmitter.setNamedSheet(document, 'text', currentTheme.useFont || currentTheme.textStroke > 0 ? createTextStyle(currentTheme) : '', 'beginning');
     activeEmitter.setNamedSheet(document, 'invert', getInversionStyleValue(currentTheme, currentFixes), 'beginning');
-    activeEmitter.setNamedSheet(document, 'inline', getLeanInlineOverrideStyle(), 'beginning');
 
     const selectionColors = currentTheme.selectionColor ? getSelectionColor(currentTheme) : null;
     const neutralBackgroundColor = modifyBackgroundColor(parseColorWithCache('#ffffff')!, currentTheme);
@@ -128,6 +133,7 @@ function createStaticStyleOverrides(): void {
 
     const overrideCSS = currentFixes?.css ? replaceCSSTemplates(currentFixes.css, currentTheme) : '';
     activeEmitter.setNamedSheet(document, 'override', overrideCSS, 'ending');
+    activeEmitter.setNamedSheet(document, 'inline', getLeanInlineOverrideStyle(), 'ending');
 }
 
 function createShadowStaticStyleOverrides(root: ShadowRoot): void {
@@ -135,10 +141,74 @@ function createShadowStaticStyleOverrides(root: ShadowRoot): void {
         return;
     }
     const activeEmitter = ensureEmitter();
-    activeEmitter.setNamedSheet(root, 'inline', getLeanInlineOverrideStyle(), 'beginning');
     activeEmitter.setNamedSheet(root, 'invert', getInversionStyleValue(currentTheme, currentFixes), 'beginning');
     const overrideCSS = currentFixes?.css ? replaceCSSTemplates(currentFixes.css, currentTheme) : '';
     activeEmitter.setNamedSheet(root, 'override', overrideCSS, 'ending');
+    activeEmitter.setNamedSheet(root, 'inline', getLeanInlineOverrideStyle(), 'ending');
+}
+
+function syncPageAdoptedSheets(root: Document | ShadowRoot): CSSStyleSheet[] {
+    const activeEmitter = ensureEmitter();
+    const newlyTracked: CSSStyleSheet[] = [];
+    let sheets: CSSStyleSheet[] = [];
+    try {
+        sheets = getAdoptedSheets(root);
+    } catch {
+        return newlyTracked;
+    }
+    for (const sheet of sheets) {
+        if (activeEmitter.ownsSheet(sheet) || adoptedSheetManagers.has(sheet)) {
+            continue;
+        }
+        try {
+            if (sheet.cssRules && sheet.cssRules.length > 0) {
+                leanVariablesStore.addRulesForMatching(sheet.cssRules);
+                pendingVariablesMatch = true;
+            }
+        } catch {
+            continue;
+        }
+        const modifier = createStyleSheetModifier({
+            sharedCache: sharedRuleCache,
+            variablesStore: leanVariablesStore,
+            imageURLModifier: null,
+        });
+        adoptedSheetManagers.set(sheet, {root, outSheet: null, modifier});
+        newlyTracked.push(sheet);
+    }
+    return newlyTracked;
+}
+
+function renderAdoptedSheet(sheet: CSSStyleSheet): void {
+    if (!currentTheme) {
+        return;
+    }
+    const entry = adoptedSheetManagers.get(sheet);
+    if (!entry) {
+        return;
+    }
+    let rules: CSSRuleList;
+    try {
+        rules = sheet.cssRules;
+    } catch {
+        return;
+    }
+    const activeEmitter = ensureEmitter();
+    entry.modifier.modifySheet({
+        sourceCSSRules: rules,
+        theme: currentTheme,
+        ignoreImageAnalysis: ignoredImageSelectors,
+        force: false,
+        prepareSheet: () => {
+            if (!entry.outSheet) {
+                entry.outSheet = activeEmitter.createDynamicSheet(entry.root);
+            } else {
+                entry.outSheet.replaceSync('');
+            }
+            return entry.outSheet;
+        },
+        isAsyncCancelled: () => !currentTheme,
+    });
 }
 
 function createManager(element: StyleElement, root: Document | ShadowRoot): LeanStyleManager {
@@ -148,7 +218,10 @@ function createManager(element: StyleElement, root: Document | ShadowRoot): Lean
         emitter: activeEmitter,
         sharedCache: sharedRuleCache,
         variablesStore: leanVariablesStore,
-        update: () => scheduleCoalescedFlush(),
+        update: () => {
+            pendingUpdatedManagers.add(manager);
+            scheduleCoalescedFlush();
+        },
         loadingStart: () => {
             loadingCount++;
         },
@@ -190,6 +263,7 @@ function renderDynamicStyles(): void {
             leanVariablesStore.addRulesForMatching(detail.rules);
         }
     }
+    syncPageAdoptedSheets(document);
 
     leanVariablesStore.matchVariablesAndDependents();
     leanVariablesStore.setOnRootVariableChange(() => {
@@ -201,6 +275,9 @@ function renderDynamicStyles(): void {
     styleManagers.forEach((manager) => {
         manager.render(currentTheme!, ignoredImageSelectors);
         manager.watch();
+    });
+    adoptedSheetManagers.forEach((_entry, sheet) => {
+        renderAdoptedSheet(sheet);
     });
 
     if (loadingCount === 0) {
@@ -256,6 +333,16 @@ function flushCoalescedMutations(): void {
         pendingShadowHosts.clear();
     }
 
+    const updatedManagers = new Set(pendingUpdatedManagers);
+    pendingUpdatedManagers.clear();
+    updatedManagers.forEach((manager) => {
+        const detail = manager.details({secondRound: true});
+        if (detail && detail.rules.length > 0) {
+            leanVariablesStore.addRulesForMatching(detail.rules);
+            pendingVariablesMatch = true;
+        }
+    });
+
     if (pendingVariablesMatch) {
         pendingVariablesMatch = false;
         leanVariablesStore.matchVariablesAndDependents();
@@ -267,10 +354,17 @@ function flushCoalescedMutations(): void {
         updateRootVars();
     }
 
+    const rendered = new Set<LeanStyleManager>();
     for (const manager of newlyAddedManagers) {
         manager.render(currentTheme, ignoredImageSelectors);
         manager.watch();
+        rendered.add(manager);
     }
+    updatedManagers.forEach((manager) => {
+        if (!rendered.has(manager)) {
+            manager.render(currentTheme!, ignoredImageSelectors);
+        }
+    });
 
     if (pendingInlineElements.size > 0) {
         pendingInlineElements.forEach((el) => {
@@ -367,22 +461,38 @@ function setupShadowRoot(shadowRoot: ShadowRoot): void {
     createShadowStaticStyleOverrides(shadowRoot);
 
     const styles = getManageableStyles(shadowRoot, [], true);
+    const newManagers: LeanStyleManager[] = [];
     for (const style of styles) {
         if (!styleManagers.has(style)) {
             const manager = createManager(style, shadowRoot);
+            newManagers.push(manager);
             const detail = manager.details({secondRound: false});
             if (detail && detail.rules.length > 0) {
                 leanVariablesStore.addRulesForMatching(detail.rules);
                 pendingVariablesMatch = true;
             }
-            if (currentTheme) {
-                manager.render(currentTheme, ignoredImageSelectors);
-                manager.watch();
-            }
         }
+    }
+    const newAdopted = syncPageAdoptedSheets(shadowRoot);
+
+    if (pendingVariablesMatch) {
+        pendingVariablesMatch = false;
+        leanVariablesStore.matchVariablesAndDependents();
+        pendingRootVars = true;
+    }
+    if (pendingRootVars) {
+        pendingRootVars = false;
+        updateRootVars();
     }
 
     if (currentTheme) {
+        for (const manager of newManagers) {
+            manager.render(currentTheme, ignoredImageSelectors);
+            manager.watch();
+        }
+        for (const sheet of newAdopted) {
+            renderAdoptedSheet(sheet);
+        }
         applyLeanInlineStyles(shadowRoot, currentTheme, leanVariablesStore, ignoredInlineSelectors, ignoredImageSelectors);
     }
 
@@ -428,6 +538,7 @@ function stopWatching(): void {
     microtaskScheduled = false;
     pendingAddedStyles.clear();
     pendingRemovedStyles.clear();
+    pendingUpdatedManagers.clear();
     pendingInlineElements.clear();
     pendingShadowHosts.clear();
     pendingVariablesMatch = false;
@@ -482,6 +593,8 @@ export function removeLeanTheme(): void {
 
     styleManagers.forEach((manager) => manager.destroy());
     styleManagers.clear();
+    adoptedSheetManagers.clear();
+    loadingCount = 0;
     cleanLeanLoadingLinks();
 
     if (emitter) {

@@ -29,11 +29,29 @@ export function attachAdoptedSheet(
     node: Document | ShadowRoot,
     sheet: CSSStyleSheet,
     position: 'beginning' | 'ending' = 'ending',
+    beforeSheets?: CSSStyleSheet[],
 ): void {
+    const findAnchorIndex = (sheets: CSSStyleSheet[]): number => {
+        if (!beforeSheets || beforeSheets.length === 0) {
+            return -1;
+        }
+        let earliest = -1;
+        for (const anchor of beforeSheets) {
+            const idx = sheets.indexOf(anchor);
+            if (idx !== -1 && (earliest === -1 || idx < earliest)) {
+                earliest = idx;
+            }
+        }
+        return earliest;
+    };
+
     if (isFirefox) {
         const sheets = getAdoptedSheets(node);
         if (!sheets.includes(sheet)) {
-            if (position === 'beginning') {
+            const anchorIndex = findAnchorIndex(sheets);
+            if (anchorIndex !== -1) {
+                sheets.splice(anchorIndex, 0, sheet);
+            } else if (position === 'beginning') {
                 sheets.unshift(sheet);
             } else {
                 sheets.push(sheet);
@@ -43,9 +61,16 @@ export function attachAdoptedSheet(
     }
     const current = node.adoptedStyleSheets;
     if (!current.includes(sheet)) {
-        node.adoptedStyleSheets = position === 'beginning'
-            ? [sheet, ...current]
-            : [...current, sheet];
+        const anchorIndex = findAnchorIndex(current);
+        if (anchorIndex !== -1) {
+            const next = [...current];
+            next.splice(anchorIndex, 0, sheet);
+            node.adoptedStyleSheets = next;
+        } else {
+            node.adoptedStyleSheets = position === 'beginning'
+                ? [sheet, ...current]
+                : [...current, sheet];
+        }
     }
 }
 
@@ -76,6 +101,7 @@ export interface AdoptedEmitter {
     getNamedSheet(root: Document | ShadowRoot, id: string): CSSStyleSheet | null;
     createDynamicSheet(root: Document | ShadowRoot): CSSStyleSheet;
     removeDynamicSheet(root: Document | ShadowRoot, sheet: CSSStyleSheet): void;
+    ownsSheet(sheet: CSSStyleSheet): boolean;
     serializeLeanCSS(): string;
     destroy(): void;
 }
@@ -84,6 +110,7 @@ export function createAdoptedEmitter(): AdoptedEmitter {
     const namedSheets = new Map<Document | ShadowRoot, Map<string, CSSStyleSheet>>();
     const dynamicSheets = new Map<Document | ShadowRoot, Set<CSSStyleSheet>>();
     const trackedRoots = new Set<Document | ShadowRoot>();
+    const ownedSheets = new WeakSet<CSSStyleSheet>();
 
     function trackRoot(root: Document | ShadowRoot) {
         trackedRoots.add(root);
@@ -104,8 +131,16 @@ export function createAdoptedEmitter(): AdoptedEmitter {
         let sheet = rootNamed.get(id);
         if (!sheet) {
             sheet = createConstructableSheet();
+            ownedSheets.add(sheet);
             rootNamed.set(id, sheet);
-            attachAdoptedSheet(root, sheet, position);
+            const anchors: CSSStyleSheet[] = [];
+            if (id === 'override') {
+                const inlineSheet = rootNamed.get('inline');
+                if (inlineSheet) {
+                    anchors.push(inlineSheet);
+                }
+            }
+            attachAdoptedSheet(root, sheet, position, anchors);
         }
         sheet.replaceSync(cssText);
         return sheet;
@@ -118,14 +153,21 @@ export function createAdoptedEmitter(): AdoptedEmitter {
     function createDynamicSheet(root: Document | ShadowRoot): CSSStyleSheet {
         trackRoot(root);
         const sheet = createConstructableSheet();
+        ownedSheets.add(sheet);
         let rootDynamic = dynamicSheets.get(root);
         if (!rootDynamic) {
             rootDynamic = new Set();
             dynamicSheets.set(root, rootDynamic);
         }
         rootDynamic.add(sheet);
-        attachAdoptedSheet(root, sheet, 'ending');
+        const rootNamed = namedSheets.get(root);
+        const anchors = [rootNamed?.get('override'), rootNamed?.get('inline')].filter(Boolean) as CSSStyleSheet[];
+        attachAdoptedSheet(root, sheet, 'ending', anchors);
         return sheet;
+    }
+
+    function ownsSheet(sheet: CSSStyleSheet): boolean {
+        return ownedSheets.has(sheet);
     }
 
     function removeDynamicSheet(root: Document | ShadowRoot, sheet: CSSStyleSheet): void {
@@ -190,6 +232,7 @@ export function createAdoptedEmitter(): AdoptedEmitter {
         getNamedSheet,
         createDynamicSheet,
         removeDynamicSheet,
+        ownsSheet,
         serializeLeanCSS,
         destroy,
     };

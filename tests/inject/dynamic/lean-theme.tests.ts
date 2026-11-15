@@ -99,4 +99,70 @@ describe('LEAN DYNAMIC THEME', () => {
         expect(shadow.adoptedStyleSheets.length).toBe(0);
         expect(document.adoptedStyleSheets.length).toBe(0);
     });
+
+    it('orders override and inline sheets after dynamicSheets so site fixes win (REQ-LEAN-3)', () => {
+        const style = document.createElement('style');
+        style.textContent = '.box { background-color: #ffffff; }';
+        const box = document.createElement('div');
+        box.className = 'box';
+        container.append(style, box);
+
+        createOrUpdateLeanTheme(theme, {
+            url: ['*'],
+            invert: [],
+            css: '.box { background-color: rgb(255, 0, 0); }',
+            ignoreInlineStyle: [],
+            ignoreImageAnalysis: [],
+            ignoreCSSUrl: [],
+            disableStyleSheetsProxy: false,
+            disableCustomElementRegistryProxy: false,
+        }, false);
+
+        expect(getComputedStyle(box).backgroundColor).toBe('rgb(255, 0, 0)');
+    });
+
+    it('re-renders existing style sheets when rules are inserted via CSSOM (REQ-LEAN-2)', async () => {
+        const style = document.createElement('style');
+        style.textContent = '.initial { color: #000000; }';
+        const target = document.createElement('div');
+        target.className = 'mutated';
+        container.append(style, target);
+
+        createOrUpdateLeanTheme(theme, null, false);
+        style.sheet!.insertRule('.mutated { background-color: #ffffff; }', style.sheet!.cssRules.length);
+        style.dispatchEvent(new CustomEvent('__nyx__updateSheet'));
+        await timeout(80);
+
+        expect(serializeLeanCSS()).toContain('.mutated');
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+    });
+
+    it('themes page-authored adoptedStyleSheets on document and ShadowRoot without removing them on cleanup (REQ-LEAN-4)', () => {
+        const pageDocSheet = new CSSStyleSheet();
+        pageDocSheet.replaceSync('.doc-adopted { background-color: #ffffff; color: #000000; }');
+        document.adoptedStyleSheets = [pageDocSheet];
+
+        const host = document.createElement('div');
+        const shadow = host.attachShadow({mode: 'open'});
+        const pageShadowSheet = new CSSStyleSheet();
+        pageShadowSheet.replaceSync('.shadow-adopted { background-color: #ffffff; color: #000000; }');
+        shadow.adoptedStyleSheets = [pageShadowSheet];
+
+        const docEl = document.createElement('div');
+        docEl.className = 'doc-adopted';
+        const shadowEl = document.createElement('div');
+        shadowEl.className = 'shadow-adopted';
+        shadow.append(shadowEl);
+        container.append(docEl, host);
+
+        createOrUpdateLeanTheme(theme, null, false);
+
+        expect(getComputedStyle(docEl).backgroundColor).toBe('rgb(17, 17, 17)');
+        expect(getComputedStyle(shadowEl).backgroundColor).toBe('rgb(17, 17, 17)');
+
+        removeLeanTheme();
+        expect(document.adoptedStyleSheets).toEqual([pageDocSheet]);
+        expect(shadow.adoptedStyleSheets).toEqual([pageShadowSheet]);
+        document.adoptedStyleSheets = [];
+    });
 });
