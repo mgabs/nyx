@@ -1,36 +1,35 @@
 <h2 align="center">Contributions</h2>
 
-<p align="center">You can contribute to and help Dark Reader in many ways. Continue reading to learn how, and thank you in advance!</p>
+<p align="center">You can contribute to and help Nyx in many ways. Continue reading to learn how, and thank you in advance!</p>
 
 ## Sponsor
 
-<a href="https://opencollective.com/darkreader/donate" target="_blank" rel="noreferrer noopener"> <img src="https://opencollective.com/darkreader/donate/button@2x.png?color=blue" width=300 /></a>
-
-Please sponsor the development of Dark Reader.
+<!-- TODO: Add Nyx donation link -->
+TODO: [Donate](TODO) — Please sponsor the development of Nyx.
 
 ## Translation
 
-[Improve or suggest](https://github.com/darkreader/darkreader/tree/main/src/_locales) a translation. See the list of [language codes](https://developer.chrome.com/webstore/i18n#localeTable) that we can support.
+[Improve or suggest](https://github.com/mgabs/nyx/tree/main/src/_locales) a translation. See the list of [language codes](https://developer.chrome.com/webstore/i18n#localeTable) that we can support.
 
-## Disabling Dark Reader on your site
+## Disabling Nyx on your site
 
-Website pages can request Dark Reader to disable itself by embedding a "Dark Reader lock". The "lock" is a `<meta>` tag with `name` attribute set to `darkreader-lock` which is a child of `<head>` tag in the document.
+Website pages can request Nyx to disable itself by embedding a "Nyx lock". The "lock" is a `<meta>` tag with `name` attribute set to `nyx-lock` (or `darkreader-lock` for compatibility) which is a child of `<head>` tag in the document.
 
-### Disabling Dark Reader statically
+### Disabling Nyx statically
 
-Add `<meta name="darkreader-lock">` within your HTML document in `<head>` like so:
+Add `<meta name="nyx-lock">` within your HTML document in `<head>` like so:
 ```html
 <head>
-    <meta name="darkreader-lock">
+    <meta name="nyx-lock">
 </head>
 ```
 
-### Disabling Dark Reader dynamically
+### Disabling Nyx dynamically
 
 Add the "lock" dynamically like so (assuming browser already parsed enough of the document to create a `head` attribute):
 ```js
 const lock = document.createElement('meta');
-lock.name = 'darkreader-lock';
+lock.name = 'nyx-lock';
 document.head.appendChild(lock);
 ```
 
@@ -42,21 +41,21 @@ If a website is **already dark** and meets the following requirements:
 - The URL is the actual website address. No redirects of any kind are allowed.
 - The website is complete and finished. Any website in the design or development phase or any other incomplete status is not permitted. These statuses can include any placeholder web pages or verbiage about coming soon, the website being under construction, the website having moved, etc.
 
-Then you can **add it to the [dark-sites.config](https://github.com/darkreader/darkreader/blob/main/src/config/dark-sites.config) file**.
+Then you can **add it to the [dark-sites.config](https://github.com/mgabs/nyx/blob/main/src/config/dark-sites.config) file**.
 
 **Please maintain the alphabetical order of the websites listed in this file.**
 
 ## Fixing incorrect inversions
 
-If any **element** on a web page is **not inverted or styled correctly**, you can fix it by specifying the appropriate [**CSS selector**](https://developer.mozilla.org/docs/Web/CSS/CSS_Selectors). Use the [**dynamic-theme-fixes.config**](https://github.com/darkreader/darkreader/blob/main/src/config/dynamic-theme-fixes.config) file for Dynamic Theme mode and the [**inversion-fixes.config**](https://github.com/darkreader/darkreader/blob/main/src/config/inversion-fixes.config) file for Filter and Filter+ modes.
+If any **element** on a web page is **not inverted or styled correctly**, you can fix it by specifying the appropriate [**CSS selector**](https://developer.mozilla.org/docs/Web/CSS/CSS_Selectors). Use the [**dynamic-theme-fixes.config**](https://github.com/mgabs/nyx/blob/main/src/config/dynamic-theme-fixes.config) file for Dynamic Theme mode and the [**inversion-fixes.config**](https://github.com/mgabs/nyx/blob/main/src/config/inversion-fixes.config) file for Filter and Filter+ modes.
 
 **Please maintain the alphabetical order of the websites listed, use short selectors, and preserve the code style in these files.**
 
-You can learn how to create a fix for the appropriate Dark Reader mode below.
+You can learn how to create a fix for the appropriate Nyx mode below.
 
 ## How to use the Dev Tools
 
-Dark Reader includes its own developer tools, allowing easier modification of its rules and quicker previews. The Dev Tools help you **fix minor issues** on a web page. These can include a dark icon on a dark background, removing a bright background, adding a white background to a transparent image, etc.
+Nyx includes its own developer tools, allowing easier modification of its rules and quicker previews. The Dev Tools help you **fix minor issues** on a web page. These can include a dark icon on a dark background, removing a bright background, adding a white background to a transparent image, etc.
 
 Common use cases:
 
@@ -66,7 +65,7 @@ In **Filter mode**, it is a common practice to invert elements on the page that 
 
 The Dev Tools can help you fix these and other rule bugs.
 
-### Navigating to the Dark Reader Dev Tools
+### Navigating to the Nyx Dev Tools
 
 #### Video walkthrough:
 https://github.com/user-attachments/assets/76a5d9bc-7553-4e50-acf5-5a9051cec152
@@ -76,7 +75,7 @@ https://github.com/user-attachments/assets/76a5d9bc-7553-4e50-acf5-5a9051cec152
 - Click on **element picker** (top-left corner). It is enabled automatically in Firefox.
 - Pick an incorrectly inverted element.
 - Choose a **[selector](https://developer.mozilla.org/docs/Web/CSS/CSS_Selectors)** for that element or all similar elements (for example, if it has `class="icon small"`, the selector may look like `.icon`).
-- Click the **Dark Reader icon** to open the extension's popup window.
+- Click the **Nyx icon** to open the extension's popup window.
 - Switch to the **More** tab.
 - Click the **⛭ All settings** button at the bottom.
 - Switch to the **Advanced** section on the left.
@@ -85,7 +84,7 @@ https://github.com/user-attachments/assets/76a5d9bc-7553-4e50-acf5-5a9051cec152
 - Edit or add a block containing the URL and selectors to invert, using the [rules below](#editor--rule-syntax).
 - Click **Apply**.
 - Check how the site looks both in **Light** and **Dark** modes.
-- If the **fix works**, open **[dynamic-theme-fixes.config](https://github.com/darkreader/darkreader/blob/main/src/config/dynamic-theme-fixes.config)** or **[inversion-fixes.config](https://github.com/darkreader/darkreader/blob/main/src/config/inversion-fixes.config)**.
+- If the **fix works**, open **[dynamic-theme-fixes.config](https://github.com/mgabs/nyx/blob/main/src/config/dynamic-theme-fixes.config)** or **[inversion-fixes.config](https://github.com/mgabs/nyx/blob/main/src/config/inversion-fixes.config)**.
 - Click **Edit** (requires being logged in to GitHub).
 - **Insert your fix** there (copying and pasting it from the Dev Tools). Preserve **alphabetic order** by URL.
 - Provide a **short description** of what you have done.
@@ -94,7 +93,7 @@ https://github.com/user-attachments/assets/76a5d9bc-7553-4e50-acf5-5a9051cec152
 - Once you create the pull request, GitHub Actions will run tests behind the scenes to ensure your submission has the right code style. This will take a few minutes.
 - If you see a **red cross**, click **Details** to see what is wrong and edit the existing Pull Request.
 - When you see a **green checkmark**, then everything is fine.
-- A Dark Reader developer will **review** and merge your changes, making them available to all Dark Reader users.
+- A Nyx maintainer will **review** and merge your changes, making them available to all Nyx users.
 
 
 ## Editor & Rule Syntax
@@ -159,10 +158,10 @@ example.com
 
 CSS
 .logo {
-    background-color: var(--darkreader-neutral-background) !important;
+    background-color: var(--nyx-neutral-background) !important;
 }
 .footer > p {
-    color: var(--darkreader-neutral-text) !important;
+    color: var(--nyx-neutral-text) !important;
 }
 
 ```
@@ -171,10 +170,10 @@ Here is a full table of available CSS variables:
 
 | Variable | Description | Use |
 |---|---|---|
-| **`--darkreader-neutral-background`** | Neutral background color that <br>corresponds to the user's settings. | Mostly used for elements that have <br>the wrong background color. |
-| **`--darkreader-neutral-text`** | Neutral text color that <br>corresponds to the user's settings. | Used for elements with the wrong text color. |
-| **`--darkreader-selection-background`** | The background color setting <br>defined by the user. | The user's Background Color setting. |
-| **`--darkreader-selection-text`** | The text color setting <br>defined by the user. | The user's Text Color setting. |
+| **`--nyx-neutral-background`** | Neutral background color that <br>corresponds to the user's settings. | Mostly used for elements that have <br>the wrong background color. |
+| **`--nyx-neutral-text`** | Neutral text color that <br>corresponds to the user's settings. | Used for elements with the wrong text color. |
+| **`--nyx-selection-background`** | The background color setting <br>defined by the user. | The user's Background Color setting. |
+| **`--nyx-selection-text`** | The text color setting <br>defined by the user. | The user's Text Color setting. |
 
 ## Fixes for Filter and Filter+ mode
 
@@ -207,7 +206,7 @@ CSS
 
 ## Adding new features or fixing bugs
 
-If you would like to **add a new feature** to Dark Reader or **fix a bug**, please **submit an issue** in GitHub (if there is no existing one), **discuss** it with active contributors, and wait for **approval**.
+If you would like to **add a new feature** to Nyx or **fix a bug**, please **submit an issue** in GitHub (if there is no existing one), **discuss** it with active contributors, and wait for **approval**.
 
 To build and debug the extension, **install the [Node.js](https://nodejs.org/)** LTS version.
 Install development dependencies by running `npm install` in the project's root folder.
@@ -216,7 +215,7 @@ Then execute `npm run debug`.
 #### Chrome and Edge
 
 - Open the `chrome://extensions` page.
-- Disable the official Dark Reader version.
+- Disable any existing Nyx or Dark Reader version.
 - Enable the **Developer mode**.
 - Click **Load unpacked extension** button.
 - Navigate to the project's `build/debug/chrome` folder.
@@ -224,7 +223,7 @@ Then execute `npm run debug`.
 #### Firefox
 
 - Open the `about:addons` page.
-- Disable the official Dark Reader version.
+- Disable any existing Nyx or Dark Reader version.
 - Open the `about:debugging#addons` page.
 - Click the **Load Temporary Add-on** button.
 - Open the `build/debug/firefox/manifest.json` file.

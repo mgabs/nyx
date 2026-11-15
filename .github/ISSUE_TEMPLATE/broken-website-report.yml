@@ -1,5 +1,5 @@
 name: Broken Website Report
-description: Create a report about a website issue you experienced while using Dark Reader.
+description: Create a report about a website issue you experienced while using Nyx.
 title: "[Broken Website] Replace with title"
 labels: ["Broken Website"]
 body:
@@ -13,9 +13,9 @@ body:
     attributes:
       label: Prerequisites
       options:
-        - label: I [searched for any existing report](https://github.com/darkreader/darkreader/issues?q=is%3Aissue) about this website issue to avoid opening a duplicate.
+        - label: I [searched for any existing report](https://github.com/mgabs/nyx/issues?q=is%3Aissue) about this website issue to avoid opening a duplicate.
           required: true
-        - label: I can reproduce this website issue in a new, unmodified web browser profile with Dark Reader installed as the only extension.
+        - label: I can reproduce this website issue in a new, unmodified web browser profile with Nyx installed as the only extension.
           required: true
 
   - type: textarea
@@ -64,7 +64,7 @@ body:
 
   - type: input
     attributes:
-      label: Dark Reader version
+      label: Nyx version
     validations:
       required: true
 

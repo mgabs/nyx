@@ -60,8 +60,9 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-darkreaderapp@gmail.com.
+reported to the community leaders responsible for enforcement via the project repository
+(https://github.com/mgabs/nyx).
+<!-- TODO: Add Nyx Code of Conduct contact email -->
 All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the
