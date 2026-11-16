@@ -17,8 +17,10 @@ interface TabProps {
     onClick?: () => void;
 }
 
-function TabPanel(props: TabPanelProps, ...children: Array<Malevic.ComponentSpec<TabProps>>) {
+function TabPanel(props: TabPanelProps, ...allChildren: Array<Malevic.ComponentSpec<TabProps> | null>) {
     const {activeTabId} = props;
+    // Conditional tabs (e.g. `{cond ? <Tab/> : null}`) arrive as null
+    const children = allChildren.filter((child): child is Malevic.ComponentSpec<TabProps> => Boolean(child));
 
     function createTabButton(tabSpec: Malevic.ComponentSpec<TabProps>) {
         const {id, label, icon, iconClass = ''} = tabSpec.props;

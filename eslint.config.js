@@ -219,7 +219,7 @@ export default tslint.config({
         globals: {
             ...globals.browser,
         },
-        ecmaVersion: 2020,
+        ecmaVersion: 2022,
         sourceType: 'module',
     },
     settings: {

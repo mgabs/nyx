@@ -92,7 +92,8 @@ describe('Toggling the extension', () => {
             ['h1', 'color', 'rgb(255, 0, 0)'],
             ['a', 'color', 'rgb(0, 0, 238)'],
         ]);
-        if ((await backgroundUtils.getManifest()).manifest_version === 3) {
+        // Only the Chromium MV3 build persists system color state in session storage
+        if (product !== 'firefox' && (await backgroundUtils.getManifest()).manifest_version === 3) {
             expect(await backgroundUtils.getChromeStorage('session', ['system-color-state'])).toEqual({
                 'system-color-state': {wasLastColorSchemeDark: false},
             });
