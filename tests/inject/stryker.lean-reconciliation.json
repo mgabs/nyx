@@ -1,6 +1,7 @@
 {
   "mutate": [
-    "src/inject/lean-theme/index.ts:159-205"
+    "src/inject/lean-theme/adopted-sync.ts",
+    "src/inject/lean-theme/index.ts:155-170"
   ],
   "testRunner": "command",
   "commandRunner": {

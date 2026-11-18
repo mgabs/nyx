@@ -90,6 +90,10 @@ Focused Jest tests exercise readable and inaccessible sheets, import expansion, 
 
 Focused Jest tests cover every override-to-property mapping, marked and unmarked cleanup, ignored selectors, missing styles, gradients, functional results, HTML, SVG and nested shadow roots. `inline-style.ts` has 100% line and branch coverage; Stryker killed 159 of 166 mutations (95.78%) with no timeouts. The unused element-root traversal branches were removed; production callers pass only documents or shadow roots. Firefox injection passed 180/180 after the change and six focused inline/engine-switch cases passed in Helium. Raw reports: `/private/tmp/nyx-inline-unit3.log` and `/private/tmp/nyx-inline-mutation2.log`.
 
+## Adopted-sheet synchronization coverage
+
+The remaining sheet synchronization was extracted into Lean-only `adopted-sync.ts`. Focused Jest tests cover inaccessible roots and sheets, per-root tracking, additions, removals, owned outputs, rule signatures and ordering around the override anchor. The module has 100% line and branch coverage; Stryker killed 44 of 45 mutants (97.78%) with no timeouts. The survivor changes `sourceIndex > anchorIndex` to `>=`; equality cannot occur for a page sheet because the anchor is an owned sheet excluded from candidates. Firefox injection passed 180/180, all 261 unit tests passed, and five focused adopted-sheet tests passed in Helium. The reusable browser mutation configuration now covers the extracted module and the remaining injector wrapper. Raw report: `/private/tmp/nyx-adopted-sync-mutation2.log`.
+
 ## Latest Firefox injection coverage
 
 After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.

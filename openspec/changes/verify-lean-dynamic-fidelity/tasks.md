@@ -30,7 +30,7 @@ flowchart LR
 
 - [x] 5.0 Red: test nested conditional cross-origin imports, failure/cycles, inline cleanup across all override types and shadow roots, and switching during pending loads; capture expected failures. Evidence: Firefox targeted Karma against an isolated `git archive HEAD` baseline: 14 failed and 12 passed; nested import and inline cleanup failed, while failure/cycle and late-switch cases already passed (see verification.md).
 - [x] 5.1 Green: resolve imports with conditions and URL bases, cancel stale work and clean owned state; verify red tests and engine-switch regressions pass. Evidence: Firefox focused Karma 26/26 and full injection 168/168; code and tests committed in 4b8ba29d.
-- [ ] 5.2 Measure changed pure logic line/branch coverage and mutation kill against 95% targets; verify reports and address meaningful gaps.
+- [x] 5.2 Measure changed pure logic line/branch coverage and mutation kill against 95% targets; verify reports and address meaningful gaps. Evidence: manager 100% lines/98.46% branches, 170/175 killed; inline 100%/100%, 159/166 killed; import scanner, condition scanner and wrapping each >=95% lines/branches and killed mutants; see verification.md. Browser orchestration remains under 4.2.
 
 ## 6. Document Export
 

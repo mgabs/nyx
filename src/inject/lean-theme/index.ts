@@ -1,4 +1,3 @@
-import {getRemovedAdoptedSheets, getUntrackedAdoptedSheets} from './adopted-reconciliation';
 import type {Theme, DynamicThemeFix} from '../../definitions';
 import {getCSSFilterValue} from '../../generators/css-filter';
 import {createTextStyle} from '../../generators/text-style';
@@ -27,6 +26,8 @@ import {createSharedRuleCache, createStyleSheetModifier} from '../dynamic-theme/
 import {VariablesStore} from '../dynamic-theme/variables';
 
 import {createAdoptedEmitter, getAdoptedSheets} from './adopted-emitter';
+import {syncAdoptedSheets} from './adopted-sync';
+import type {AdoptedSheetEntry} from './adopted-sync';
 import type {AdoptedEmitter} from './adopted-emitter';
 import {
     applyLeanInlineStyles,
@@ -43,12 +44,7 @@ const sharedRuleCache = createSharedRuleCache(4000);
 
 let emitter: AdoptedEmitter | null = null;
 const styleManagers = new Map<StyleElement, LeanStyleManager>();
-const adoptedSheetManagers = new Map<Document | ShadowRoot, Map<CSSStyleSheet, {
-    root: Document | ShadowRoot;
-    outSheet: CSSStyleSheet | null;
-    modifier: ReturnType<typeof createStyleSheetModifier>;
-    signature: string;
-}>>();
+const adoptedSheetManagers = new Map<Document | ShadowRoot, Map<CSSStyleSheet, AdoptedSheetEntry>>();
 const adoptedEventCleaners: Array<() => void> = [];
 const pendingAdoptedRoots = new Set<Document | ShadowRoot>();
 const shadowRootsObserved = new Set<ShadowRoot>();
@@ -157,51 +153,20 @@ function createShadowStaticStyleOverrides(root: ShadowRoot): void {
 }
 
 function syncPageAdoptedSheets(root: Document | ShadowRoot): CSSStyleSheet[] {
-    const activeEmitter = ensureEmitter();
-    const newlyTracked: CSSStyleSheet[] = [];
-    let sheets: CSSStyleSheet[] = [];
-    try {
-        sheets = getAdoptedSheets(root);
-    } catch {
-        return newlyTracked;
-    }
-    let managers = adoptedSheetManagers.get(root);
-    if (!managers) {
-        managers = new Map();
-        adoptedSheetManagers.set(root, managers);
-    }
-    for (const sheet of getRemovedAdoptedSheets(sheets, managers.keys())) {
-        const entry = managers.get(sheet)!;
-        if (entry.outSheet) {
-            activeEmitter.removeDynamicSheet(root, entry.outSheet);
-        }
-        managers.delete(sheet);
-    }
-    for (const sheet of getUntrackedAdoptedSheets([...sheets], managers, activeEmitter.ownsSheet)) {
-        try {
-            if (sheet.cssRules && sheet.cssRules.length > 0) {
-                leanVariablesStore.addRulesForMatching(sheet.cssRules);
-                pendingVariablesMatch = true;
-            }
-        } catch {
-            continue;
-        }
-        const anchor = activeEmitter.getNamedSheet(root, 'override');
-        const sourceIndex = sheets.indexOf(sheet);
-        const anchorIndex = anchor ? sheets.indexOf(anchor) : -1;
-        if (anchorIndex >= 0 && sourceIndex > anchorIndex) {
-            sheets.splice(sourceIndex, 1);
-            sheets.splice(anchorIndex, 0, sheet);
-        }
-        const modifier = createStyleSheetModifier({
+    return syncAdoptedSheets(root, {
+        emitter: ensureEmitter(),
+        getSheets: getAdoptedSheets,
+        managersByRoot: adoptedSheetManagers,
+        addRules: (rules) => {
+            leanVariablesStore.addRulesForMatching(rules);
+            pendingVariablesMatch = true;
+        },
+        createModifier: () => createStyleSheetModifier({
             sharedCache: sharedRuleCache,
             variablesStore: leanVariablesStore,
             imageURLModifier: null,
-        });
-        managers.set(sheet, {root, outSheet: null, modifier, signature: Array.from(sheet.cssRules, (rule) => rule.cssText).join('\n')});
-        newlyTracked.push(sheet);
-    }
-    return newlyTracked;
+        }),
+    });
 }
 
 function renderAdoptedSheet(root: Document | ShadowRoot, sheet: CSSStyleSheet): void {
