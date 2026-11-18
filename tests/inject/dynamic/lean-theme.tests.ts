@@ -3,6 +3,7 @@ import {DEFAULT_THEME} from '../../../src/defaults';
 import {createOrUpdateLeanTheme, removeLeanTheme, serializeLeanCSS} from '../../../src/inject/lean-theme';
 import {injectProxy} from '../../../src/inject/dynamic-theme/stylesheet-proxy';
 import {createOrUpdateDynamicTheme, removeDynamicTheme} from '../../../src/inject/dynamic-theme';
+import {VariablesStore} from '../../../src/inject/dynamic-theme/variables';
 import {resetChromeRuntimeMessageStub, stubBackgroundFetchResponse, stubChromeRuntimeMessage} from '../support/background-stub';
 import {getCSSEchoURL} from '../support/echo-client';
 import {multiline, timeout} from '../support/test-utils';
@@ -627,6 +628,30 @@ describe('LEAN DYNAMIC THEME', () => {
         }
     });
 
+    it('queues and matches variables when a page adopts a new stylesheet', async () => {
+        const addRules = spyOn(VariablesStore.prototype, 'addRulesForMatching').and.callThrough();
+        const matchVariables = spyOn(VariablesStore.prototype, 'matchVariablesAndDependents').and.callThrough();
+        createOrUpdateLeanTheme(theme, null, false);
+        await timeout(100);
+        addRules.calls.reset();
+        matchVariables.calls.reset();
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(':root { --late-adopted: white; } .late-adopted { background-color: var(--late-adopted); }');
+        const target = document.createElement('div');
+        target.className = 'late-adopted';
+        container.append(target);
+        try {
+            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+            await timeout(150);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+            expect(addRules).toHaveBeenCalledWith(sheet.cssRules);
+            expect(matchVariables).toHaveBeenCalled();
+        } finally {
+            removeLeanTheme();
+            document.adoptedStyleSheets = [];
+        }
+    });
+
     it('themes chained variables when an adopted sheet appears after activation', async () => {
         const style = document.createElement('style');
         style.textContent = '.late-variable { background-color: var(--late-alias); } .late-reference { background-color: white; }';
@@ -811,6 +836,38 @@ describe('LEAN DYNAMIC THEME', () => {
         expect(getComputedStyle(banner).backgroundColor).toBe('rgb(17, 17, 17)');
         expect(getComputedStyle(banner).color).toBe('rgb(238, 238, 238)');
         expect(getComputedStyle(logo).filter).toContain('invert');
+    });
+
+    it('themes an open shadow root added after activation and cleans it on removal', async () => {
+        createOrUpdateLeanTheme(theme, null, false);
+        const host = document.createElement('div');
+        const shadow = host.attachShadow({mode: 'open'});
+        shadow.innerHTML = '<style>.late-shadow { background-color: white; }</style><span class="late-shadow">Late</span>';
+        container.append(host);
+        await timeout(150);
+        const target = shadow.querySelector('.late-shadow')!;
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        removeLeanTheme();
+        expect(shadow.adoptedStyleSheets.length).toBe(0);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(255, 255, 255)');
+    });
+
+    it('removes overrides when a dynamically inserted style container is removed', async () => {
+        const target = document.createElement('div');
+        target.className = 'dynamic-removal';
+        container.append(target);
+        createOrUpdateLeanTheme(theme, null, false);
+        const holder = document.createElement('section');
+        const style = document.createElement('style');
+        style.textContent = '.dynamic-removal { background-color: white; }';
+        holder.append(style);
+        container.append(holder);
+        await timeout(150);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        holder.remove();
+        await timeout(150);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+        expect(serializeLeanCSS()).not.toContain('.dynamic-removal');
     });
 
     it('supports open ShadowRoot adoptedStyleSheets and coalesced DOM updates', async () => {

@@ -1,9 +1,9 @@
 import type {Theme, DynamicThemeFix} from '../../definitions';
 import {getCSSFilterValue} from '../../generators/css-filter';
 import {createTextStyle} from '../../generators/text-style';
-import {forEach, toArray} from '../../utils/array';
+import {forEach} from '../../utils/array';
 import {clearColorCache, getSRGBLightness, parseColorWithCache} from '../../utils/color';
-import {isFirefox, isShadowDomSupported} from '../../utils/platform';
+import {isShadowDomSupported} from '../../utils/platform';
 import {
     iterateShadowHosts,
     isDOMReady,
@@ -27,6 +27,9 @@ import {VariablesStore} from '../dynamic-theme/variables';
 
 import {createAdoptedEmitter, getAdoptedSheets} from './adopted-emitter';
 import {syncAdoptedSheets} from './adopted-sync';
+import {watchAdoptedRoot} from './adopted-watch';
+import {renderAdoptedOutput} from './adopted-render';
+import {reorderAdoptedOutputs as reorderAdopted} from './adopted-reorder';
 import type {AdoptedSheetEntry} from './adopted-sync';
 import type {AdoptedEmitter} from './adopted-emitter';
 import {
@@ -170,61 +173,17 @@ function syncPageAdoptedSheets(root: Document | ShadowRoot): CSSStyleSheet[] {
 }
 
 function renderAdoptedSheet(root: Document | ShadowRoot, sheet: CSSStyleSheet): void {
-    if (!currentTheme) {
-        return;
-    }
-    const entry = adoptedSheetManagers.get(root)?.get(sheet);
-    if (!entry) {
-        return;
-    }
-    let rules: CSSRuleList;
-    try {
-        rules = sheet.cssRules;
-    } catch {
-        return;
-    }
-    const activeEmitter = ensureEmitter();
-    entry.modifier.modifySheet({
-        sourceCSSRules: rules,
+    renderAdoptedOutput(root, sheet, {
         theme: currentTheme,
-        ignoreImageAnalysis: ignoredImageSelectors,
-        force: false,
-        prepareSheet: () => {
-            if (!entry.outSheet) {
-                entry.outSheet = activeEmitter.createDynamicSheet(entry.root);
-            } else {
-                entry.outSheet.replaceSync('');
-            }
-            return entry.outSheet;
-        },
-        isAsyncCancelled: () => !currentTheme,
+        managersByRoot: adoptedSheetManagers,
+        getEmitter: ensureEmitter,
+        ignoredImageSelectors,
+        isActive: () => Boolean(currentTheme),
     });
 }
 
 function reorderAdoptedOutputs(root: Document | ShadowRoot): void {
-    const managers = adoptedSheetManagers.get(root);
-    if (!managers || !emitter) {
-        return;
-    }
-    const pageSheets = getAdoptedSheets(root);
-    const sheets = toArray(pageSheets);
-    const outputs = sheets.map((sheet) => managers.get(sheet)?.outSheet).filter((sheet): sheet is CSSStyleSheet => Boolean(sheet));
-    if (outputs.length === 0) {
-        return;
-    }
-    const outputSet = new Set(outputs);
-    const ordered = sheets.filter((sheet) => !outputSet.has(sheet));
-    const anchor = emitter.getNamedSheet(root, 'override');
-    const index = anchor ? ordered.indexOf(anchor) : -1;
-    ordered.splice(index < 0 ? ordered.length : index, 0, ...outputs);
-    if (ordered.length === sheets.length && ordered.every((sheet, i) => sheet === sheets[i])) {
-        return;
-    }
-    if (isFirefox) {
-        pageSheets.splice(0, pageSheets.length, ...ordered);
-    } else {
-        root.adoptedStyleSheets = ordered;
-    }
+    reorderAdopted(root, {managersByRoot: adoptedSheetManagers, emitter, getSheets: getAdoptedSheets});
 }
 
 function createManager(element: StyleElement, root: Document | ShadowRoot): LeanStyleManager {
@@ -526,46 +485,25 @@ function setupShadowRoot(shadowRoot: ShadowRoot): void {
     const observer = new MutationObserver((mutations) => collectMutationsFromRoot(mutations));
     observer.observe(shadowRoot, {childList: true, subtree: true, attributes: true, attributeFilter: ['style']});
     shadowObservers.set(shadowRoot, observer);
-    watchAdoptedRoot(shadowRoot);
+    startWatchingAdoptedRoot(shadowRoot);
 }
 
-function watchAdoptedRoot(root: Document | ShadowRoot): void {
-    const onChange = () => {
-        if (pendingAdoptedRoots.has(root)) {
-            return;
-        }
-        pendingAdoptedRoots.add(root);
-        queueMicrotask(() => {
-            if (!pendingAdoptedRoots.delete(root) || !currentTheme) {
-                return;
-            }
-            const added = syncPageAdoptedSheets(root);
-            for (const sheet of added) {
-                renderAdoptedSheet(root, sheet);
-            }
-            adoptedSheetManagers.get(root)?.forEach((entry, sheet) => {
-                try {
-                    const signature = Array.from(sheet.cssRules, (rule) => rule.cssText).join('\n');
-                    if (signature !== entry.signature) {
-                        entry.signature = signature;
-                        leanVariablesStore.addRulesForMatching(sheet.cssRules);
-                        pendingVariablesMatch = true;
-                        renderAdoptedSheet(root, sheet);
-                    }
-                } catch {
-                    // Inaccessible page stylesheet.
-                }
-            });
-            reorderAdoptedOutputs(root);
-            if (pendingVariablesMatch) {
-                scheduleCoalescedFlush();
-            }
-        });
-    };
-    const events = ['__nyx__adoptedStyleSheetsChange', '__nyx__adoptedStyleSheetChange', '__nyx__adoptedStyleDeclarationChange'];
-    events.forEach((type) => root.addEventListener(type, onChange));
-    adoptedEventCleaners.push(() => events.forEach((type) => root.removeEventListener(type, onChange)));
-    root.dispatchEvent(new CustomEvent('__nyx__registerAdoptedRoot', {bubbles: true, composed: true}));
+function startWatchingAdoptedRoot(root: Document | ShadowRoot): void {
+    watchAdoptedRoot(root, {
+        pendingRoots: pendingAdoptedRoots,
+        isActive: () => Boolean(currentTheme),
+        sync: syncPageAdoptedSheets,
+        render: renderAdoptedSheet,
+        getManagers: (target) => adoptedSheetManagers.get(target),
+        addRules: (rules) => {
+            leanVariablesStore.addRulesForMatching(rules);
+            pendingVariablesMatch = true;
+        },
+        reorder: reorderAdoptedOutputs,
+        needsFlush: () => pendingVariablesMatch,
+        scheduleFlush: scheduleCoalescedFlush,
+        addCleanup: (cleanup) => adoptedEventCleaners.push(cleanup),
+    });
 }
 
 function startLeanProxy(fixes: DynamicThemeFix | null): void {
@@ -602,7 +540,7 @@ function startWatching(): void {
             }
         });
     }
-    watchAdoptedRoot(document);
+    startWatchingAdoptedRoot(document);
 }
 
 function stopWatching(): void {

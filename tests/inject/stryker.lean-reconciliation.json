@@ -1,11 +1,20 @@
 {
   "mutate": [
+    "src/inject/lean-theme/adopted-reconciliation.ts",
     "src/inject/lean-theme/adopted-sync.ts",
-    "src/inject/lean-theme/index.ts:155-170"
+    "src/inject/lean-theme/adopted-order.ts",
+    "src/inject/lean-theme/adopted-apply.ts",
+    "src/inject/lean-theme/adopted-reorder.ts",
+    "src/inject/lean-theme/adopted-render.ts",
+    "src/inject/lean-theme/adopted-watch.ts",
+    "src/inject/lean-theme/index.ts:158-172",
+    "src/inject/lean-theme/index.ts:175-183",
+    "src/inject/lean-theme/index.ts:185-187",
+    "src/inject/lean-theme/index.ts:491-507"
   ],
   "testRunner": "command",
   "commandRunner": {
-    "command": "FIREFOX_TEST=1 node \"$NYX_KARMA_BIN\" start tests/inject/karma.lean-mutation.cjs --log-level warn"
+    "command": "node \"$NYX_JEST_BIN\" --config=tests/unit/jest.config.mjs --runInBand tests/unit/inject/lean-adopted-reconciliation.tests.ts tests/unit/inject/lean-adopted-sync.tests.ts tests/unit/inject/lean-adopted-order.tests.ts tests/unit/inject/lean-adopted-apply.tests.ts tests/unit/inject/lean-adopted-reorder.tests.ts tests/unit/inject/lean-adopted-render.tests.ts tests/unit/inject/lean-adopted-watch.tests.ts && FIREFOX_TEST=1 node \"$NYX_KARMA_BIN\" start tests/inject/karma.lean-mutation.cjs --log-level warn"
   },
   "reporters": [
     "clear-text",
