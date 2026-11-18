@@ -17,6 +17,7 @@ import {createSheetWatcher} from '../dynamic-theme/watch/sheet-changes';
 import {createConstructableSheet} from './adopted-emitter';
 import type {AdoptedEmitter} from './adopted-emitter';
 import {findClosingParenthesis} from './import-conditions';
+import {findCSSImports} from './import-scan';
 
 export interface LeanStyleManager {
     details(options: {secondRound: boolean}): {rules: CSSRuleList} | null;
@@ -117,36 +118,10 @@ export function manageLeanStyle(
     }
 
     async function expandImports(css: string, baseURL: string, ancestors: Set<string>): Promise<string> {
-        const importPattern = /@import\s+(url\(\s*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^)]*)\s*\)|"(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*((?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^;"'])*);/gi;
         const source = removeCSSComments(css);
         let result = '';
         let offset = 0;
-        let cursor = 0;
-        let depth = 0;
-        let quote = '';
-        let escaped = false;
-        for (const match of source.matchAll(importPattern)) {
-            while (cursor < match.index) {
-                const character = source[cursor++];
-                if (escaped) {
-                    escaped = false;
-                } else if (character === '\\') {
-                    escaped = true;
-                } else if (quote) {
-                    if (character === quote) {
-                        quote = '';
-                    }
-                } else if (character === '"' || character === "'") {
-                    quote = character;
-                } else if (character === '{') {
-                    depth++;
-                } else if (character === '}') {
-                    depth = Math.max(0, depth - 1);
-                }
-            }
-            if (quote || depth > 0) {
-                continue;
-            }
+        for (const match of findCSSImports(source)) {
             result += source.slice(offset, match.index);
             offset = match.index + match[0].length;
             const url = getAbsoluteURL(baseURL, getCSSURLValue(match[1]));

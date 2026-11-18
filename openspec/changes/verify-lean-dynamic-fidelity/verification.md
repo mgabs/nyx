@@ -66,6 +66,10 @@ Two new Firefox tests first failed with the preceding implementation: quoted sem
 
 The quote-aware closing-parenthesis scanner was extracted into Lean-only `import-conditions.ts`. Focused Jest tests report 100% lines and branches. A Stryker run scored 98.11%: 51 killed, one timeout, and one survivor out of 53 (96.23% killed without counting the timeout). The remaining loop-boundary mutant performs one extra out-of-range read, with the same result for ordinary strings. The full Firefox injection suite passed 180/180 after extraction, and four focused import tests passed in Helium. This covers the scanner only, not the rest of the lifecycle slice. Raw report: `/private/tmp/nyx-import-conditions-mutation.log`.
 
+## CSS import scanner coverage
+
+The top-level import scanner was extracted into Lean-only `import-scan.ts`. Focused Jest tests cover quoted and unquoted URLs, escaped text, quoted conditions, nested blocks, malformed input and offsets: 100% lines and branches. Stryker scored 98.77%: 77 killed, three timeouts and one survivor out of 81 (95.06% killed without counting timeouts). The survivor advances one extra character over `@`, which has no effect on the scanner's quote or brace state. After extraction, the full Firefox injection suite passed 180/180, all 205 unit tests passed, and five focused import checks passed in Helium. This result is scoped to the scanner; other lifecycle logic remains below or unmeasured against the target. Raw report: `/private/tmp/nyx-import-scan-mutation2.log`.
+
 ## Latest Firefox injection coverage
 
 After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.
