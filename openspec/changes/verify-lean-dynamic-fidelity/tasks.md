@@ -40,7 +40,7 @@ flowchart LR
 
 ## 7. Integration & Rebase Plan
 
-- [ ] 7.0 Verify registration, palette and sliders, fixes, ignored selectors, no Lean sync style elements or image-analysis canvas, and Dynamic shared-helper regressions in representative Chrome and Firefox tests; record unavailable environments.
+- [x] 7.0 Verify registration, palette and sliders, fixes, ignored selectors, no Lean sync style elements or image-analysis canvas, and Dynamic shared-helper regressions in representative Chrome and Firefox tests; record unavailable environments. Evidence: Firefox injection 170/170; isolated Helium settings 2/2 and fixes/isolation 5/5, packaged Lean test passes in both; full Helium suite reload limitation in verification.md.
 - [x] 7.1 Run `npm test`, `npm run test:browser`, `npm run test:inject`, `npm run lint`, `npm run build`, and `npm run api`; record outcomes and any environment blockers. Evidence: command results and Helium navigation/reload blockers recorded in verification.md; Firefox suites and unit, lint, build, and API checks pass.
 - [x] 7.2 Measure startup, CPU and memory for Lean and Dynamic on repeatable representative workloads; report methodology, results and limitations without assuming improvement. Evidence: `node tests/perf/compare-lean.mjs`, 10 measured iterations per fixture and engine; see verification.md for results and scope.
 - [x] 7.3 Reconcile the earlier change's tasks and conflicting requirement identifiers against actual evidence; verify no unsupported completion claims or accidental spec changes. Evidence: task-by-task disposition and requirement mapping in verification.md; `git diff -- openspec/specs` is empty.

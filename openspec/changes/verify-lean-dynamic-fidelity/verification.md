@@ -46,6 +46,10 @@ Focused Jest unit coverage for `adopted-emitter.ts` reached 100% lines and 100% 
 
 The full Firefox injection run passed 168 tests. Its browser instrumentation reported line/branch coverage of 85.32%/76.47% for `adopted-emitter.ts`, 82.31%/75.84% for `index.ts`, 71.87%/57.14% for `inline-style.ts`, and 88.88%/77.21% for `style-manager.ts`. These are separate from the focused Jest figures and below the required 95% thresholds. The browser instrumentation excludes `stylesheet-proxy.ts`.
 
+## Latest Firefox injection coverage
+
+After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.
+
 ## Packaged extension check
 
 The packaged extension integration test passed individually in Firefox and Helium, including a direct CSSOM declaration update, one constructed stylesheet shared by two shadow roots, and page-authored adopted-sheet reordering. It exposed and then verified a Firefox page-realm array fix that the standalone injection tests did not detect. The full Helium extension suite still has the separately reproduced blank-page reload problem.
