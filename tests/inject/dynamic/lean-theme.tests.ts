@@ -365,6 +365,68 @@ describe('LEAN DYNAMIC THEME', () => {
         }
     });
 
+    it('preserves an import condition containing a quoted parenthesis', async () => {
+        const importedURL = 'https://example.invalid/quoted-parenthesis.css';
+        const mainCSS = `@import "${importedURL}" supports(content: ")") screen;`;
+        const mainURL = getCSSEchoURL(mainCSS);
+        const page = window as any;
+        const previousNyx = page.Nyx;
+        page.Nyx = {Plugins: {fetch: async ({url}: {url: string}) => {
+            if (url === mainURL) {
+                return mainCSS;
+            }
+            if (url === importedURL) {
+                return '.quoted-parenthesis-target { background-color: white; }';
+            }
+            throw new Error('Unexpected stylesheet URL');
+        }}};
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = mainURL;
+        const target = document.createElement('div');
+        target.className = 'quoted-parenthesis-target';
+        container.append(link, target);
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            await timeout(300);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        } finally {
+            removeLeanTheme();
+            page.Nyx = previousNyx;
+        }
+    });
+
+    it('preserves an import condition containing a quoted semicolon', async () => {
+        const importedURL = 'https://example.invalid/quoted-condition.css';
+        const mainCSS = `@import "${importedURL}" supports(content: ";") screen;`;
+        const mainURL = getCSSEchoURL(mainCSS);
+        const page = window as any;
+        const previousNyx = page.Nyx;
+        page.Nyx = {Plugins: {fetch: async ({url}: {url: string}) => {
+            if (url === mainURL) {
+                return mainCSS;
+            }
+            if (url === importedURL) {
+                return '.quoted-condition-target { background-color: white; }';
+            }
+            throw new Error('Unexpected stylesheet URL');
+        }}};
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = mainURL;
+        const target = document.createElement('div');
+        target.className = 'quoted-condition-target';
+        container.append(link, target);
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            await timeout(300);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        } finally {
+            removeLeanTheme();
+            page.Nyx = previousNyx;
+        }
+    });
+
     it('themes nested imported cross-origin styles under their media condition', async () => {
         stubChromeRuntimeMessage();
         const nestedCSS = '.import-target { background-color: white; }';

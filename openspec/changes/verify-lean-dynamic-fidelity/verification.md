@@ -58,6 +58,10 @@ A browser-driven Stryker run mutated only `syncPageAdoptedSheets` in `src/inject
 
 The import-cycle and cancellation guard at `style-manager.ts:152` was probed with 10 browser-driven mutants: six were killed, two timed out, and two survived, for an 80% Stryker score. Both survivors changed the 32-level depth limit. A subsequent test builds a 40-level import chain and asserts that only the first 31 imports are fetched; it passes in Firefox and Helium. A focused rerun on the depth expression killed all three of its mutants, including the previous two survivors. This focused result does not establish the score for the rest of the lifecycle slice. Raw reports: `/private/tmp/nyx-cycle-mutation.log` and `/private/tmp/nyx-depth-mutation.log`.
 
+## Quoted import conditions
+
+Two new Firefox tests first failed with the preceding implementation: quoted semicolons caused the import condition to be truncated, and quoted closing parentheses ended `supports()` parsing early. The parser now preserves quoted strings in both cases. The focused Firefox suite passes 38/38, the full Firefox injection suite passes 180/180, and both cases pass individually in Helium. Red and green logs are in `/private/tmp/nyx-semicolon-red.log`, `/private/tmp/nyx-parenthesis-red.log`, and `/private/tmp/nyx-parenthesis-green.log`.
+
 ## Latest Firefox injection coverage
 
 After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.

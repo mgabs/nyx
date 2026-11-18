@@ -116,7 +116,7 @@ export function manageLeanStyle(
     }
 
     async function expandImports(css: string, baseURL: string, ancestors: Set<string>): Promise<string> {
-        const importPattern = /@import\s+(url\(\s*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^)]*)\s*\)|"(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*([^;]*);/gi;
+        const importPattern = /@import\s+(url\(\s*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^)]*)\s*\)|"(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*((?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^;"'])*);/gi;
         const source = removeCSSComments(css);
         let result = '';
         let offset = 0;
@@ -168,10 +168,23 @@ export function manageLeanStyle(
             if (/^supports\(/i.test(conditions)) {
                 let depth = 0;
                 let end = -1;
+                let conditionQuote = '';
+                let conditionEscaped = false;
                 for (let i = conditions.indexOf('('); i < conditions.length; i++) {
-                    if (conditions[i] === '(') {
+                    const character = conditions[i];
+                    if (conditionEscaped) {
+                        conditionEscaped = false;
+                    } else if (character === '\\') {
+                        conditionEscaped = true;
+                    } else if (conditionQuote) {
+                        if (character === conditionQuote) {
+                            conditionQuote = '';
+                        }
+                    } else if (character === '"' || character === "'") {
+                        conditionQuote = character;
+                    } else if (character === '(') {
                         depth++;
-                    } else if (conditions[i] === ')' && --depth === 0) {
+                    } else if (character === ')' && --depth === 0) {
                         end = i;
                         break;
                     }
