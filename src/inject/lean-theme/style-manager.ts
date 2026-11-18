@@ -28,11 +28,9 @@ export interface LeanStyleManager {
 }
 
 const loadingLinkCounter = new Map<HTMLLinkElement, symbol>();
-let loadingLinks = 0;
 
 export function cleanLeanLoadingLinks(): void {
     loadingLinkCounter.clear();
-    loadingLinks = 0;
 }
 
 export function manageLeanStyle(
@@ -150,7 +148,6 @@ export function manageLeanStyle(
         }
         const loadToken = Symbol();
         loadingLinkCounter.set(link, loadToken);
-        loadingLinks++;
         loadingStart();
         try {
             let cssText = await loadCSS(link.href);
@@ -172,7 +169,6 @@ export function manageLeanStyle(
         } finally {
             if (loadingLinkCounter.get(link) === loadToken) {
                 loadingLinkCounter.delete(link);
-                loadingLinks = Math.max(0, loadingLinks - 1);
             }
             loadingEnd();
         }
@@ -234,7 +230,6 @@ export function manageLeanStyle(
 
     function destroy(): void {
         isDestroyed = true;
-        cancelAsyncOperations = true;
         sheetWatcher.stop();
         if (overrideSheet) {
             emitter.removeDynamicSheet(root, overrideSheet);

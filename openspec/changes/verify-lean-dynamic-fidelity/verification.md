@@ -82,6 +82,10 @@ The pure decisions for selecting removed and newly adopted page sheets were extr
 
 Layer, supports and media wrapping was extracted into Lean-only `import-wrapping.ts`. Focused Jest tests report 100% lines and branches; Stryker killed 53 of 55 mutants (96.36%) with no timeouts. The two survivors concern an equivalent layer-regex backtracking variation and comparing a closing-parenthesis index against zero rather than negative one; a valid closing index is always greater than zero. After extraction, Firefox injection passed 180/180, all 219 unit tests passed, and five focused import cases passed in Helium. This covers wrapping only, not the remaining asynchronous lifecycle boundaries. Raw report: `/private/tmp/nyx-import-wrapping-mutation2.log`.
 
+## Stylesheet manager lifecycle coverage
+
+Focused Jest tests exercise readable and inaccessible sheets, import expansion, failed and cached fetches, document readiness, pause, destruction, stale loading tokens and teardown. `style-manager.ts` has 100% line and 98.46% branch coverage. Stryker killed 170 of 175 mutations (97.14%), with five survivors and no timeouts. The tests bound intentionally recursive mocked requests, so mutations that remove cycle guards fail promptly rather than exhausting a worker. Firefox injection passed 180/180 and four focused lifecycle and engine-switch cases passed in Helium. These results cover the manager, not all other lifecycle modules. Raw reports: `/private/tmp/nyx-style-manager-unit5.log` and `/private/tmp/nyx-style-manager-mutation5.log`.
+
 ## Latest Firefox injection coverage
 
 After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.
