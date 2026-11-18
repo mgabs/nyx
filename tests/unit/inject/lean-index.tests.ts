@@ -1034,6 +1034,31 @@ describe('Lean injector lifecycle', () => {
         expect(manager.render).toHaveBeenCalledTimes(1);
     });
 
+    test('coalesces an old queued microtask with the next theme’s update', async () => {
+        const oldElement = new TestHTMLElement();
+        const newElement = new TestHTMLElement();
+        createOrUpdateLeanTheme(theme, null, false);
+        TestObserver.instances[0].callback([{type: 'attributes', attributeName: 'style', target: oldElement} as unknown as MutationRecord]);
+        removeLeanTheme();
+        createOrUpdateLeanTheme(theme, null, false);
+        TestObserver.instances[1].callback([{type: 'attributes', attributeName: 'style', target: newElement} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(globalThis.requestAnimationFrame).toHaveBeenCalledTimes(1);
+        expect(overrideLeanInlineStyle).toHaveBeenCalledTimes(1);
+        expect(overrideLeanInlineStyle).toHaveBeenCalledWith(newElement, theme, expect.anything(), [], []);
+    });
+
+    test('ignores a late observer callback after Lean is removed', async () => {
+        const element = new TestHTMLElement();
+        createOrUpdateLeanTheme(theme, null, false);
+        const oldObserver = TestObserver.instances[0];
+        removeLeanTheme();
+        oldObserver.callback([{type: 'attributes', attributeName: 'style', target: element} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(overrideLeanInlineStyle).not.toHaveBeenCalled();
+        expect(serializeLeanCSS()).toBe('');
+    });
+
     test('does not carry queued inline changes into a later theme', async () => {
         const oldElement = new TestHTMLElement();
         const newElement = new TestHTMLElement();

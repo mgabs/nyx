@@ -63,6 +63,8 @@ A full Jest-driven run after the event-driven review fixes killed 425 of 622 inj
 
 A focused follow-up for the fallback selector and root-variable guard killed all four mutations in those two lines; raw output: `/private/tmp/nyx-index-audit-target.log`. A browser regression for replacing stylesheet text and editing an existing text node passed in Firefox and Helium, and the Firefox injection suite then passed 194/194 after correcting a test-isolation leak in the nested-rule test. Raw output: `/private/tmp/nyx-firefox-text-full2.log` and `/private/tmp/nyx-lean-character-helium.log`.
 
+Two further tests exercise an old queued microtask overlapping a new theme and an observer callback arriving after teardown. A focused mutation run killed all six mutations in the two relevant guard ranges, with no timeouts; four had survived the preceding full run. Raw output: `/private/tmp/nyx-late-mutation.log`. A fresh full-file run is required to establish the unadjusted score.
+
 ### Audit of eight empty-set mutations
 
 The 359-test full run before the subsequent startup fix killed 586 of 622 mutants (94.21%), with 32 survivors, four uncovered and no timeouts. After the fix, the raw full-file run killed 602 of 636 (94.65%), with 30 survivors, four uncovered and no timeouts. Eight survivors change four pending-set guards in `index.ts` from `size > 0` to either `true` or `size >= 0`:
