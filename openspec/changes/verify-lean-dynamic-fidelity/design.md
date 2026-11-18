@@ -7,7 +7,7 @@ Keep the existing Lean injector and shared color transforms. Reproduce each susp
 ## 2. Domain Models, State & Interface Contracts
 
 - Track page-authored adopted sheets per `(root, source sheet)` rather than globally per sheet. Reconcile current source membership and changes with output membership, ignoring owned sheets; remove generated output when a source or root disappears.
-- Detect real CSSOM updates in supported browsers, including same-count edits. Choose and test an observer/proxy or bounded fallback that cooperates with existing Dynamic lifecycle and does not assume test-only events.
+- Detect real CSSOM updates through page-level event hooks, including same-count edits via declaration wrappers, without periodic CSS rule scans. Direct writes through declaration references retained before hook installation and edits when page-level hooks are unavailable cannot be guaranteed; document and test these limitations. Verify native methods, repeated access, cleanup, and cross-engine and browser compatibility before accepting the wrapper.
 - Resolve accessible imports with their original URL bases, order and media/supports/layer conditions; guard cycles, failures and cancellation. Reuse existing safe loading behavior where feasible.
 - Scope asynchronous callbacks and mutations to an active generation, and clean all inline override types from every tracked accessible root on teardown. Preserve page-owned state.
 - Serialize owned document sheets in actual adopted cascade order. Never flatten shadow-root output into the document export; document this limit.

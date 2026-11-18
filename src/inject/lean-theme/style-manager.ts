@@ -6,7 +6,7 @@ import {readCSSFetchCache, writeCSSFetchCache} from '../cache';
 import {addReadyStateCompleteListener} from '../utils/dom';
 import {logInfo, logWarn} from '../utils/log';
 
-import {replaceCSSRelativeURLsWithAbsolute, replaceCSSFontFace, getCSSBaseBath, cssImportRegex, getCSSURLValue} from '../dynamic-theme/css-rules';
+import {replaceCSSRelativeURLsWithAbsolute, replaceCSSFontFace, getCSSBaseBath, getCSSURLValue} from '../dynamic-theme/css-rules';
 import {bgFetch} from '../dynamic-theme/network';
 import type {StyleElement} from '../dynamic-theme/style-manager';
 import {createStyleSheetModifier} from '../dynamic-theme/stylesheet-modifier';
@@ -25,7 +25,7 @@ export interface LeanStyleManager {
     watch(): void;
 }
 
-const loadingLinkCounter = new Map<HTMLLinkElement, boolean>();
+const loadingLinkCounter = new Map<HTMLLinkElement, symbol>();
 let loadingLinks = 0;
 
 export function cleanLeanLoadingLinks(): void {
@@ -90,8 +90,7 @@ export function manageLeanStyle(
         return null;
     }
 
-    async function loadLinkCSS(link: HTMLLinkElement): Promise<string | null> {
-        const href = link.href;
+    async function loadCSS(href: string): Promise<string | null> {
         if (!href) {
             return null;
         }
@@ -116,26 +115,107 @@ export function manageLeanStyle(
         }
     }
 
+    async function expandImports(css: string, baseURL: string, ancestors: Set<string>): Promise<string> {
+        const importPattern = /@import\s+(url\(\s*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^)]*)\s*\)|"(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*([^;]*);/gi;
+        const source = removeCSSComments(css);
+        let result = '';
+        let offset = 0;
+        let cursor = 0;
+        let depth = 0;
+        let quote = '';
+        let escaped = false;
+        for (const match of source.matchAll(importPattern)) {
+            while (cursor < match.index) {
+                const character = source[cursor++];
+                if (escaped) {
+                    escaped = false;
+                } else if (character === '\\') {
+                    escaped = true;
+                } else if (quote) {
+                    if (character === quote) {
+                        quote = '';
+                    }
+                } else if (character === '"' || character === "'") {
+                    quote = character;
+                } else if (character === '{') {
+                    depth++;
+                } else if (character === '}') {
+                    depth = Math.max(0, depth - 1);
+                }
+            }
+            if (quote || depth > 0) {
+                continue;
+            }
+            result += source.slice(offset, match.index);
+            offset = match.index + match[0].length;
+            const url = getAbsoluteURL(baseURL, getCSSURLValue(match[1]));
+            if (ancestors.has(url) || ancestors.size >= 32 || isDestroyed || cancelAsyncOperations) {
+                continue;
+            }
+            const imported = await loadCSS(url);
+            if (imported == null || isDestroyed || cancelAsyncOperations) {
+                continue;
+            }
+            const nextAncestors = new Set(ancestors);
+            nextAncestors.add(url);
+            let expanded = await expandImports(imported, getCSSBaseBath(url), nextAncestors);
+            let conditions = match[2].trim();
+            const layer = /^layer(?:\(\s*([^)]*)\s*\))?\s*/i.exec(conditions);
+            if (layer) {
+                conditions = conditions.slice(layer[0].length);
+            }
+            let supports = '';
+            if (/^supports\(/i.test(conditions)) {
+                let depth = 0;
+                let end = -1;
+                for (let i = conditions.indexOf('('); i < conditions.length; i++) {
+                    if (conditions[i] === '(') {
+                        depth++;
+                    } else if (conditions[i] === ')' && --depth === 0) {
+                        end = i;
+                        break;
+                    }
+                }
+                if (end < 0) {
+                    continue;
+                }
+                supports = conditions.slice(conditions.indexOf('(') + 1, end).trim();
+                conditions = conditions.slice(end + 1).trim();
+            }
+            if (conditions) {
+                expanded = `@media ${conditions} { ${expanded} }`;
+            }
+            if (supports) {
+                const query = supports.startsWith('(') || /^(not|selector|font-tech|font-format)\b/i.test(supports) ? supports : `(${supports})`;
+                expanded = `@supports ${query} { ${expanded} }`;
+            }
+            if (layer) {
+                expanded = `@layer${layer[1] ? ` ${layer[1].trim()}` : ''} { ${expanded} }`;
+            }
+            result += expanded;
+        }
+        result += source.slice(offset);
+        return replaceCSSRelativeURLsWithAbsolute(replaceCSSFontFace(result), baseURL);
+    }
+
     async function loadCORSSheet(link: HTMLLinkElement) {
         if (loadingLinkCounter.get(link)) {
             return;
         }
-        loadingLinkCounter.set(link, true);
+        const loadToken = Symbol();
+        loadingLinkCounter.set(link, loadToken);
         loadingLinks++;
         loadingStart();
         try {
-            let cssText = await loadLinkCSS(link);
+            let cssText = await loadCSS(link.href);
             if (isDestroyed || cancelAsyncOperations || cssText == null) {
                 return;
             }
             const baseURL = getCSSBaseBath(link.href);
-            cssText = removeCSSComments(cssText);
-            cssText = replaceCSSRelativeURLsWithAbsolute(cssText, baseURL);
-            cssText = replaceCSSFontFace(cssText);
-            cssText = cssText.replace(cssImportRegex, (match) => {
-                const importURL = getCSSURLValue(match);
-                return importURL ? `@import url("${getAbsoluteURL(baseURL, importURL)}");` : '';
-            });
+            cssText = await expandImports(cssText, baseURL, new Set([link.href]));
+            if (isDestroyed || cancelAsyncOperations) {
+                return;
+            }
 
             if (!corsSheet) {
                 corsSheet = createConstructableSheet();
@@ -144,8 +224,10 @@ export function manageLeanStyle(
             logInfo(`Loaded CORS stylesheet for ${link.href}`);
             update();
         } finally {
-            loadingLinkCounter.delete(link);
-            loadingLinks = Math.max(0, loadingLinks - 1);
+            if (loadingLinkCounter.get(link) === loadToken) {
+                loadingLinkCounter.delete(link);
+                loadingLinks = Math.max(0, loadingLinks - 1);
+            }
             loadingEnd();
         }
     }

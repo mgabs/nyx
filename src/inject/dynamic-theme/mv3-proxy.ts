@@ -14,9 +14,9 @@ function regularPath() {
     const argString = document.currentScript!.dataset.arg;
     if (argString !== undefined) {
         document.documentElement.dataset[key] = 'true';
-        const args: {enableStyleSheetsProxy: boolean; enableCustomElementRegistryProxy: boolean} = JSON.parse(argString);
+        const args: {enableStyleSheetsProxy: boolean; enableCustomElementRegistryProxy: boolean; enableLeanDeclarations?: boolean} = JSON.parse(argString);
         logInfo(`MV3 proxy injector: regular path runs injectProxy(${argString}).`);
-        injectProxy(args.enableStyleSheetsProxy, args.enableCustomElementRegistryProxy);
+        injectProxy(args.enableStyleSheetsProxy, args.enableCustomElementRegistryProxy, args.enableLeanDeclarations);
     }
 }
 
@@ -27,7 +27,7 @@ function dataReceiver(e: any) {
     }
     document.documentElement.dataset[key] = 'true';
     logInfo(`MV3 proxy injector: ${registeredScriptPath ? 'registered' : 'dedicated'} path runs injectProxy(${e.detail}).`);
-    injectProxy(e.detail.enableStyleSheetsProxy, e.detail.enableCustomElementRegistryProxy);
+    injectProxy(e.detail.enableStyleSheetsProxy, e.detail.enableCustomElementRegistryProxy, e.detail.enableLeanDeclarations);
 }
 
 function cleanUpReceiver() {

@@ -1,9 +1,9 @@
 import type {Theme, DynamicThemeFix} from '../../definitions';
 import {getCSSFilterValue} from '../../generators/css-filter';
 import {createTextStyle} from '../../generators/text-style';
-import {forEach} from '../../utils/array';
+import {forEach, toArray} from '../../utils/array';
 import {clearColorCache, getSRGBLightness, parseColorWithCache} from '../../utils/color';
-import {isShadowDomSupported} from '../../utils/platform';
+import {isFirefox, isShadowDomSupported} from '../../utils/platform';
 import {
     iterateShadowHosts,
     isDOMReady,
@@ -19,6 +19,9 @@ import {getModifiedUserAgentStyle, getModifiedFallbackStyle, getSelectionColor} 
 import {clearColorPalette, registerVariablesSheet, releaseVariablesSheet} from '../dynamic-theme/palette';
 import {getManageableStyles, setIgnoredCSSURLs, shouldManageStyle} from '../dynamic-theme/style-manager';
 import type {StyleElement} from '../dynamic-theme/style-manager';
+import {injectProxy} from '../dynamic-theme/stylesheet-proxy';
+
+declare const __CHROMIUM_MV3__: boolean;
 import {createSharedRuleCache, createStyleSheetModifier} from '../dynamic-theme/stylesheet-modifier';
 import {VariablesStore} from '../dynamic-theme/variables';
 
@@ -28,6 +31,7 @@ import {
     applyLeanInlineStyles,
     clearLeanInlineOverrides,
     getLeanInlineOverrideStyle,
+    LEAN_INLINE_OVERRIDE_SELECTOR,
     overrideLeanInlineStyle,
 } from './inline-style';
 import {cleanLeanLoadingLinks, manageLeanStyle} from './style-manager';
@@ -38,11 +42,14 @@ const sharedRuleCache = createSharedRuleCache(4000);
 
 let emitter: AdoptedEmitter | null = null;
 const styleManagers = new Map<StyleElement, LeanStyleManager>();
-const adoptedSheetManagers = new Map<CSSStyleSheet, {
+const adoptedSheetManagers = new Map<Document | ShadowRoot, Map<CSSStyleSheet, {
     root: Document | ShadowRoot;
     outSheet: CSSStyleSheet | null;
     modifier: ReturnType<typeof createStyleSheetModifier>;
-}>();
+    signature: string;
+}>>();
+const adoptedEventCleaners: Array<() => void> = [];
+const pendingAdoptedRoots = new Set<Document | ShadowRoot>();
 const shadowRootsObserved = new Set<ShadowRoot>();
 const shadowObservers = new Map<ShadowRoot, MutationObserver>();
 
@@ -56,13 +63,14 @@ let domObserver: MutationObserver | null = null;
 const pendingAddedStyles = new Set<StyleElement>();
 const pendingRemovedStyles = new Set<StyleElement>();
 const pendingUpdatedManagers = new Set<LeanStyleManager>();
-const pendingInlineElements = new Set<HTMLElement>();
+const pendingInlineElements = new Set<HTMLElement | SVGElement>();
 const pendingShadowHosts = new Set<Element>();
 let pendingVariablesMatch = false;
 let pendingRootVars = false;
 let microtaskScheduled = false;
 let rafId: number | null = null;
 let loadingCount = 0;
+let themeGeneration = 0;
 
 function ensureEmitter(): AdoptedEmitter {
     if (!emitter) {
@@ -156,8 +164,21 @@ function syncPageAdoptedSheets(root: Document | ShadowRoot): CSSStyleSheet[] {
     } catch {
         return newlyTracked;
     }
-    for (const sheet of sheets) {
-        if (activeEmitter.ownsSheet(sheet) || adoptedSheetManagers.has(sheet)) {
+    let managers = adoptedSheetManagers.get(root);
+    if (!managers) {
+        managers = new Map();
+        adoptedSheetManagers.set(root, managers);
+    }
+    for (const [sheet, entry] of managers) {
+        if (!sheets.includes(sheet)) {
+            if (entry.outSheet) {
+                activeEmitter.removeDynamicSheet(root, entry.outSheet);
+            }
+            managers.delete(sheet);
+        }
+    }
+    for (const sheet of [...sheets]) {
+        if (activeEmitter.ownsSheet(sheet) || managers.has(sheet)) {
             continue;
         }
         try {
@@ -168,22 +189,29 @@ function syncPageAdoptedSheets(root: Document | ShadowRoot): CSSStyleSheet[] {
         } catch {
             continue;
         }
+        const anchor = activeEmitter.getNamedSheet(root, 'override');
+        const sourceIndex = sheets.indexOf(sheet);
+        const anchorIndex = anchor ? sheets.indexOf(anchor) : -1;
+        if (anchorIndex >= 0 && sourceIndex > anchorIndex) {
+            sheets.splice(sourceIndex, 1);
+            sheets.splice(anchorIndex, 0, sheet);
+        }
         const modifier = createStyleSheetModifier({
             sharedCache: sharedRuleCache,
             variablesStore: leanVariablesStore,
             imageURLModifier: null,
         });
-        adoptedSheetManagers.set(sheet, {root, outSheet: null, modifier});
+        managers.set(sheet, {root, outSheet: null, modifier, signature: Array.from(sheet.cssRules, (rule) => rule.cssText).join('\n')});
         newlyTracked.push(sheet);
     }
     return newlyTracked;
 }
 
-function renderAdoptedSheet(sheet: CSSStyleSheet): void {
+function renderAdoptedSheet(root: Document | ShadowRoot, sheet: CSSStyleSheet): void {
     if (!currentTheme) {
         return;
     }
-    const entry = adoptedSheetManagers.get(sheet);
+    const entry = adoptedSheetManagers.get(root)?.get(sheet);
     if (!entry) {
         return;
     }
@@ -211,8 +239,35 @@ function renderAdoptedSheet(sheet: CSSStyleSheet): void {
     });
 }
 
+function reorderAdoptedOutputs(root: Document | ShadowRoot): void {
+    const managers = adoptedSheetManagers.get(root);
+    if (!managers || !emitter) {
+        return;
+    }
+    const pageSheets = getAdoptedSheets(root);
+    const sheets = toArray(pageSheets);
+    const outputs = sheets.map((sheet) => managers.get(sheet)?.outSheet).filter((sheet): sheet is CSSStyleSheet => Boolean(sheet));
+    if (outputs.length === 0) {
+        return;
+    }
+    const outputSet = new Set(outputs);
+    const ordered = sheets.filter((sheet) => !outputSet.has(sheet));
+    const anchor = emitter.getNamedSheet(root, 'override');
+    const index = anchor ? ordered.indexOf(anchor) : -1;
+    ordered.splice(index < 0 ? ordered.length : index, 0, ...outputs);
+    if (ordered.length === sheets.length && ordered.every((sheet, i) => sheet === sheets[i])) {
+        return;
+    }
+    if (isFirefox) {
+        pageSheets.splice(0, pageSheets.length, ...ordered);
+    } else {
+        root.adoptedStyleSheets = ordered;
+    }
+}
+
 function createManager(element: StyleElement, root: Document | ShadowRoot): LeanStyleManager {
     const activeEmitter = ensureEmitter();
+    const generation = themeGeneration;
     const manager = manageLeanStyle(element, {
         root,
         emitter: activeEmitter,
@@ -223,9 +278,14 @@ function createManager(element: StyleElement, root: Document | ShadowRoot): Lean
             scheduleCoalescedFlush();
         },
         loadingStart: () => {
-            loadingCount++;
+            if (generation === themeGeneration) {
+                loadingCount++;
+            }
         },
         loadingEnd: () => {
+            if (generation !== themeGeneration) {
+                return;
+            }
             loadingCount = Math.max(0, loadingCount - 1);
             if (loadingCount === 0) {
                 cleanFallback();
@@ -240,6 +300,7 @@ function cleanFallback(): void {
     if (emitter) {
         emitter.setNamedSheet(document, 'fallback', '', 'beginning');
     }
+    document.querySelector('.nyx.nyx--fallback')?.remove();
 }
 
 function renderDynamicStyles(): void {
@@ -276,8 +337,9 @@ function renderDynamicStyles(): void {
         manager.render(currentTheme!, ignoredImageSelectors);
         manager.watch();
     });
-    adoptedSheetManagers.forEach((_entry, sheet) => {
-        renderAdoptedSheet(sheet);
+    adoptedSheetManagers.forEach((managers, root) => {
+        managers.forEach((_entry, sheet) => renderAdoptedSheet(root, sheet));
+        reorderAdoptedOutputs(root);
     });
 
     if (loadingCount === 0) {
@@ -398,7 +460,7 @@ function collectMutationsFromRoot(mutations: MutationRecord[]): void {
 
     for (const mutation of mutations) {
         if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-            if (mutation.target instanceof HTMLElement) {
+            if (mutation.target instanceof HTMLElement || mutation.target instanceof SVGElement) {
                 pendingInlineElements.add(mutation.target);
                 hasRelevantMutation = true;
             }
@@ -413,13 +475,15 @@ function collectMutationsFromRoot(mutations: MutationRecord[]): void {
                         pendingAddedStyles.add(style);
                         hasRelevantMutation = true;
                     }
-                    if (node.hasAttribute('style')) {
-                        pendingInlineElements.add(node as HTMLElement);
+                    if ((node instanceof HTMLElement || node instanceof SVGElement) && node.hasAttribute('style')) {
+                        pendingInlineElements.add(node);
                         hasRelevantMutation = true;
                     }
                     forEach(node.querySelectorAll('[style]'), (el) => {
-                        pendingInlineElements.add(el as HTMLElement);
-                        hasRelevantMutation = true;
+                        if (el instanceof HTMLElement || el instanceof SVGElement) {
+                            pendingInlineElements.add(el);
+                            hasRelevantMutation = true;
+                        }
                     });
                     if (node.shadowRoot) {
                         pendingShadowHosts.add(node);
@@ -491,14 +555,69 @@ function setupShadowRoot(shadowRoot: ShadowRoot): void {
             manager.watch();
         }
         for (const sheet of newAdopted) {
-            renderAdoptedSheet(sheet);
+            renderAdoptedSheet(shadowRoot, sheet);
         }
+        reorderAdoptedOutputs(shadowRoot);
         applyLeanInlineStyles(shadowRoot, currentTheme, leanVariablesStore, ignoredInlineSelectors, ignoredImageSelectors);
     }
 
     const observer = new MutationObserver((mutations) => collectMutationsFromRoot(mutations));
     observer.observe(shadowRoot, {childList: true, subtree: true, attributes: true, attributeFilter: ['style']});
     shadowObservers.set(shadowRoot, observer);
+    watchAdoptedRoot(shadowRoot);
+}
+
+function watchAdoptedRoot(root: Document | ShadowRoot): void {
+    const onChange = () => {
+        if (pendingAdoptedRoots.has(root)) {
+            return;
+        }
+        pendingAdoptedRoots.add(root);
+        queueMicrotask(() => {
+            if (!pendingAdoptedRoots.delete(root) || !currentTheme) {
+                return;
+            }
+            const added = syncPageAdoptedSheets(root);
+            for (const sheet of added) {
+                renderAdoptedSheet(root, sheet);
+            }
+            adoptedSheetManagers.get(root)?.forEach((entry, sheet) => {
+                try {
+                    const signature = Array.from(sheet.cssRules, (rule) => rule.cssText).join('\n');
+                    if (signature !== entry.signature) {
+                        entry.signature = signature;
+                        leanVariablesStore.addRulesForMatching(sheet.cssRules);
+                        pendingVariablesMatch = true;
+                        renderAdoptedSheet(root, sheet);
+                    }
+                } catch {
+                    // Inaccessible page stylesheet.
+                }
+            });
+            reorderAdoptedOutputs(root);
+            if (pendingVariablesMatch) {
+                scheduleCoalescedFlush();
+            }
+        });
+    };
+    const events = ['__nyx__adoptedStyleSheetsChange', '__nyx__adoptedStyleSheetChange', '__nyx__adoptedStyleDeclarationChange'];
+    events.forEach((type) => root.addEventListener(type, onChange));
+    adoptedEventCleaners.push(() => events.forEach((type) => root.removeEventListener(type, onChange)));
+    root.dispatchEvent(new CustomEvent('__nyx__registerAdoptedRoot', {bubbles: true, composed: true}));
+}
+
+function startLeanProxy(fixes: DynamicThemeFix | null): void {
+    document.dispatchEvent(new CustomEvent('__nyx__cleanUp'));
+    const enableStyleSheetsProxy = !(fixes && fixes.disableStyleSheetsProxy);
+    const enableCustomElementRegistryProxy = !(fixes && fixes.disableCustomElementRegistryProxy);
+    if (__CHROMIUM_MV3__) {
+        document.dispatchEvent(new CustomEvent('__nyx__stylesheetProxy__arg', {detail: {enableStyleSheetsProxy, enableCustomElementRegistryProxy, enableLeanDeclarations: true}}));
+    } else {
+        const script = document.createElement('script');
+        script.textContent = `(${injectProxy})(${enableStyleSheetsProxy}, ${enableCustomElementRegistryProxy}, true)`;
+        (document.head || document.documentElement).append(script);
+        script.remove();
+    }
 }
 
 function startWatching(): void {
@@ -521,9 +640,13 @@ function startWatching(): void {
             }
         });
     }
+    watchAdoptedRoot(document);
 }
 
 function stopWatching(): void {
+    adoptedEventCleaners.forEach((clean) => clean());
+    adoptedEventCleaners.length = 0;
+    pendingAdoptedRoots.clear();
     if (domObserver) {
         domObserver.disconnect();
         domObserver = null;
@@ -567,6 +690,7 @@ export function createOrUpdateLeanTheme(
     setIgnoredCSSURLs(fixes?.ignoreCSSUrl ?? []);
 
     clearColorModificationCache();
+    startLeanProxy(fixes);
     createStaticStyleOverrides();
 
     if (isDOMReady()) {
@@ -587,9 +711,13 @@ export function removeLeanTheme(): void {
     if (!currentTheme && !emitter) {
         return;
     }
+    themeGeneration++;
     removeDOMReadyListener(onDOMReady);
     cleanReadyStateCompleteListeners();
+    const inlineRoots = [document, ...shadowRootsObserved];
     stopWatching();
+    document.dispatchEvent(new CustomEvent('__nyx__cleanUp'));
+    document.querySelector('.nyx.nyx--fallback')?.remove();
 
     styleManagers.forEach((manager) => manager.destroy());
     styleManagers.clear();
@@ -602,11 +730,13 @@ export function removeLeanTheme(): void {
         emitter = null;
     }
 
-    forEach(document.querySelectorAll('[data-nyx-inline-bgcolor], [data-nyx-inline-color], [data-nyx-inline-border], [data-nyx-inline-bgimage], [data-nyx-inline-boxshadow]'), (el) => {
-        if (el instanceof HTMLElement) {
-            clearLeanInlineOverrides(el);
-        }
-    });
+    for (const root of inlineRoots) {
+        forEach(root.querySelectorAll(LEAN_INLINE_OVERRIDE_SELECTOR), (el) => {
+            if (el instanceof HTMLElement || el instanceof SVGElement) {
+                clearLeanInlineOverrides(el);
+            }
+        });
+    }
 
     leanVariablesStore.clear();
     releaseVariablesSheet();

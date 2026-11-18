@@ -16,7 +16,7 @@ Lean MUST theme accessible page-authored adopted stylesheets separately for each
 - **THEN** the themed output reflects the current sheets and rules without stale overrides
 
 ### Requirement: REQ-LEAN-FIDELITY-2 Stylesheet changes and imports
-Lean MUST reflect page CSSOM declaration changes and accessible imported rules, including cross-origin stylesheet imports that the extension can fetch, while retaining stylesheet ordering and applicable import conditions.
+When page-level hooks are available, Lean MUST reflect page CSSOM declaration changes made through declarations obtained after hook installation, and MUST reflect accessible imported rules, including cross-origin stylesheet imports that the extension can fetch, while retaining stylesheet ordering and applicable import conditions. Direct property assignments through declarations saved before hook installation, and changes when page-level hooks are unavailable, are not guaranteed to be detected.
 
 #### Scenario: Same-count CSSOM edit
 - **GIVEN** Lean manages a page stylesheet

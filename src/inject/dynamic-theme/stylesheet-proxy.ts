@@ -1,6 +1,6 @@
 type OverrideFactory<T, P extends keyof T> = (native: T[P] & ((...args: any[]) => any)) => (this: T, ...args: Parameters<typeof native>) => ReturnType<typeof native>;
 
-export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElementRegistryProxy: boolean): void {
+export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElementRegistryProxy: boolean, enableLeanDeclarations = false): void {
     document.dispatchEvent(new CustomEvent('__nyx__inlineScriptsAllowed'));
 
     const cleaners: Array<() => void> = [];
@@ -351,13 +351,80 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
         });
     });
 
+    if (enableLeanDeclarations) {
+        const declarationProxies = new WeakMap<CSSStyleDeclaration, CSSStyleDeclaration>();
+        const proxyDeclarations = new WeakMap<CSSStyleDeclaration, CSSStyleDeclaration>();
+        for (const name of Object.getOwnPropertyNames(CSSStyleDeclaration.prototype)) {
+            if (name === 'constructor') {
+                continue;
+            }
+            const descriptor = Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, name);
+            if (!descriptor?.configurable || typeof descriptor.value !== 'function') {
+                continue;
+            }
+            const native = descriptor.value;
+            Object.defineProperty(CSSStyleDeclaration.prototype, name, {...descriptor, value: function (this: CSSStyleDeclaration, ...args: any[]) {
+                return native.apply(proxyDeclarations.get(this) ?? this, args);
+            }});
+            cleaners.push(() => Object.defineProperty(CSSStyleDeclaration.prototype, name, descriptor));
+        }
+        overrideProperty(CSSStyleRule, 'style', {
+            get: (native) => function () {
+                const declaration = native.call(this) as CSSStyleDeclaration;
+                let proxy = declarationProxies.get(declaration);
+                if (!proxy) {
+                    const methods = new Map<PropertyKey, {original: (...args: any[]) => any; bound: (...args: any[]) => any}>();
+                    proxy = new Proxy(declaration, {
+                        get(target, key) {
+                            const value = Reflect.get(target, key, target);
+                            if (typeof value !== 'function') {
+                                return value;
+                            }
+                            const cached = methods.get(key);
+                            if (cached && cached.original === value) {
+                                return cached.bound;
+                            }
+                            const bound = value.bind(target);
+                            methods.set(key, {original: value, bound});
+                            return bound;
+                        },
+                        set(target, key, value) {
+                            const previous = Reflect.get(target, key, target);
+                            const success = Reflect.set(target, key, value, target);
+                            if (success && previous !== Reflect.get(target, key, target)) {
+                                const sheet = target.parentRule?.parentStyleSheet;
+                                if (sheet) {
+                                    reportSheetChange(sheet);
+                                }
+                            }
+                            return success;
+                        },
+                    });
+                    declarationProxies.set(declaration, proxy);
+                    proxyDeclarations.set(proxy, declaration);
+                }
+                return proxy;
+            },
+        });
+
+        documentEventListener('__nyx__registerAdoptedRoot', (event) => {
+            const node = event.composedPath()[0];
+            if (node instanceof Document || node instanceof ShadowRoot) {
+                onAdoptedSheetsChange(node);
+            }
+        });
+    }
+
     const adoptedDeclarationChangeEvent = new CustomEvent('__nyx__adoptedStyleDeclarationChange');
     (['setProperty', 'removeProperty'] as Array<keyof CSSStyleDeclaration>).forEach((key) => {
         override(CSSStyleDeclaration, key, (native) => {
             return function (...args: any[]) {
                 const returnValue = native.apply(this, args);
-                const sheet = adoptedDeclarationSheets.get(this);
+                const sheet = adoptedDeclarationSheets.get(this) ?? (enableLeanDeclarations ? this.parentRule?.parentStyleSheet : null);
                 if (sheet) {
+                    if (enableLeanDeclarations) {
+                        reportSheetChange(sheet);
+                    }
                     const owners = adoptedSheetOwners.get(sheet);
                     if (owners) {
                         owners.forEach((node) => {

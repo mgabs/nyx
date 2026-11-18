@@ -28,11 +28,11 @@ export function getAdoptedSheets(node: Document | ShadowRoot): CSSStyleSheet[] {
 export function attachAdoptedSheet(
     node: Document | ShadowRoot,
     sheet: CSSStyleSheet,
-    position: 'beginning' | 'ending' = 'ending',
+    position?: 'beginning' | 'ending',
     beforeSheets?: CSSStyleSheet[],
 ): void {
     const findAnchorIndex = (sheets: CSSStyleSheet[]): number => {
-        if (!beforeSheets || beforeSheets.length === 0) {
+        if (!beforeSheets) {
             return -1;
         }
         let earliest = -1;
@@ -120,7 +120,7 @@ export function createAdoptedEmitter(): AdoptedEmitter {
         root: Document | ShadowRoot,
         id: string,
         cssText: string,
-        position: 'beginning' | 'ending' = 'ending',
+        position?: 'beginning' | 'ending',
     ): CSSStyleSheet {
         trackRoot(root);
         let rootNamed = namedSheets.get(root);
@@ -162,7 +162,7 @@ export function createAdoptedEmitter(): AdoptedEmitter {
         rootDynamic.add(sheet);
         const rootNamed = namedSheets.get(root);
         const anchors = [rootNamed?.get('override'), rootNamed?.get('inline')].filter(Boolean) as CSSStyleSheet[];
-        attachAdoptedSheet(root, sheet, 'ending', anchors);
+        attachAdoptedSheet(root, sheet, undefined, anchors);
         return sheet;
     }
 
@@ -192,26 +192,15 @@ export function createAdoptedEmitter(): AdoptedEmitter {
 
     function serializeLeanCSS(): string {
         const chunks: string[] = [];
-        trackedRoots.forEach((root) => {
-            const rootNamed = namedSheets.get(root);
-            if (rootNamed) {
-                rootNamed.forEach((sheet) => {
-                    const text = serializeSheet(sheet);
-                    if (text) {
-                        chunks.push(text);
-                    }
-                });
+        for (const sheet of getAdoptedSheets(document)) {
+            if (!ownedSheets.has(sheet)) {
+                continue;
             }
-            const rootDynamic = dynamicSheets.get(root);
-            if (rootDynamic) {
-                rootDynamic.forEach((sheet) => {
-                    const text = serializeSheet(sheet);
-                    if (text) {
-                        chunks.push(text);
-                    }
-                });
+            const text = serializeSheet(sheet);
+            if (text) {
+                chunks.push(text);
             }
-        });
+        }
         return chunks.join('\n');
     }
 

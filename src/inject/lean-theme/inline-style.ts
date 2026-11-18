@@ -85,6 +85,7 @@ const overrides: Record<string, OverrideEntry> = {
 export const LEAN_INLINE_STYLE_SELECTOR = '[style]';
 
 const overrideEntries = Object.values(overrides);
+export const LEAN_INLINE_OVERRIDE_SELECTOR = overrideEntries.map(({dataAttr}) => `[${dataAttr}]`).join(', ');
 
 export function getLeanInlineOverrideStyle(): string {
     return overrideEntries.map(({customProp, cssProp, dataAttr}) => {
@@ -92,14 +93,16 @@ export function getLeanInlineOverrideStyle(): string {
     }).join('\n');
 }
 
-function getInlineStyleElements(root: Node): HTMLElement[] {
-    const results: HTMLElement[] = [];
-    if (root instanceof Element && root.hasAttribute('style')) {
-        results.push(root as HTMLElement);
+function getInlineStyleElements(root: Node): Array<HTMLElement | SVGElement> {
+    const results: Array<HTMLElement | SVGElement> = [];
+    if ((root instanceof HTMLElement || root instanceof SVGElement) && root.hasAttribute('style')) {
+        results.push(root);
     }
     if (root instanceof Element || root === document || (isShadowDomSupported && root instanceof ShadowRoot)) {
         forEach((root as ParentNode).querySelectorAll(LEAN_INLINE_STYLE_SELECTOR), (el) => {
-            results.push(el as HTMLElement);
+            if (el instanceof HTMLElement || el instanceof SVGElement) {
+                results.push(el);
+            }
         });
         iterateShadowHosts(root, (host) => {
             if (host.shadowRoot) {
@@ -111,7 +114,7 @@ function getInlineStyleElements(root: Node): HTMLElement[] {
 }
 
 export function overrideLeanInlineStyle(
-    element: HTMLElement,
+    element: HTMLElement | SVGElement,
     theme: Theme,
     variablesStore: VariablesStore,
     ignoreInlineSelectors: string[],
@@ -195,7 +198,7 @@ export function overrideLeanInlineStyle(
     }
 }
 
-export function clearLeanInlineOverrides(element: HTMLElement): void {
+export function clearLeanInlineOverrides(element: HTMLElement | SVGElement): void {
     for (const entry of overrideEntries) {
         if (element.hasAttribute(entry.dataAttr)) {
             element.removeAttribute(entry.dataAttr);

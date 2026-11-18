@@ -15,6 +15,9 @@
 - **Default Dark Text:** `#e8e6e3`
 - **Adjustable Sliders:** Brightness, Contrast, Sepia, Grayscale, and custom background/text colors per site or globally.
 - **Theme Engines:** Supports `dynamicTheme`, `leanDynamicTheme` (consistent cross-site dark palette via `adoptedStyleSheets` with zero `<canvas>` image analysis), `staticTheme`, `cssFilter`, and `svgFilter`.
+
+Lean Dynamic observes stylesheet changes through page-level hooks. Direct changes made through stylesheet declaration references saved before the hooks were installed, or changes made when those hooks cannot run, may not be detected.
+Lean Dynamic CSS export includes document styles only; styles for shadow-root components are omitted.
 <br/>
 <br/>
 
