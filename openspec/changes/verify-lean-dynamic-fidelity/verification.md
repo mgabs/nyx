@@ -62,6 +62,10 @@ The import-cycle and cancellation guard at `style-manager.ts:152` was probed wit
 
 Two new Firefox tests first failed with the preceding implementation: quoted semicolons caused the import condition to be truncated, and quoted closing parentheses ended `supports()` parsing early. The parser now preserves quoted strings in both cases. The focused Firefox suite passes 38/38, the full Firefox injection suite passes 180/180, and both cases pass individually in Helium. Red and green logs are in `/private/tmp/nyx-semicolon-red.log`, `/private/tmp/nyx-parenthesis-red.log`, and `/private/tmp/nyx-parenthesis-green.log`.
 
+## Import-condition scanner coverage
+
+The quote-aware closing-parenthesis scanner was extracted into Lean-only `import-conditions.ts`. Focused Jest tests report 100% lines and branches. A Stryker run scored 98.11%: 51 killed, one timeout, and one survivor out of 53 (96.23% killed without counting the timeout). The remaining loop-boundary mutant performs one extra out-of-range read, with the same result for ordinary strings. The full Firefox injection suite passed 180/180 after extraction, and four focused import tests passed in Helium. This covers the scanner only, not the rest of the lifecycle slice. Raw report: `/private/tmp/nyx-import-conditions-mutation.log`.
+
 ## Latest Firefox injection coverage
 
 After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.

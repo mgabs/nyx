@@ -16,6 +16,7 @@ import {createSheetWatcher} from '../dynamic-theme/watch/sheet-changes';
 
 import {createConstructableSheet} from './adopted-emitter';
 import type {AdoptedEmitter} from './adopted-emitter';
+import {findClosingParenthesis} from './import-conditions';
 
 export interface LeanStyleManager {
     details(options: {secondRound: boolean}): {rules: CSSRuleList} | null;
@@ -166,29 +167,7 @@ export function manageLeanStyle(
             }
             let supports = '';
             if (/^supports\(/i.test(conditions)) {
-                let depth = 0;
-                let end = -1;
-                let conditionQuote = '';
-                let conditionEscaped = false;
-                for (let i = conditions.indexOf('('); i < conditions.length; i++) {
-                    const character = conditions[i];
-                    if (conditionEscaped) {
-                        conditionEscaped = false;
-                    } else if (character === '\\') {
-                        conditionEscaped = true;
-                    } else if (conditionQuote) {
-                        if (character === conditionQuote) {
-                            conditionQuote = '';
-                        }
-                    } else if (character === '"' || character === "'") {
-                        conditionQuote = character;
-                    } else if (character === '(') {
-                        depth++;
-                    } else if (character === ')' && --depth === 0) {
-                        end = i;
-                        break;
-                    }
-                }
+                const end = findClosingParenthesis(conditions, conditions.indexOf('('));
                 if (end < 0) {
                     continue;
                 }
