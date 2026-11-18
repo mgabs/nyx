@@ -260,6 +260,17 @@ describe('Lean injector lifecycle', () => {
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'text', 'font override', 'beginning');
     });
 
+    test('does not register empty rules from a document stylesheet', () => {
+        const style = new TestHTMLElement();
+        const manager = {details: jest.fn(() => ({rules: []})), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(getManageableStyles).mockReturnValue([style as never]);
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        createOrUpdateLeanTheme(theme, null, false);
+        const variables = jest.mocked(manageLeanStyle).mock.calls[0][1].variablesStore;
+        expect(variables.addRulesForMatching).not.toHaveBeenCalled();
+        expect(variables.matchVariablesAndDependents).toHaveBeenCalledTimes(1);
+    });
+
     test('defers initial rendering until ready and ignores ready callbacks after removal', () => {
         jest.mocked(isDOMReady).mockReturnValue(false);
         createOrUpdateLeanTheme(theme, null, false);
@@ -284,6 +295,7 @@ describe('Lean injector lifecycle', () => {
         observer.callback([{type: 'attributes', attributeName: 'style', target: second} as unknown as MutationRecord]);
         await flushFrame();
         expect(globalThis.requestAnimationFrame).toHaveBeenCalledTimes(1);
+        expect(globalThis.cancelAnimationFrame).toHaveBeenCalledWith(1);
         expect(overrideLeanInlineStyle).toHaveBeenCalledTimes(2);
         expect(overrideLeanInlineStyle).toHaveBeenCalledWith(first, theme, expect.anything(), [], []);
         expect(overrideLeanInlineStyle).toHaveBeenCalledWith(second, theme, expect.anything(), [], []);
@@ -307,6 +319,11 @@ describe('Lean injector lifecycle', () => {
         observer.callback([{type: 'childList', addedNodes: [holder], removedNodes: []} as unknown as MutationRecord]);
         await flushFrame();
         expect(manager.render).toHaveBeenCalledTimes(1);
+        expect(manager.details).toHaveBeenCalledWith({secondRound: false});
+        expect(jest.mocked(manageLeanStyle).mock.calls[0][1].root).toBe(doc);
+        const variables = jest.mocked(manageLeanStyle).mock.calls[0][1].variablesStore;
+        expect(variables.addRulesForMatching).toHaveBeenCalledWith([{}]);
+        expect(variables.matchVariablesAndDependents).toHaveBeenCalledTimes(2);
         expect(overrideLeanInlineStyle).toHaveBeenCalled();
         observer.callback([{type: 'childList', addedNodes: [], removedNodes: [holder]} as unknown as MutationRecord]);
         await flushFrame();
@@ -342,6 +359,10 @@ describe('Lean injector lifecycle', () => {
         options.loadingStart();
         options.loadingEnd();
         expect(emitter.setNamedSheet).not.toHaveBeenCalled();
+        const currentOptions = jest.mocked(manageLeanStyle).mock.calls[1][1];
+        currentOptions.loadingStart();
+        currentOptions.loadingEnd();
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'fallback', '', 'beginning');
     });
 
     test('routes adopted-sheet events and cancels queued work on teardown', async () => {
@@ -372,8 +393,9 @@ describe('Lean injector lifecycle', () => {
         const syncOptions = jest.mocked(syncAdoptedSheets).mock.calls[0][1];
         syncOptions.createModifier();
         syncOptions.addRules([{}] as never);
-        const modifierOptions = jest.mocked(createStyleSheetModifier).mock.calls[0][0] as unknown as {variablesStore: {setOnRootVariableChange: jest.Mock; matchVariablesAndDependents: jest.Mock}};
+        const modifierOptions = jest.mocked(createStyleSheetModifier).mock.calls[0][0] as unknown as {variablesStore: {addRulesForMatching: jest.Mock; setOnRootVariableChange: jest.Mock; matchVariablesAndDependents: jest.Mock}};
         const variables = modifierOptions.variablesStore;
+        expect(variables.addRulesForMatching).toHaveBeenCalledWith([{}]);
         const rootChanged = variables.setOnRootVariableChange.mock.calls[0][0];
         emitter.setNamedSheet.mockClear();
         rootChanged();
@@ -417,6 +439,14 @@ describe('Lean injector lifecycle', () => {
         expect(script.textContent).toContain('(false, false, true)');
         expect(doc.head.append).toHaveBeenCalledWith(script);
         expect(script.remove).toHaveBeenCalledTimes(1);
+    });
+
+    test('enables both page proxy options by default in Chromium', () => {
+        Object.assign(globalThis, {__CHROMIUM_MV3__: true});
+        const dispatch = jest.spyOn(doc, 'dispatchEvent');
+        createOrUpdateLeanTheme(theme, null, false);
+        const event = dispatch.mock.calls.map(([value]) => value).find((value) => value.type === '__nyx__stylesheetProxy__arg') as CustomEvent;
+        expect(event.detail).toEqual({enableStyleSheetsProxy: true, enableCustomElementRegistryProxy: true, enableLeanDeclarations: true});
     });
 
     test('uses the Chromium proxy event and applies valid color templates', () => {
@@ -467,6 +497,35 @@ describe('Lean injector lifecycle', () => {
         const shadowObserver = TestObserver.instances[1];
         removeLeanTheme();
         expect(shadowObserver.disconnect).toHaveBeenCalledTimes(1);
+    });
+
+    test('discovers a nested stylesheet without unrelated inline mutations', async () => {
+        const holder = new TestHTMLElement();
+        const style = new TestHTMLElement();
+        const manager = {details: jest.fn(() => null), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(getManageableStyles).mockImplementation((node) => node === holder as unknown as Node ? [style as never] : []);
+        jest.mocked(shouldManageStyle).mockImplementation((node) => node === style as unknown as Node);
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        createOrUpdateLeanTheme(theme, null, false);
+        TestObserver.instances[0].callback([{type: 'childList', addedNodes: [holder], removedNodes: []} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(manager.render).toHaveBeenCalledTimes(1);
+        expect(manager.watch).toHaveBeenCalledTimes(1);
+    });
+
+    test('ignores non-HTML descendants and removed text nodes', async () => {
+        const style = new TestHTMLElement();
+        const holder = new TestHTMLElement();
+        holder.nested = [new TestElement()];
+        const manager = {details: jest.fn(() => null), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(getManageableStyles).mockImplementation((node) => node === doc as unknown as Node ? [style as never] : []);
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        createOrUpdateLeanTheme(theme, null, false);
+        const records = [{type: 'childList', addedNodes: [holder], removedNodes: [{}]} as unknown as MutationRecord];
+        expect(() => TestObserver.instances[0].callback(records)).not.toThrow();
+        await flushFrame();
+        expect(overrideLeanInlineStyle).not.toHaveBeenCalled();
+        expect(manager.destroy).not.toHaveBeenCalled();
     });
 
     test('only queues styled inserted elements and their styled descendants', async () => {
@@ -708,6 +767,27 @@ describe('Lean injector lifecycle', () => {
         expect(manager.destroy).not.toHaveBeenCalled();
     });
 
+    test('matches shadow variables during startup and leaves no stale work for later inline changes', async () => {
+        const shadow = new TestShadowRoot();
+        const host = new TestHTMLElement();
+        host.shadowRoot = shadow;
+        const style = new TestHTMLElement();
+        const manager = {details: jest.fn(() => ({rules: [{}]})), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        jest.mocked(getManageableStyles).mockImplementation((node) => node === shadow as unknown as Node ? [style as never] : []);
+        jest.mocked(iterateShadowHosts).mockImplementation((_root, callback) => callback(host as never));
+        createOrUpdateLeanTheme(theme, null, false);
+        const variables = jest.mocked(manageLeanStyle).mock.calls[0][1].variablesStore;
+        expect(variables.matchVariablesAndDependents).toHaveBeenCalledTimes(2);
+        expect(emitter.setNamedSheet.mock.calls.filter((args) => args[1] === 'root-vars' && args[2] === 'root vars')).toHaveLength(2);
+        jest.mocked(variables.matchVariablesAndDependents).mockClear();
+        emitter.setNamedSheet.mockClear();
+        TestObserver.instances[0].callback([{type: 'attributes', attributeName: 'style', target: new TestHTMLElement()} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(variables.matchVariablesAndDependents).not.toHaveBeenCalled();
+        expect(emitter.setNamedSheet).not.toHaveBeenCalledWith(doc, 'root-vars', 'root vars', 'beginning');
+    });
+
     test('does not rematch variables for a newly observed empty shadow stylesheet', async () => {
         const shadow = new TestShadowRoot();
         const host = new TestHTMLElement();
@@ -828,6 +908,30 @@ describe('Lean injector lifecycle', () => {
         await flushFrame();
         expect(first.destroy).toHaveBeenCalledTimes(1);
         expect(second.destroy).not.toHaveBeenCalled();
+    });
+
+    test('clears queued adopted-root events when a theme is removed', () => {
+        createOrUpdateLeanTheme(theme, null, false);
+        const options = jest.mocked(watchAdoptedRoot).mock.calls[0][1];
+        options.pendingRoots.add(doc as never);
+        expect(options.pendingRoots.size).toBe(1);
+        removeLeanTheme();
+        expect(options.pendingRoots.size).toBe(0);
+    });
+
+    test('does not carry queued root-variable updates into the next theme', async () => {
+        createOrUpdateLeanTheme(theme, null, false);
+        const syncOptions = jest.mocked(syncAdoptedSheets).mock.calls[0][1];
+        syncOptions.createModifier();
+        const modifierOptions = jest.mocked(createStyleSheetModifier).mock.calls[0][0] as unknown as {variablesStore: {setOnRootVariableChange: jest.Mock}};
+        modifierOptions.variablesStore.setOnRootVariableChange.mock.calls[0][0]();
+        removeLeanTheme();
+        createOrUpdateLeanTheme(theme, null, false);
+        emitter.setNamedSheet.mockClear();
+        const inline = new TestHTMLElement();
+        TestObserver.instances[1].callback([{type: 'attributes', attributeName: 'style', target: inline} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(emitter.setNamedSheet).not.toHaveBeenCalledWith(doc, 'root-vars', 'root vars', 'beginning');
     });
 
     test('does not keep adopted managers from the previous theme', () => {
