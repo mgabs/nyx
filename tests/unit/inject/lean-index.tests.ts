@@ -227,6 +227,35 @@ describe('Lean injector lifecycle', () => {
         expect(secondCleanup).toHaveBeenCalledTimes(1);
     });
 
+    test('stops initialization if the theme is disabled during page proxy setup', () => {
+        jest.spyOn(doc, 'dispatchEvent').mockImplementationOnce(() => {
+            removeLeanTheme();
+            return true;
+        });
+        createOrUpdateLeanTheme(theme, null, false);
+        expect(createAdoptedEmitter).not.toHaveBeenCalled();
+        expect(doc.createElement).not.toHaveBeenCalled();
+        expect(doc.head.append).not.toHaveBeenCalled();
+        expect(applyLeanInlineStyles).not.toHaveBeenCalled();
+        expect(TestObserver.instances).toHaveLength(0);
+        expect(serializeLeanCSS()).toBe('');
+    });
+
+    test('does not resume old initialization when a new theme starts during proxy setup', () => {
+        const replacement = {...theme, brightness: 80};
+        jest.spyOn(doc, 'dispatchEvent').mockImplementationOnce(() => {
+            removeLeanTheme();
+            createOrUpdateLeanTheme(replacement, null, false);
+            return true;
+        });
+        createOrUpdateLeanTheme(theme, null, false);
+        expect(createAdoptedEmitter).toHaveBeenCalledTimes(1);
+        expect(doc.createElement).toHaveBeenCalledTimes(1);
+        expect(applyLeanInlineStyles).toHaveBeenCalledTimes(1);
+        expect(applyLeanInlineStyles).toHaveBeenCalledWith(doc, replacement, expect.anything(), [], []);
+        expect(TestObserver.instances).toHaveLength(1);
+    });
+
     test('creates ordered static output and respects font, selection, and site settings', () => {
         const options = {...theme, useFont: true, styleSystemControls: true, selectionColor: 'auto'};
         const settings = fixes({invert: ['.first', '.second'], ignoreCSSUrl: ['https://example.com/ignored.css']});

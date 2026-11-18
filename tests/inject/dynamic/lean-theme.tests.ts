@@ -30,6 +30,17 @@ afterEach(() => {
 });
 
 describe('LEAN DYNAMIC THEME', () => {
+    it('does not resume Lean when disabled during page-hook setup', () => {
+        const element = document.createElement('div');
+        element.style.color = 'black';
+        container.append(element);
+        document.addEventListener('__nyx__cleanUp', () => removeLeanTheme(), {once: true});
+        expect(() => createOrUpdateLeanTheme(theme, null, false)).not.toThrow();
+        expect(serializeLeanCSS()).toBe('');
+        expect(element.hasAttribute('data-nyx-inline-color')).toBe(false);
+        expect(document.adoptedStyleSheets).toHaveSize(0);
+    });
+
     it('updates a managed stylesheet when its text is replaced', async () => {
         const style = document.createElement('style');
         style.textContent = '.text-change-target { background-color: white; } .text-change-reference { background-color: red; } .text-change-blue { background-color: blue; }';

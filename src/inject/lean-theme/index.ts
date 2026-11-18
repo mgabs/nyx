@@ -508,7 +508,11 @@ function startWatchingAdoptedRoot(root: Document | ShadowRoot): void {
 }
 
 function startLeanProxy(fixes: DynamicThemeFix | null): void {
+    const generation = themeGeneration;
     document.dispatchEvent(new CustomEvent('__nyx__cleanUp'));
+    if (!currentTheme || generation !== themeGeneration) {
+        return;
+    }
     const enableStyleSheetsProxy = !(fixes && fixes.disableStyleSheetsProxy);
     const enableCustomElementRegistryProxy = !(fixes && fixes.disableCustomElementRegistryProxy);
     if (__CHROMIUM_MV3__) {
@@ -592,7 +596,11 @@ export function createOrUpdateLeanTheme(
 
     clearColorPalette();
     clearColorModificationCache();
+    const generation = themeGeneration;
     startLeanProxy(fixes);
+    if (!currentTheme || generation !== themeGeneration) {
+        return;
+    }
     createStaticStyleOverrides();
 
     if (isDOMReady()) {
