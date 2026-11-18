@@ -30,6 +30,32 @@ afterEach(() => {
 });
 
 describe('LEAN DYNAMIC THEME', () => {
+    it('updates a managed stylesheet when its text is replaced', async () => {
+        const style = document.createElement('style');
+        style.textContent = '.text-change-target { background-color: white; } .text-change-reference { background-color: red; } .text-change-blue { background-color: blue; }';
+        const target = document.createElement('div');
+        target.className = 'text-change-target';
+        const reference = document.createElement('div');
+        reference.className = 'text-change-reference';
+        const blueReference = document.createElement('div');
+        blueReference.className = 'text-change-blue';
+        container.append(style, target, reference, blueReference);
+        createOrUpdateLeanTheme(theme, null, false);
+        const themedRed = getComputedStyle(reference).backgroundColor;
+        const themedBlue = getComputedStyle(blueReference).backgroundColor;
+        const previousCSS = serializeLeanCSS();
+        expect(themedRed).not.toBe('rgb(255, 0, 0)');
+        expect(themedBlue).not.toBe('rgb(0, 0, 255)');
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        style.textContent = '.text-change-target { background-color: red; } .text-change-reference { background-color: red; } .text-change-blue { background-color: blue; }';
+        await timeout(100);
+        expect(getComputedStyle(target).backgroundColor).toBe(themedRed);
+        expect(serializeLeanCSS()).not.toBe(previousCSS);
+        style.firstChild!.textContent = '.text-change-target { background-color: blue; } .text-change-reference { background-color: red; } .text-change-blue { background-color: blue; }';
+        await timeout(100);
+        expect(getComputedStyle(target).backgroundColor).toBe(themedBlue);
+    });
+
     it('updates an adopted stylesheet when a nested grouping rule changes', async () => {
         const sheet = new CSSStyleSheet();
         sheet.replaceSync('@media screen {}');
@@ -37,14 +63,19 @@ describe('LEAN DYNAMIC THEME', () => {
         const target = document.createElement('div');
         target.className = 'grouped-target';
         container.append(target);
-        createOrUpdateLeanTheme(theme, null, false);
-        const group = sheet.cssRules[0] as CSSMediaRule;
-        group.insertRule('.grouped-target { background-color: white; }', 0);
-        await timeout(100);
-        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
-        group.deleteRule(0);
-        await timeout(100);
-        expect(serializeLeanCSS()).not.toContain('.grouped-target');
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            const group = sheet.cssRules[0] as CSSMediaRule;
+            group.insertRule('.grouped-target { background-color: white; }', 0);
+            await timeout(100);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+            group.deleteRule(0);
+            await timeout(100);
+            expect(serializeLeanCSS()).not.toContain('.grouped-target');
+        } finally {
+            removeLeanTheme();
+            document.adoptedStyleSheets = [];
+        }
     });
 
     it('updates a regular stylesheet when a nested grouping rule changes', async () => {

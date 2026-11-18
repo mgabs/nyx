@@ -191,6 +191,7 @@ describe('Lean injector lifecycle', () => {
         expect(setIgnoredCSSURLs).toHaveBeenCalledWith([]);
         expect(clearColorPalette).toHaveBeenCalledTimes(1);
         expect(clearColorModificationCache).toHaveBeenCalledTimes(1);
+        expect(doc.querySelector).toHaveBeenCalledWith('.nyx.nyx--fallback');
         doc.querySelector.mockClear();
         removeLeanTheme();
         expect(doc.querySelector).toHaveBeenCalledWith('.nyx.nyx--fallback');
@@ -951,6 +952,7 @@ describe('Lean injector lifecycle', () => {
         const variables = jest.mocked(manageLeanStyle).mock.calls[0][1].variablesStore;
         expect(variables.addRulesForMatching).not.toHaveBeenCalled();
         expect(variables.matchVariablesAndDependents).toHaveBeenCalledTimes(1);
+        expect(emitter.setNamedSheet.mock.calls.filter((args) => args[1] === 'root-vars' && args[2] === 'root vars')).toHaveLength(1);
     });
 
     test('ignores style attributes on nodes that cannot have inline overrides', async () => {
