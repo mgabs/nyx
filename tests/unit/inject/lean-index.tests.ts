@@ -305,6 +305,10 @@ describe('Lean injector lifecycle', () => {
     });
 
     test('defers initial rendering until ready and ignores ready callbacks after removal', () => {
+        const style = new TestHTMLElement();
+        const manager = {details: jest.fn(() => null), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(getManageableStyles).mockReturnValue([style as never]);
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
         jest.mocked(isDOMReady).mockReturnValue(false);
         createOrUpdateLeanTheme(theme, null, false);
         expect(addDOMReadyListener).toHaveBeenCalled();
@@ -313,10 +317,13 @@ describe('Lean injector lifecycle', () => {
         expect(applyLeanInlineStyles).not.toHaveBeenCalled();
         ready();
         expect(applyLeanInlineStyles).toHaveBeenCalledTimes(1);
+        expect(manager.render).toHaveBeenCalledTimes(1);
+        expect(manager.watch).toHaveBeenCalledTimes(1);
         removeLeanTheme();
         ready();
         complete();
         expect(applyLeanInlineStyles).toHaveBeenCalledTimes(1);
+        expect(manager.render).toHaveBeenCalledTimes(1);
     });
 
     test('schedules one frame for a burst of inline mutations', async () => {
@@ -825,6 +832,7 @@ describe('Lean injector lifecycle', () => {
         Object.assign(doc, {documentElement: null});
         createOrUpdateLeanTheme(theme, null, false);
         expect(TestObserver.instances).toHaveLength(0);
+        expect(iterateShadowHosts).not.toHaveBeenCalled();
         expect(watchAdoptedRoot).toHaveBeenCalledTimes(1);
     });
 
@@ -1000,6 +1008,23 @@ describe('Lean injector lifecycle', () => {
         expect(second.destroy).not.toHaveBeenCalled();
     });
 
+    test('forgets shadow observers and inline roots when the theme is restarted', () => {
+        const shadow = new TestShadowRoot();
+        const host = new TestHTMLElement();
+        host.shadowRoot = shadow;
+        jest.mocked(iterateShadowHosts).mockImplementation((_root, callback) => callback(host as never));
+        createOrUpdateLeanTheme(theme, null, false);
+        const observer = TestObserver.instances[1];
+        removeLeanTheme();
+        expect(observer.disconnect).toHaveBeenCalledTimes(1);
+        expect(shadow.querySelectorAll).toHaveBeenCalledTimes(1);
+        jest.mocked(iterateShadowHosts).mockReset();
+        createOrUpdateLeanTheme(theme, null, false);
+        removeLeanTheme();
+        expect(observer.disconnect).toHaveBeenCalledTimes(1);
+        expect(shadow.querySelectorAll).toHaveBeenCalledTimes(1);
+    });
+
     test('clears queued adopted-root events when a theme is removed', () => {
         createOrUpdateLeanTheme(theme, null, false);
         const options = jest.mocked(watchAdoptedRoot).mock.calls[0][1];
@@ -1070,6 +1095,7 @@ describe('Lean injector lifecycle', () => {
         TestObserver.instances[0].callback([{type: 'attributes', attributeName: 'style', target: inline} as unknown as MutationRecord]);
         await Promise.resolve();
         expect(overrideLeanInlineStyle).toHaveBeenCalled();
+        expect(globalThis.cancelAnimationFrame).not.toHaveBeenCalled();
     });
 
     test('cleans inline attributes from observed document and shadow roots', () => {
