@@ -1,5 +1,20 @@
 # Verification notes
 
+## Review guide and current scope
+
+Lean tracks each page stylesheet separately for every document or accessible open shadow root. Page-level hooks notify Lean of supported CSSOM and adoption changes; a coalesced watcher updates the owned output sheets in page cascade order. Lean removes its sheets and inline markers on teardown, and generation checks prevent late stylesheet loads from reviving an old theme. The declaration wrapper is enabled only for Lean and restores native prototypes on cleanup. Writes through declarations retained before hooks were installed, and changes when hooks are unavailable, remain documented limitations.
+
+The changed reconciliation components and injector wiring were measured together at 197/199 killed mutations, with no timeouts; the Lean-only declaration block was measured separately at 64/67 killed. The stylesheet manager, inline styling, emitter, import scanners and condition wrapping each have scoped reports meeting the 95% line, branch and mutation targets. The whole injector file still has lower browser-instrumented coverage, and the full Helium suites retain the independently reproduced reload/navigation failure. The checklist must not imply that those broader checks passed. A human reviewer must inspect the implementation and evidence before the comprehension gate can be completed.
+
+
+## Latest verification and remaining gates
+
+The full Firefox injection suite passed 190/190 tests after seven additional checks for theme options, dynamically inserted content, shadow styles, style removal and scheduling without animation frames. A direct lifecycle test suite also checks deferred initialization, teardown, coalesced updates and stale loading callbacks. The browser-instrumented injector as a whole remains below the required 95% line and branch thresholds; the scoped reconciliation results below do not replace that requirement.
+
+A combined reusable unit mutation run across 14 Lean modules and the Lean-only proxy block killed 920 of 957 mutations (96.13%); nine timed out and 28 survived. Its Stryker score, which counts timeouts, was 97.07%. The stylesheet manager's earlier isolated run killed 170 of 175 mutations without timeouts. The combined reconciliation browser and unit run separately killed 197 of 199 mutations without timeouts. The combined unit configuration is `tests/unit/stryker.lean.mjs`; it requires Stryker and its Jest runner installed separately, with `NYX_STRYKER_JEST_PLUGIN` pointing to the runner's entry point. Raw combined output: `/private/tmp/nyx-all-lean-mutation-final.log`.
+
+The human comprehension review and final integration remain open. Full Helium suites still encounter the independently reproduced browser navigation/reload issue described below; isolated representative checks pass, but this is not a full-suite pass.
+
 ## Preliminary performance probe
 
 An ad hoc Helium headless probe explicitly selected each engine through the extension and verified that it applied to the page. It used one warmup and three measured new-page iterations per fixture on one machine. The first article navigation for each engine was aborted by the known blank-page reload and retried; those warmups are excluded below. These are preliminary medians, not a performance claim.

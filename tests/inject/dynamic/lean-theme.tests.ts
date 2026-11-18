@@ -59,6 +59,54 @@ describe('LEAN DYNAMIC THEME', () => {
         expect(getComputedStyle(target).color).not.toBe(afterBrightness);
     });
 
+    it('does not emit inversion or selection colors when both are disabled', () => {
+        createOrUpdateLeanTheme({...theme, mode: 0, brightness: 100, contrast: 100, sepia: 0, grayscale: 0, selectionColor: ''}, {
+            url: ['*'], invert: ['.no-filter'], css: '', ignoreInlineStyle: [], ignoreImageAnalysis: [],
+            ignoreCSSUrl: [], disableStyleSheetsProxy: false, disableCustomElementRegistryProxy: false,
+        }, false);
+        const css = serializeLeanCSS();
+        expect(css).not.toContain('.no-filter');
+        expect(css).toContain('--nyx-selection-background: initial');
+        expect(css).toContain('--nyx-selection-text: initial');
+    });
+
+    it('applies font, text stroke and selection settings', () => {
+        createOrUpdateLeanTheme({...theme, useFont: true, fontFamily: 'Arial', textStroke: 1, selectionColor: '#ff0000'}, null, false);
+        const css = serializeLeanCSS();
+        expect(css).toContain('font-family: Arial');
+        expect(css).toContain('text-stroke');
+        expect(css).toContain('--nyx-selection-background:');
+        expect(css).not.toContain('--nyx-selection-background: initial');
+    });
+
+    it('keeps an invalid color template without preventing valid fixes from applying', () => {
+        const target = document.createElement('div');
+        target.className = 'template-target';
+        container.append(target);
+        createOrUpdateLeanTheme(theme, {
+            url: ['*'], invert: [], css: '.template-target { color: ${not-a-color}; background-color: red; }',
+            ignoreInlineStyle: [], ignoreImageAnalysis: [], ignoreCSSUrl: [], disableStyleSheetsProxy: false,
+            disableCustomElementRegistryProxy: false,
+        }, false);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(255, 0, 0)');
+        expect(serializeLeanCSS()).toContain('.template-target');
+    });
+
+    it('themes newly inserted inline HTML and SVG descendants', async () => {
+        createOrUpdateLeanTheme(theme, null, false);
+        const holder = document.createElement('section');
+        holder.style.backgroundColor = 'white';
+        holder.innerHTML = '<span style="color: black">Text</span><svg><path style="fill: black"></path></svg>';
+        container.append(holder);
+        await timeout(150);
+        expect(getComputedStyle(holder).backgroundColor).toBe('rgb(17, 17, 17)');
+        expect(getComputedStyle(holder.querySelector('span')!).color).toBe('rgb(238, 238, 238)');
+        expect(getComputedStyle(holder.querySelector('path')!).fill).toBe('rgb(238, 238, 238)');
+        removeLeanTheme();
+        expect(holder.hasAttribute('data-nyx-inline-bgcolor')).toBe(false);
+        expect(holder.querySelector('path')!.hasAttribute('data-nyx-inline-fill')).toBe(false);
+    });
+
     it('leaves ignored inline styles unchanged while theming other elements', () => {
         const ignored = document.createElement('div');
         ignored.className = 'ignored-inline';
@@ -850,6 +898,57 @@ describe('LEAN DYNAMIC THEME', () => {
         removeLeanTheme();
         expect(shadow.adoptedStyleSheets.length).toBe(0);
         expect(getComputedStyle(target).backgroundColor).toBe('rgb(255, 255, 255)');
+    });
+
+    it('removes overrides when a style element is directly removed', async () => {
+        const target = document.createElement('div');
+        target.className = 'direct-removal';
+        const style = document.createElement('style');
+        style.textContent = '.direct-removal { background-color: white; }';
+        container.append(style, target);
+        createOrUpdateLeanTheme(theme, null, false);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        style.remove();
+        await timeout(150);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+        expect(serializeLeanCSS()).not.toContain('.direct-removal');
+    });
+
+    it('updates styles when animation-frame scheduling is unavailable', async () => {
+        const original = window.requestAnimationFrame;
+        Object.defineProperty(window, 'requestAnimationFrame', {value: undefined, configurable: true, writable: true});
+        try {
+            const target = document.createElement('div');
+            target.className = 'no-frame-target';
+            container.append(target);
+            createOrUpdateLeanTheme(theme, null, false);
+            const style = document.createElement('style');
+            style.textContent = '.no-frame-target { background-color: white; }';
+            container.append(style);
+            await timeout(150);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        } finally {
+            removeLeanTheme();
+            Object.defineProperty(window, 'requestAnimationFrame', {value: original, configurable: true, writable: true});
+        }
+    });
+
+    it('updates and removes dynamic styles inside an active shadow root', async () => {
+        const host = document.createElement('div');
+        const shadow = host.attachShadow({mode: 'open'});
+        const target = document.createElement('span');
+        target.className = 'shadow-dynamic';
+        shadow.append(target);
+        container.append(host);
+        createOrUpdateLeanTheme(theme, null, false);
+        const style = document.createElement('style');
+        style.textContent = '.shadow-dynamic { background-color: white; }';
+        shadow.append(style);
+        await timeout(150);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        style.remove();
+        await timeout(150);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgba(0, 0, 0, 0)');
     });
 
     it('removes overrides when a dynamically inserted style container is removed', async () => {
