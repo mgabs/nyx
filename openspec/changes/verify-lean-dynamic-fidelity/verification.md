@@ -50,6 +50,14 @@ The full Firefox injection run passed 168 tests. Its browser instrumentation rep
 
 A focused browser test checks that a wrapped declaration supports native `item`, `setProperty`, `getPropertyPriority`, and `removeProperty` calls and that edits update themed output. It passed individually in both Firefox and Helium. It does not remove the documented limitation for declarations retained before hook installation.
 
+## Adopted-sheet reconciliation mutation probe
+
+A browser-driven Stryker run mutated only `syncPageAdoptedSheets` in `src/inject/lean-theme/index.ts` (lines 158–209), with the focused Firefox injection suite. A Karma setup bridged Stryker's active mutation into the browser and was verified to select active mutation IDs. The run killed 33 of 56 mutants and left 23 survivors: **58.93%**, below the 95% target. Survivors include sheet removal/re-adoption, variable processing, rule signatures and branches that require equivalence review. This is a partial slice, not a full-project mutation score. Raw report: `/private/tmp/nyx-index-mutation.log`. Reproduce using Stryker 10 with `NYX_KARMA_BIN` set to the absolute Karma executable, `FIREFOX_BIN` set to Firefox, and `stryker run tests/inject/stryker.lean-reconciliation.json`. Subsequent targeted runs confirmed that the new re-adoption test kills the `managers.delete` mutation and the adopted-image test kills the modifier-options mutation. The variable registration mutation still survived the new variable tests; those tests do not close that gap. The four new re-adoption, variable and no-image-analysis scenarios pass individually in Helium and as part of the 33-test focused Firefox suite.
+
+## Import depth mutation probe
+
+The import-cycle and cancellation guard at `style-manager.ts:152` was probed with 10 browser-driven mutants: six were killed, two timed out, and two survived, for an 80% Stryker score. Both survivors changed the 32-level depth limit. A subsequent test builds a 40-level import chain and asserts that only the first 31 imports are fetched; it passes in Firefox and Helium. A focused rerun on the depth expression killed all three of its mutants, including the previous two survivors. This focused result does not establish the score for the rest of the lifecycle slice. Raw reports: `/private/tmp/nyx-cycle-mutation.log` and `/private/tmp/nyx-depth-mutation.log`.
+
 ## Latest Firefox injection coverage
 
 After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.

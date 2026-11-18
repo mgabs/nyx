@@ -303,8 +303,8 @@ describe('LEAN DYNAMIC THEME', () => {
         const mainURL = getCSSEchoURL(mainCSS);
         const sources = new Map([
             [mainURL, mainCSS],
-            [firstURL, `@import "${secondURL}";`],
-            [secondURL, `@import "${firstURL}";`],
+            [firstURL, `@import "${secondURL}"; .cycle-first { color: black; }`],
+            [secondURL, `@import "${firstURL}"; .cycle-second { color: black; }`],
         ]);
         const page = window as any;
         const previousNyx = page.Nyx;
@@ -319,11 +319,52 @@ describe('LEAN DYNAMIC THEME', () => {
             createOrUpdateLeanTheme(theme, null, false);
             await timeout(300);
             expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+            const exported = serializeLeanCSS();
+            expect(exported.split('.cycle-first').length - 1).toBe(1);
+            expect(exported.split('.cycle-second').length - 1).toBe(1);
         } finally {
             removeLeanTheme();
             page.Nyx = previousNyx;
         }
     });
+    it('stops expanding an import chain at the depth limit', async () => {
+        const urlFor = (index: number) => `https://example.invalid/lean-depth-${index}.css`;
+        const mainCSS = `@import "${urlFor(0)}"; .depth-target { background-color: white; }`;
+        const mainURL = getCSSEchoURL(mainCSS);
+        const fetched: string[] = [];
+        const page = window as any;
+        const previousNyx = page.Nyx;
+        page.Nyx = {Plugins: {fetch: async ({url}: {url: string}) => {
+            fetched.push(url);
+            if (url === mainURL) {
+                return mainCSS;
+            }
+            const match = /lean-depth-(\d+)\.css$/.exec(url);
+            if (!match) {
+                throw new Error('Unexpected stylesheet URL');
+            }
+            const index = Number(match[1]);
+            return index < 40 ? `@import "${urlFor(index + 1)}";` : '';
+        }}};
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = mainURL;
+        const target = document.createElement('div');
+        target.className = 'depth-target';
+        container.append(link, target);
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            await timeout(300);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+            expect(fetched.length).toBe(32);
+            expect(fetched[fetched.length - 1]).toBe(urlFor(30));
+            expect(fetched).not.toContain(urlFor(31));
+        } finally {
+            removeLeanTheme();
+            page.Nyx = previousNyx;
+        }
+    });
+
     it('themes nested imported cross-origin styles under their media condition', async () => {
         stubChromeRuntimeMessage();
         const nestedCSS = '.import-target { background-color: white; }';
@@ -475,6 +516,136 @@ describe('LEAN DYNAMIC THEME', () => {
         expect(getComputedStyle(target).color).toBe('rgb(238, 238, 238)');
         expect(getComputedStyle(target).backgroundColor).not.toBe('rgb(17, 17, 17)');
         document.adoptedStyleSheets = document.adoptedStyleSheets.filter((sheet) => sheet !== second);
+    });
+
+    it('does not analyze images from adopted styles in document or shadow roots', async () => {
+        const image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aXcAAAAASUVORK5CYII=';
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(`.adopted-image { background-image: url("${image}"); }`);
+        const host = document.createElement('div');
+        const shadow = host.attachShadow({mode: 'open'});
+        const child = document.createElement('span');
+        child.className = 'adopted-image';
+        shadow.append(child);
+        shadow.adoptedStyleSheets = [sheet];
+        const target = document.createElement('div');
+        target.className = 'adopted-image';
+        container.append(target, host);
+        document.adoptedStyleSheets = [sheet];
+        const createElement = spyOn(document, 'createElement').and.callThrough();
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            await timeout(300);
+            expect(createElement.calls.allArgs().some(([tag]) => tag.toLowerCase() === 'canvas')).toBe(false);
+        } finally {
+            removeLeanTheme();
+            document.adoptedStyleSheets = [];
+        }
+    });
+
+    it('themes an adopted sheet again after the page removes and re-adds it', async () => {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync('.readopted-target { background-color: white; }');
+        const target = document.createElement('div');
+        target.className = 'readopted-target';
+        container.append(target);
+        document.adoptedStyleSheets = [sheet];
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+            document.adoptedStyleSheets = document.adoptedStyleSheets.filter((entry) => entry !== sheet);
+            await timeout(150);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+            await timeout(150);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        } finally {
+            removeLeanTheme();
+            document.adoptedStyleSheets = [];
+        }
+    });
+
+    it('themes chained variables when an adopted sheet appears after activation', async () => {
+        const style = document.createElement('style');
+        style.textContent = '.late-variable { background-color: var(--late-alias); } .late-reference { background-color: white; }';
+        const variable = document.createElement('div');
+        variable.className = 'late-variable';
+        const reference = document.createElement('div');
+        reference.className = 'late-reference';
+        container.append(style, variable, reference);
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(':root { --late-alias: var(--late-source); --late-source: white; }');
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+            await timeout(150);
+            expect(getComputedStyle(reference).backgroundColor).toBe('rgb(17, 17, 17)');
+            expect(getComputedStyle(variable).backgroundColor).toBe(getComputedStyle(reference).backgroundColor);
+        } finally {
+            removeLeanTheme();
+            document.adoptedStyleSheets = [];
+        }
+    });
+
+    it('themes chained variables declared in an adopted sheet', () => {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(':root { --adopted-alias: var(--adopted-source); --adopted-source: white; }');
+        const style = document.createElement('style');
+        style.textContent = '.chained-variable { background-color: var(--adopted-alias); } .chained-reference { background-color: white; }';
+        const variable = document.createElement('div');
+        variable.className = 'chained-variable';
+        const reference = document.createElement('div');
+        reference.className = 'chained-reference';
+        container.append(style, variable, reference);
+        document.adoptedStyleSheets = [sheet];
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            expect(getComputedStyle(reference).backgroundColor).toBe('rgb(17, 17, 17)');
+            expect(getComputedStyle(variable).backgroundColor).toBe(getComputedStyle(reference).backgroundColor);
+        } finally {
+            removeLeanTheme();
+            document.adoptedStyleSheets = [];
+        }
+    });
+
+    it('themes a regular rule that uses a variable declared in an adopted sheet', () => {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(':root { --shared-adopted-color: white; }');
+        const style = document.createElement('style');
+        style.textContent = '.shared-variable { background-color: var(--shared-adopted-color); } .shared-reference { background-color: white; }';
+        const variable = document.createElement('div');
+        variable.className = 'shared-variable';
+        const reference = document.createElement('div');
+        reference.className = 'shared-reference';
+        container.append(style, variable, reference);
+        document.adoptedStyleSheets = [sheet];
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            expect(getComputedStyle(reference).backgroundColor).toBe('rgb(17, 17, 17)');
+            expect(getComputedStyle(variable).backgroundColor).toBe(getComputedStyle(reference).backgroundColor);
+        } finally {
+            removeLeanTheme();
+            document.adoptedStyleSheets = [];
+        }
+    });
+
+    it('updates adopted CSS variable colors after a same-count declaration edit', async () => {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(':root { --adopted-color: white; } .adopted-variable { background-color: var(--adopted-color); }');
+        const target = document.createElement('div');
+        target.className = 'adopted-variable';
+        container.append(target);
+        document.adoptedStyleSheets = [sheet];
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+            (sheet.cssRules[0] as CSSStyleRule).style.setProperty('--adopted-color', 'red');
+            await timeout(150);
+            expect(getComputedStyle(target).backgroundColor).not.toBe('rgb(17, 17, 17)');
+        } finally {
+            removeLeanTheme();
+            document.adoptedStyleSheets = [];
+        }
     });
 
     it('updates an adopted sheet when its rules change and restores native declarations on cleanup', async () => {
