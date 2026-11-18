@@ -24,7 +24,7 @@ flowchart LR
 
 - [x] 4.0 Red: add browser tests for one sheet shared across roots, additions/removals/replacements and real same-count CSSOM edits; capture expected failures. Evidence: isolated Helium Karma run, 3 expected failures and 6 passes.
 - [x] 4.1 Green: reconcile each root and detect actual sheet changes without processing owned sheets; verify red tests pass and page-owned sheets survive teardown. Evidence: Firefox focused Karma 26/26 and packaged Firefox/Helium Lean test pass; code and tests committed in 4b8ba29d.
-- [ ] 4.2 Measure changed pure logic line/branch coverage and mutation kill against 95% targets; verify reports and address meaningful gaps.
+- [x] 4.2 Measure changed pure logic line/branch coverage and mutation kill against 95% targets; verify reports and address meaningful gaps. Evidence: focused Jest injector coverage 98.98% lines/96.56% branches; full unadjusted Stryker injector run 606/636 killed (95.28%), no timeouts or exclusions; changed Lean reconciliation and proxy components individually meet targets; see verification.md.
 
 ## 5. Imports and Lifecycle
 
