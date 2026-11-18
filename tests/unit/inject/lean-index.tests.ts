@@ -260,6 +260,20 @@ describe('Lean injector lifecycle', () => {
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'text', 'font override', 'beginning');
     });
 
+    test('passes site ignore lists to stylesheet and inline processing', () => {
+        const style = new TestHTMLElement();
+        const manager = {details: jest.fn(() => null), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(getManageableStyles).mockReturnValue([style as never]);
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        const settings = fixes({ignoreInlineStyle: ['.leave-inline'], ignoreImageAnalysis: ['.leave-image']});
+        createOrUpdateLeanTheme(theme, settings, false);
+        expect(manager.render).toHaveBeenCalledWith(theme, ['.leave-image']);
+        expect(applyLeanInlineStyles).toHaveBeenCalledWith(doc, theme, expect.anything(), ['.leave-inline'], ['.leave-image']);
+        createOrUpdateLeanTheme(theme, null, false);
+        expect(manager.render).toHaveBeenLastCalledWith(theme, []);
+        expect(applyLeanInlineStyles).toHaveBeenLastCalledWith(doc, theme, expect.anything(), [], []);
+    });
+
     test('does not register empty rules from a document stylesheet', () => {
         const style = new TestHTMLElement();
         const manager = {details: jest.fn(() => ({rules: []})), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
