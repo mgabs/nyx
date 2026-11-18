@@ -70,6 +70,10 @@ The quote-aware closing-parenthesis scanner was extracted into Lean-only `import
 
 The top-level import scanner was extracted into Lean-only `import-scan.ts`. Focused Jest tests cover quoted and unquoted URLs, escaped text, quoted conditions, nested blocks, malformed input and offsets: 100% lines and branches. Stryker scored 98.77%: 77 killed, three timeouts and one survivor out of 81 (95.06% killed without counting timeouts). The survivor advances one extra character over `@`, which has no effect on the scanner's quote or brace state. After extraction, the full Firefox injection suite passed 180/180, all 205 unit tests passed, and five focused import checks passed in Helium. This result is scoped to the scanner; other lifecycle logic remains below or unmeasured against the target. Raw report: `/private/tmp/nyx-import-scan-mutation2.log`.
 
+## Adopted-sheet selection coverage
+
+The pure decisions for selecting removed and newly adopted page sheets were extracted into Lean-only `adopted-reconciliation.ts`. Focused Jest tests report 100% lines and branches, with identity, order, duplicate and owned-sheet cases. Stryker killed all 22 mutations (100%, no timeouts). After extraction, the full Firefox injection suite passed 180/180, all 207 unit tests passed, and five focused adopted-sheet tests passed in Helium. This covers sheet selection only; the browser orchestration still requires a fresh mutation and coverage assessment. The reusable Stryker configuration was updated to the new line range. Raw report: `/private/tmp/nyx-reconciliation-pure-mutation.log`.
+
 ## Latest Firefox injection coverage
 
 After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.

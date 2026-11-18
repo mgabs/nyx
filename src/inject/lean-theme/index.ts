@@ -1,3 +1,4 @@
+import {getRemovedAdoptedSheets, getUntrackedAdoptedSheets} from './adopted-reconciliation';
 import type {Theme, DynamicThemeFix} from '../../definitions';
 import {getCSSFilterValue} from '../../generators/css-filter';
 import {createTextStyle} from '../../generators/text-style';
@@ -169,18 +170,14 @@ function syncPageAdoptedSheets(root: Document | ShadowRoot): CSSStyleSheet[] {
         managers = new Map();
         adoptedSheetManagers.set(root, managers);
     }
-    for (const [sheet, entry] of managers) {
-        if (!sheets.includes(sheet)) {
-            if (entry.outSheet) {
-                activeEmitter.removeDynamicSheet(root, entry.outSheet);
-            }
-            managers.delete(sheet);
+    for (const sheet of getRemovedAdoptedSheets(sheets, managers.keys())) {
+        const entry = managers.get(sheet)!;
+        if (entry.outSheet) {
+            activeEmitter.removeDynamicSheet(root, entry.outSheet);
         }
+        managers.delete(sheet);
     }
-    for (const sheet of [...sheets]) {
-        if (activeEmitter.ownsSheet(sheet) || managers.has(sheet)) {
-            continue;
-        }
+    for (const sheet of getUntrackedAdoptedSheets([...sheets], managers, activeEmitter.ownsSheet)) {
         try {
             if (sheet.cssRules && sheet.cssRules.length > 0) {
                 leanVariablesStore.addRulesForMatching(sheet.cssRules);

@@ -1,13 +1,24 @@
 {
-  "mutate": ["src/inject/lean-theme/index.ts:158-209"],
+  "mutate": [
+    "src/inject/lean-theme/index.ts:159-205"
+  ],
   "testRunner": "command",
   "commandRunner": {
     "command": "FIREFOX_TEST=1 node \"$NYX_KARMA_BIN\" start tests/inject/karma.lean-mutation.cjs --log-level warn"
   },
-  "reporters": ["clear-text", "progress"],
+  "reporters": [
+    "clear-text",
+    "progress"
+  ],
   "coverageAnalysis": "off",
   "concurrency": 1,
   "timeoutMS": 30000,
-  "ignorePatterns": [".worktrees", "build", "tests/browser/coverage", "tests/inject/coverage", "tests/perf/results"],
+  "ignorePatterns": [
+    ".worktrees",
+    "build",
+    "tests/browser/coverage",
+    "tests/inject/coverage",
+    "tests/perf/results"
+  ],
   "cleanTempDir": "always"
 }
