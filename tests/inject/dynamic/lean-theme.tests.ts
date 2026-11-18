@@ -26,6 +26,55 @@ afterEach(() => {
 });
 
 describe('LEAN DYNAMIC THEME', () => {
+    it('updates themed colors when the palette and brightness change', () => {
+        const style = document.createElement('style');
+        style.textContent = '.settings-target { background-color: white; color: black; }';
+        const target = document.createElement('div');
+        target.className = 'settings-target';
+        const inline = document.createElement('div');
+        inline.style.backgroundColor = 'white';
+        const host = document.createElement('div');
+        const shadow = host.attachShadow({mode: 'open'});
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync('.settings-shadow { background-color: white; }');
+        shadow.adoptedStyleSheets = [sheet];
+        const shadowTarget = document.createElement('span');
+        shadowTarget.className = 'settings-shadow';
+        shadow.append(shadowTarget);
+        container.append(style, target, inline, host);
+        createOrUpdateLeanTheme(theme, null, false);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        expect(getComputedStyle(inline).backgroundColor).toBe('rgb(17, 17, 17)');
+        expect(getComputedStyle(shadowTarget).backgroundColor).toBe('rgb(17, 17, 17)');
+        const beforeText = getComputedStyle(target).color;
+
+        createOrUpdateLeanTheme({...theme, darkSchemeBackgroundColor: '#333333', brightness: 80}, null, false);
+        expect(getComputedStyle(target).backgroundColor).not.toBe('rgb(17, 17, 17)');
+        expect(getComputedStyle(inline).backgroundColor).not.toBe('rgb(17, 17, 17)');
+        expect(getComputedStyle(shadowTarget).backgroundColor).not.toBe('rgb(17, 17, 17)');
+        expect(getComputedStyle(target).color).not.toBe(beforeText);
+        const afterBrightness = getComputedStyle(target).color;
+        createOrUpdateLeanTheme({...theme, contrast: 70, sepia: 50}, null, false);
+        expect(getComputedStyle(target).color).not.toBe(afterBrightness);
+    });
+
+    it('leaves ignored inline styles unchanged while theming other elements', () => {
+        const ignored = document.createElement('div');
+        ignored.className = 'ignored-inline';
+        ignored.style.backgroundColor = 'white';
+        const themed = document.createElement('div');
+        themed.style.backgroundColor = 'white';
+        container.append(ignored, themed);
+        createOrUpdateLeanTheme(theme, {
+            url: ['*'], invert: [], css: '', ignoreInlineStyle: ['.ignored-inline'],
+            ignoreImageAnalysis: [], ignoreCSSUrl: [], disableStyleSheetsProxy: false,
+            disableCustomElementRegistryProxy: false,
+        }, false);
+        expect(getComputedStyle(ignored).backgroundColor).toBe('rgb(255, 255, 255)');
+        expect(ignored.hasAttribute('data-nyx-inline-bgcolor')).toBe(false);
+        expect(getComputedStyle(themed).backgroundColor).toBe('rgb(17, 17, 17)');
+    });
+
     it('updates an existing SVG inline color when the page changes it', async () => {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');

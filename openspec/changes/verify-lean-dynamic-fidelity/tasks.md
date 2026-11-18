@@ -23,20 +23,20 @@ flowchart LR
 ## 4. Adopted Sheets and CSSOM
 
 - [x] 4.0 Red: add browser tests for one sheet shared across roots, additions/removals/replacements and real same-count CSSOM edits; capture expected failures. Evidence: isolated Helium Karma run, 3 expected failures and 6 passes.
-- [ ] 4.1 Green: reconcile each root and detect actual sheet changes without processing owned sheets; verify red tests pass and page-owned sheets survive teardown.
+- [x] 4.1 Green: reconcile each root and detect actual sheet changes without processing owned sheets; verify red tests pass and page-owned sheets survive teardown. Evidence: Firefox focused Karma 26/26 and packaged Firefox/Helium Lean test pass; code and tests committed in 4b8ba29d.
 - [ ] 4.2 Measure changed pure logic line/branch coverage and mutation kill against 95% targets; verify reports and address meaningful gaps.
 
 ## 5. Imports and Lifecycle
 
 - [x] 5.0 Red: test nested conditional cross-origin imports, failure/cycles, inline cleanup across all override types and shadow roots, and switching during pending loads; capture expected failures. Evidence: Firefox targeted Karma against an isolated `git archive HEAD` baseline: 14 failed and 12 passed; nested import and inline cleanup failed, while failure/cycle and late-switch cases already passed (see verification.md).
-- [ ] 5.1 Green: resolve imports with conditions and URL bases, cancel stale work and clean owned state; verify red tests and engine-switch regressions pass.
+- [x] 5.1 Green: resolve imports with conditions and URL bases, cancel stale work and clean owned state; verify red tests and engine-switch regressions pass. Evidence: Firefox focused Karma 26/26 and full injection 168/168; code and tests committed in 4b8ba29d.
 - [ ] 5.2 Measure changed pure logic line/branch coverage and mutation kill against 95% targets; verify reports and address meaningful gaps.
 
 ## 6. Document Export
 
 - [x] 6.0 Red: assert exported document rules preserve live cascade and omit shadow rules; capture expected failures. Evidence: targeted Helium Karma run failed on shadow-root leakage before the fix.
-- [ ] 6.1 Green: serialize document-owned sheets in live order and document the shadow-root limitation; verify exported CSS behavior and live shadow styling.
-- [ ] 6.2 Measure changed pure logic line/branch coverage and mutation kill against 95% targets; verify reports and address meaningful gaps.
+- [x] 6.1 Green: serialize document-owned sheets in live order and document the shadow-root limitation; verify exported CSS behavior and live shadow styling. Evidence: Firefox focused Karma 26/26 and packaged Firefox/Helium Lean test pass; code and tests committed in 4b8ba29d.
+- [x] 6.2 Measure changed pure logic line/branch coverage and mutation kill against 95% targets; verify reports and address meaningful gaps. Evidence: focused Jest coverage for adopted-emitter.ts 100% lines and branches; Stryker 172/181 killed, 1 timeout, 8 survived, 95.58% score; see verification.md.
 
 ## 7. Integration & Rebase Plan
 

@@ -689,6 +689,7 @@ export function createOrUpdateLeanTheme(
     ignoredInlineSelectors = fixes?.ignoreInlineStyle ?? [];
     setIgnoredCSSURLs(fixes?.ignoreCSSUrl ?? []);
 
+    clearColorPalette();
     clearColorModificationCache();
     startLeanProxy(fixes);
     createStaticStyleOverrides();
