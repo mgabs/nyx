@@ -16,7 +16,7 @@ import {createSheetWatcher} from '../dynamic-theme/watch/sheet-changes';
 
 import {createConstructableSheet} from './adopted-emitter';
 import type {AdoptedEmitter} from './adopted-emitter';
-import {findClosingParenthesis} from './import-conditions';
+import {wrapImportConditions} from './import-wrapping';
 import {findCSSImports} from './import-scan';
 
 export interface LeanStyleManager {
@@ -134,32 +134,11 @@ export function manageLeanStyle(
             }
             const nextAncestors = new Set(ancestors);
             nextAncestors.add(url);
-            let expanded = await expandImports(imported, getCSSBaseBath(url), nextAncestors);
-            let conditions = match[2].trim();
-            const layer = /^layer(?:\(\s*([^)]*)\s*\))?\s*/i.exec(conditions);
-            if (layer) {
-                conditions = conditions.slice(layer[0].length);
+            const expanded = await expandImports(imported, getCSSBaseBath(url), nextAncestors);
+            const wrapped = wrapImportConditions(expanded, match[2]);
+            if (wrapped != null) {
+                result += wrapped;
             }
-            let supports = '';
-            if (/^supports\(/i.test(conditions)) {
-                const end = findClosingParenthesis(conditions, conditions.indexOf('('));
-                if (end < 0) {
-                    continue;
-                }
-                supports = conditions.slice(conditions.indexOf('(') + 1, end).trim();
-                conditions = conditions.slice(end + 1).trim();
-            }
-            if (conditions) {
-                expanded = `@media ${conditions} { ${expanded} }`;
-            }
-            if (supports) {
-                const query = supports.startsWith('(') || /^(not|selector|font-tech|font-format)\b/i.test(supports) ? supports : `(${supports})`;
-                expanded = `@supports ${query} { ${expanded} }`;
-            }
-            if (layer) {
-                expanded = `@layer${layer[1] ? ` ${layer[1].trim()}` : ''} { ${expanded} }`;
-            }
-            result += expanded;
         }
         result += source.slice(offset);
         return replaceCSSRelativeURLsWithAbsolute(replaceCSSFontFace(result), baseURL);

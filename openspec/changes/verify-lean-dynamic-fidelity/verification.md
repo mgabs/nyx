@@ -54,6 +54,10 @@ A focused browser test checks that a wrapped declaration supports native `item`,
 
 A browser-driven Stryker run mutated only `syncPageAdoptedSheets` in `src/inject/lean-theme/index.ts` (lines 158–209), with the focused Firefox injection suite. A Karma setup bridged Stryker's active mutation into the browser and was verified to select active mutation IDs. The run killed 33 of 56 mutants and left 23 survivors: **58.93%**, below the 95% target. Survivors include sheet removal/re-adoption, variable processing, rule signatures and branches that require equivalence review. This is a partial slice, not a full-project mutation score. Raw report: `/private/tmp/nyx-index-mutation.log`. Reproduce using Stryker 10 with `NYX_KARMA_BIN` set to the absolute Karma executable, `FIREFOX_BIN` set to Firefox, and `stryker run tests/inject/stryker.lean-reconciliation.json`. Subsequent targeted runs confirmed that the new re-adoption test kills the `managers.delete` mutation and the adopted-image test kills the modifier-options mutation. The variable registration mutation still survived the new variable tests; those tests do not close that gap. The four new re-adoption, variable and no-image-analysis scenarios pass individually in Helium and as part of the 33-test focused Firefox suite.
 
+## Reconciliation orchestration after extraction
+
+The browser-driven mutation run was repeated after the pure selection extraction using `tests/inject/stryker.lean-reconciliation.json`. It killed 27 of 48 mutations, with 21 survivors and no timeouts: **56.25%** for the remaining `syncPageAdoptedSheets` orchestration. Survivors include inaccessible-sheet handling, variable matching, ordering guards and initial rule signatures. The extracted selection helpers separately scored 100%; neither figure proves the entire adopted-sheet slice meets 95%. Raw report: `/private/tmp/nyx-index-mutation-after-refactor.log`.
+
 ## Import depth mutation probe
 
 The import-cycle and cancellation guard at `style-manager.ts:152` was probed with 10 browser-driven mutants: six were killed, two timed out, and two survived, for an 80% Stryker score. Both survivors changed the 32-level depth limit. A subsequent test builds a 40-level import chain and asserts that only the first 31 imports are fetched; it passes in Firefox and Helium. A focused rerun on the depth expression killed all three of its mutants, including the previous two survivors. This focused result does not establish the score for the rest of the lifecycle slice. Raw reports: `/private/tmp/nyx-cycle-mutation.log` and `/private/tmp/nyx-depth-mutation.log`.
@@ -73,6 +77,10 @@ The top-level import scanner was extracted into Lean-only `import-scan.ts`. Focu
 ## Adopted-sheet selection coverage
 
 The pure decisions for selecting removed and newly adopted page sheets were extracted into Lean-only `adopted-reconciliation.ts`. Focused Jest tests report 100% lines and branches, with identity, order, duplicate and owned-sheet cases. Stryker killed all 22 mutations (100%, no timeouts). After extraction, the full Firefox injection suite passed 180/180, all 207 unit tests passed, and five focused adopted-sheet tests passed in Helium. This covers sheet selection only; the browser orchestration still requires a fresh mutation and coverage assessment. The reusable Stryker configuration was updated to the new line range. Raw report: `/private/tmp/nyx-reconciliation-pure-mutation.log`.
+
+## Import condition wrapping coverage
+
+Layer, supports and media wrapping was extracted into Lean-only `import-wrapping.ts`. Focused Jest tests report 100% lines and branches; Stryker killed 53 of 55 mutants (96.36%) with no timeouts. The two survivors concern an equivalent layer-regex backtracking variation and comparing a closing-parenthesis index against zero rather than negative one; a valid closing index is always greater than zero. After extraction, Firefox injection passed 180/180, all 219 unit tests passed, and five focused import cases passed in Helium. This covers wrapping only, not the remaining asynchronous lifecycle boundaries. Raw report: `/private/tmp/nyx-import-wrapping-mutation2.log`.
 
 ## Latest Firefox injection coverage
 
