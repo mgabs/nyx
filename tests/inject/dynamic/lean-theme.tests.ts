@@ -4,6 +4,9 @@ import {createOrUpdateLeanTheme, removeLeanTheme, serializeLeanCSS} from '../../
 import {injectProxy} from '../../../src/inject/dynamic-theme/stylesheet-proxy';
 import {createOrUpdateDynamicTheme, removeDynamicTheme} from '../../../src/inject/dynamic-theme';
 import {VariablesStore} from '../../../src/inject/dynamic-theme/variables';
+import {createSharedRuleCache} from '../../../src/inject/dynamic-theme/stylesheet-modifier';
+import {createAdoptedEmitter} from '../../../src/inject/lean-theme/adopted-emitter';
+import {manageLeanStyle} from '../../../src/inject/lean-theme/style-manager';
 import {resetChromeRuntimeMessageStub, stubBackgroundFetchResponse, stubChromeRuntimeMessage} from '../support/background-stub';
 import {getCSSEchoURL} from '../support/echo-client';
 import {multiline, timeout} from '../support/test-utils';
@@ -27,6 +30,58 @@ afterEach(() => {
 });
 
 describe('LEAN DYNAMIC THEME', () => {
+    it('updates an adopted stylesheet when a nested grouping rule changes', async () => {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync('@media screen {}');
+        document.adoptedStyleSheets = [sheet];
+        const target = document.createElement('div');
+        target.className = 'grouped-target';
+        container.append(target);
+        createOrUpdateLeanTheme(theme, null, false);
+        const group = sheet.cssRules[0] as CSSMediaRule;
+        group.insertRule('.grouped-target { background-color: white; }', 0);
+        await timeout(100);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        group.deleteRule(0);
+        await timeout(100);
+        expect(serializeLeanCSS()).not.toContain('.grouped-target');
+    });
+
+    it('updates a regular stylesheet when a nested grouping rule changes', async () => {
+        const style = document.createElement('style');
+        style.textContent = '@media screen {}';
+        const target = document.createElement('div');
+        target.className = 'regular-grouped-target';
+        container.append(style, target);
+        createOrUpdateLeanTheme(theme, null, false);
+        const group = style.sheet!.cssRules[0] as CSSMediaRule;
+        group.insertRule('.regular-grouped-target { background-color: white; }', 0);
+        await timeout(100);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgb(17, 17, 17)');
+        group.deleteRule(0);
+        await timeout(100);
+        expect(serializeLeanCSS()).not.toContain('.regular-grouped-target');
+    });
+
+    it('does not poll unavailable stylesheet rules while waiting for events', () => {
+        const style = document.createElement('style');
+        const emitter = createAdoptedEmitter();
+        const requestFrame = spyOn(window, 'requestAnimationFrame').and.callThrough();
+        const manager = manageLeanStyle(style, {
+            root: document,
+            emitter,
+            sharedCache: createSharedRuleCache(10),
+            variablesStore: new VariablesStore({imageURLModifier: null}),
+            update: () => {},
+            loadingStart: () => {},
+            loadingEnd: () => {},
+        });
+        manager.watch();
+        expect(requestFrame).not.toHaveBeenCalled();
+        manager.destroy();
+        emitter.destroy();
+    });
+
     it('updates themed colors when the palette and brightness change', () => {
         const style = document.createElement('style');
         style.textContent = '.settings-target { background-color: white; color: black; }';

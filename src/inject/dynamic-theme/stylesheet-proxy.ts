@@ -352,6 +352,21 @@ export function injectProxy(enableStyleSheetsProxy: boolean, enableCustomElement
     });
 
     if (enableLeanDeclarations) {
+        if (typeof CSSGroupingRule !== 'undefined') {
+            override(CSSGroupingRule, 'insertRule', (native) => function (rule: string, index?: number) {
+                const result = native.call(this, rule, index) as number;
+                if (this.parentStyleSheet) {
+                    reportSheetChange(this.parentStyleSheet);
+                }
+                return result;
+            });
+            override(CSSGroupingRule, 'deleteRule', (native) => function (index: number) {
+                native.call(this, index);
+                if (this.parentStyleSheet) {
+                    reportSheetChange(this.parentStyleSheet);
+                }
+            });
+        }
         const declarationProxies = new WeakMap<CSSStyleDeclaration, CSSStyleDeclaration>();
         const proxyDeclarations = new WeakMap<CSSStyleDeclaration, CSSStyleDeclaration>();
         for (const name of Object.getOwnPropertyNames(CSSStyleDeclaration.prototype)) {

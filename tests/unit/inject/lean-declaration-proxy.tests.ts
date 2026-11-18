@@ -54,6 +54,17 @@ class TestSheet {
     replaceSync() {}
 }
 
+class TestGroup {
+    parentStyleSheet: TestSheet | null = null;
+    rules = ['a'];
+    insertRule(_rule: string, index = 0) {
+        return index;
+    }
+    deleteRule(index: number) {
+        this.rules.splice(index, 1);
+    }
+}
+
 class TestNode extends EventTarget {}
 class TestElement extends TestNode {
     isConnected = true;
@@ -101,6 +112,7 @@ beforeEach(() => {
         CSSStyleDeclaration: TestDeclaration,
         CSSStyleRule: TestRule,
         CSSStyleSheet: TestSheet,
+        CSSGroupingRule: TestGroup,
         Element: TestElement,
         Node: TestNode,
         Document: TestDocument,
@@ -152,6 +164,8 @@ describe('Lean-only declaration proxy', () => {
         expect(wrapped.getPropertyValue).toBe(wrapped.getPropertyValue);
         wrapped.setProperty('color', 'red');
         expect(wrapped.getPropertyValue('color')).toBe('red');
+        const detachedMethod = wrapped.getPropertyValue;
+        expect(detachedMethod('color')).toBe('red');
         expect(TestDeclaration.prototype.getPropertyValue.call(wrapped, 'color')).toBe('red');
         changed.mockClear();
         wrapped.color = 'blue';
@@ -248,13 +262,45 @@ describe('Lean-only declaration proxy', () => {
         expect(shadowChanged).toHaveBeenCalledTimes(1);
     });
 
+    test('keeps declaration support when grouping rules are unavailable', () => {
+        Object.defineProperty(globalThis, 'CSSGroupingRule', {value: undefined, configurable: true, writable: true});
+        expect(() => injectProxy(false, false, true)).not.toThrow();
+        const {rule} = pageSheet();
+        expect(rule.style).not.toBe(rule.declaration);
+    });
+
+    test('notifies on nested rule edits and restores grouping methods on cleanup', () => {
+        const {sheet, owner} = pageSheet();
+        const group = new TestGroup();
+        group.parentStyleSheet = sheet;
+        const changed = jest.fn();
+        owner.addEventListener('__nyx__updateSheet', changed);
+        const insert = TestGroup.prototype.insertRule;
+        const remove = TestGroup.prototype.deleteRule;
+        injectProxy(false, false, true);
+        expect(group.insertRule('a {}', 2)).toBe(2);
+        group.deleteRule(0);
+        expect(group.rules).toEqual([]);
+        expect(changed).toHaveBeenCalledTimes(2);
+        group.parentStyleSheet = null;
+        group.insertRule('a {}');
+        group.deleteRule(0);
+        expect(group.rules).toEqual([]);
+        expect(changed).toHaveBeenCalledTimes(2);
+        documentRoot.dispatchEvent(new CustomEvent('__nyx__cleanUp'));
+        expect(TestGroup.prototype.insertRule).toBe(insert);
+        expect(TestGroup.prototype.deleteRule).toBe(remove);
+    });
+
     test('leaves declaration getters and ordinary native methods unchanged for Dynamic', () => {
         const {rule} = pageSheet();
         const getter = Object.getOwnPropertyDescriptor(TestRule.prototype, 'style')!.get;
         const method = TestDeclaration.prototype.getPropertyValue;
+        const groupMethod = TestGroup.prototype.insertRule;
         injectProxy(false, false);
         expect(Object.getOwnPropertyDescriptor(TestRule.prototype, 'style')!.get).toBe(getter);
         expect(TestDeclaration.prototype.getPropertyValue).toBe(method);
+        expect(TestGroup.prototype.insertRule).toBe(groupMethod);
         expect(rule.style).toBe(rule.declaration);
     });
 });

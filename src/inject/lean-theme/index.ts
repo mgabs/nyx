@@ -173,12 +173,13 @@ function syncPageAdoptedSheets(root: Document | ShadowRoot): CSSStyleSheet[] {
 }
 
 function renderAdoptedSheet(root: Document | ShadowRoot, sheet: CSSStyleSheet): void {
+    const generation = themeGeneration;
     renderAdoptedOutput(root, sheet, {
         theme: currentTheme,
         managersByRoot: adoptedSheetManagers,
         getEmitter: ensureEmitter,
         ignoredImageSelectors,
-        isActive: () => Boolean(currentTheme),
+        isActive: () => Boolean(currentTheme) && generation === themeGeneration,
     });
 }
 

@@ -15,7 +15,7 @@ jest.mock('../../../src/inject/dynamic-theme/network', () => ({bgFetch: jest.fn(
 jest.mock('../../../src/utils/network', () => ({loadAsText: jest.fn()}));
 jest.mock('../../../src/inject/utils/dom', () => ({addReadyStateCompleteListener: jest.fn()}));
 jest.mock('../../../src/inject/utils/log', () => ({logInfo: jest.fn(), logWarn: jest.fn()}));
-jest.mock('../../../src/inject/dynamic-theme/watch/sheet-changes', () => ({createSheetWatcher: jest.fn()}));
+jest.mock('../../../src/inject/lean-theme/sheet-watch', () => ({createLeanSheetWatcher: jest.fn()}));
 jest.mock('../../../src/inject/dynamic-theme/stylesheet-modifier', () => ({createStyleSheetModifier: jest.fn()}));
 jest.mock('../../../src/inject/lean-theme/adopted-emitter', () => ({createConstructableSheet: jest.fn()}));
 
@@ -24,7 +24,7 @@ import {bgFetch} from '../../../src/inject/dynamic-theme/network';
 import {loadAsText} from '../../../src/utils/network';
 import {addReadyStateCompleteListener} from '../../../src/inject/utils/dom';
 import {logInfo, logWarn} from '../../../src/inject/utils/log';
-import {createSheetWatcher} from '../../../src/inject/dynamic-theme/watch/sheet-changes';
+import {createLeanSheetWatcher} from '../../../src/inject/lean-theme/sheet-watch';
 import {createStyleSheetModifier} from '../../../src/inject/dynamic-theme/stylesheet-modifier';
 import {createConstructableSheet} from '../../../src/inject/lean-theme/adopted-emitter';
 import {cleanLeanLoadingLinks, manageLeanStyle} from '../../../src/inject/lean-theme/style-manager';
@@ -46,7 +46,7 @@ beforeEach(() => {
         document: {readyState: 'complete'},
     });
     jest.mocked(readCSSFetchCache).mockReturnValue(null);
-    jest.mocked(createSheetWatcher).mockReturnValue({start: jest.fn(), stop: jest.fn()} as never);
+    jest.mocked(createLeanSheetWatcher).mockReturnValue({start: jest.fn(), stop: jest.fn()} as never);
     jest.mocked(createStyleSheetModifier).mockReturnValue({modifySheet: jest.fn()} as never);
 });
 
@@ -388,15 +388,29 @@ describe('Lean stylesheet loading lifecycle', () => {
         expect(bgFetch).not.toHaveBeenCalled();
     });
 
+    test('forces a rebuild after an event even when the top-level rule count is unchanged', () => {
+        const link = new Link();
+        link.sheet = {cssRules: [{}]} as unknown as CSSStyleSheet;
+        const {manager, update} = setup(link);
+        const modifier = jest.mocked(createStyleSheetModifier).mock.results[0].value;
+        manager.render(theme, []);
+        manager.render(theme, []);
+        expect(modifier.modifySheet.mock.calls[1][0].force).toBe(false);
+        jest.mocked(createLeanSheetWatcher).mock.calls[0][1]();
+        expect(update).toHaveBeenCalledTimes(1);
+        manager.render(theme, []);
+        expect(modifier.modifySheet.mock.calls[2][0].force).toBe(true);
+    });
+
     test('renders readable rules, watches, pauses and removes its output on destroy', () => {
         const rules = [{}] as unknown as CSSRuleList;
         const link = new Link();
         link.sheet = {cssRules: rules} as CSSStyleSheet;
         const {manager, emitter, output} = setup(link);
         const modifier = jest.mocked(createStyleSheetModifier).mock.results[0].value;
-        const watcher = jest.mocked(createSheetWatcher).mock.results[0].value;
+        const watcher = jest.mocked(createLeanSheetWatcher).mock.results[0].value;
         expect(manager.details({secondRound: false})).toEqual({rules});
-        const shouldStop = jest.mocked(createSheetWatcher).mock.calls[0][3];
+        const shouldStop = jest.mocked(createLeanSheetWatcher).mock.calls[0][2];
         expect(shouldStop()).toBe(false);
         manager.render(theme, []);
         expect(createStyleSheetModifier).toHaveBeenCalledWith({sharedCache: expect.anything(), variablesStore: expect.anything(), imageURLModifier: null});

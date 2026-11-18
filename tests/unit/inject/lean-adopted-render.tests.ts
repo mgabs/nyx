@@ -28,7 +28,7 @@ describe('Lean adopted stylesheet rendering', () => {
         expect(args.sourceCSSRules).toBe(source.cssRules);
         expect(args.theme).toBe(theme);
         expect(args.ignoreImageAnalysis).toEqual(['.image']);
-        expect(args.force).toBe(false);
+        expect(args.force).toBe(true);
         expect(args.isAsyncCancelled()).toBe(false);
         expect(args.prepareSheet()).toBe(output);
         expect(emitter.createDynamicSheet).toHaveBeenCalledWith(root);

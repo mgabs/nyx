@@ -28,7 +28,7 @@ export function renderAdoptedOutput(root: Document | ShadowRoot, sheet: CSSStyle
         sourceCSSRules: rules,
         theme,
         ignoreImageAnalysis: ignoredImageSelectors,
-        force: false,
+        force: true,
         prepareSheet: () => {
             if (!entry.outSheet) {
                 entry.outSheet = emitter.createDynamicSheet(entry.root);

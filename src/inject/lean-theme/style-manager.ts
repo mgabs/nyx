@@ -12,7 +12,7 @@ import type {StyleElement} from '../dynamic-theme/style-manager';
 import {createStyleSheetModifier} from '../dynamic-theme/stylesheet-modifier';
 import type {SharedRuleCache} from '../dynamic-theme/stylesheet-modifier';
 import type {VariablesStore} from '../dynamic-theme/variables';
-import {createSheetWatcher} from '../dynamic-theme/watch/sheet-changes';
+import {createLeanSheetWatcher} from './sheet-watch';
 
 import {createConstructableSheet} from './adopted-emitter';
 import type {AdoptedEmitter} from './adopted-emitter';
@@ -53,6 +53,7 @@ export function manageLeanStyle(
     let overrideSheet: CSSStyleSheet | null = null;
     let corsSheet: CSSStyleSheet | null = null;
     let prevRulesCount = 0;
+    let stylesheetChanged = false;
 
     const sheetModifier = createStyleSheetModifier({
         sharedCache,
@@ -60,10 +61,12 @@ export function manageLeanStyle(
         imageURLModifier: null,
     });
 
-    const sheetWatcher = createSheetWatcher(
+    const sheetWatcher = createLeanSheetWatcher(
         element,
-        getRulesSync,
-        update,
+        () => {
+            stylesheetChanged = true;
+            update();
+        },
         () => isDestroyed || isPaused,
     );
 
@@ -206,7 +209,8 @@ export function manageLeanStyle(
             return;
         }
         cancelAsyncOperations = false;
-        const force = rules.length !== prevRulesCount;
+        const force = stylesheetChanged || rules.length !== prevRulesCount;
+        stylesheetChanged = false;
         prevRulesCount = rules.length;
 
         sheetModifier.modifySheet({

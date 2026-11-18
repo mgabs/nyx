@@ -308,6 +308,17 @@ describe('Lean injector lifecycle', () => {
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'root-vars', 'root vars', 'beginning');
     });
 
+    test('keeps old adopted rendering cancelled after the theme is re-enabled', () => {
+        createOrUpdateLeanTheme(theme, null, false);
+        const watcherOptions = jest.mocked(watchAdoptedRoot).mock.calls[0][1];
+        watcherOptions.render(doc as never, {} as never);
+        const oldRender = jest.mocked(renderAdoptedOutput).mock.calls[0][2];
+        expect(oldRender.isActive()).toBe(true);
+        removeLeanTheme();
+        createOrUpdateLeanTheme(theme, null, false);
+        expect(oldRender.isActive()).toBe(false);
+    });
+
     test('uses the Chromium proxy event and applies valid color templates', () => {
         Object.assign(globalThis, {__CHROMIUM_MV3__: true});
         const dispatch = jest.spyOn(doc, 'dispatchEvent');
