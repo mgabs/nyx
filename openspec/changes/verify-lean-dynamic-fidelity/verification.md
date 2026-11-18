@@ -27,7 +27,7 @@ The full Firefox injection suite passed 193/193 tests after the review fixes and
 
 A combined reusable unit mutation run across 14 Lean modules and the Lean-only proxy block killed 920 of 957 mutations (96.13%); nine timed out and 28 survived. Its Stryker score, which counts timeouts, was 97.07%. The stylesheet manager's earlier isolated run killed 170 of 175 mutations without timeouts. The combined reconciliation browser and unit run separately killed 197 of 199 mutations without timeouts. The combined unit configuration is `tests/unit/stryker.lean.mjs`; it requires Stryker and its Jest runner installed separately, with `NYX_STRYKER_JEST_PLUGIN` pointing to the runner's entry point. Raw combined output: `/private/tmp/nyx-all-lean-mutation-final.log`.
 
-The human comprehension review and final integration remain open. Full Helium suites still encounter the independently reproduced browser navigation/reload issue described below; isolated representative checks pass, but this is not a full-suite pass.
+The user confirmed that the reviewed behaviors and documented reload and hook limitations match their intent and marked the human review checkbox. Final integration remains open. Full Helium suites still encounter the independently reproduced browser navigation/reload issue described below; isolated representative checks pass, but this is not a full-suite pass.
 
 ## Preliminary performance probe
 
@@ -54,6 +54,10 @@ Run `npm run build`, then `CHROME_BIN="<Helium executable>" node tests/perf/comp
 | SPA churn | Lean | 47.69 | 22.59 | 2,874,282 |
 
 Page ready includes navigation, verification that the selected theme applied, and two animation frames. The SPA fixture adds 200 nodes once. Task duration is a renderer metric, not total CPU usage; JS heap is page heap, not total browser or extension memory. A single device, browser and short workload cannot establish a general performance advantage. This run was repeated after the settings fix. Raw records: `/private/tmp/nyx-perf-after-palette.jsonl`.
+
+## Latest injector mutation baseline
+
+A full Jest-driven run after the event-driven review fixes killed 425 of 622 injector mutations (68.33%), with 192 survivors, five uncovered and no timeouts. It ran the then-current 326 tests and does not include browser injection tests. Additional focused lifecycle, cleanup and shadow-root assertions were added after this run. A focused event and shadow-root run killed 129 of 148 mutations (87.16%); a focused teardown and switching run killed 119 of 140 (85%). Both were below target, with no timeouts. Further tests were added afterward; their impact has not yet been measured. Raw outputs: `/private/tmp/nyx-mutation-events-improved.log` and `/private/tmp/nyx-mutation-lifecycle-improved.log`. The full-file mutation gate remains open. Raw report: `/private/tmp/nyx-index-mutation-current.log`.
 
 ## Performance after review fixes
 
