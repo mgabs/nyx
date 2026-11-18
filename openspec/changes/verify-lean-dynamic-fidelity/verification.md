@@ -86,6 +86,10 @@ Layer, supports and media wrapping was extracted into Lean-only `import-wrapping
 
 Focused Jest tests exercise readable and inaccessible sheets, import expansion, failed and cached fetches, document readiness, pause, destruction, stale loading tokens and teardown. `style-manager.ts` has 100% line and 98.46% branch coverage. Stryker killed 170 of 175 mutations (97.14%), with five survivors and no timeouts. The tests bound intentionally recursive mocked requests, so mutations that remove cycle guards fail promptly rather than exhausting a worker. Firefox injection passed 180/180 and four focused lifecycle and engine-switch cases passed in Helium. These results cover the manager, not all other lifecycle modules. Raw reports: `/private/tmp/nyx-style-manager-unit5.log` and `/private/tmp/nyx-style-manager-mutation5.log`.
 
+## Inline styling and cleanup coverage
+
+Focused Jest tests cover every override-to-property mapping, marked and unmarked cleanup, ignored selectors, missing styles, gradients, functional results, HTML, SVG and nested shadow roots. `inline-style.ts` has 100% line and branch coverage; Stryker killed 159 of 166 mutations (95.78%) with no timeouts. The unused element-root traversal branches were removed; production callers pass only documents or shadow roots. Firefox injection passed 180/180 after the change and six focused inline/engine-switch cases passed in Helium. Raw reports: `/private/tmp/nyx-inline-unit3.log` and `/private/tmp/nyx-inline-mutation2.log`.
+
 ## Latest Firefox injection coverage
 
 After the settings fix, `FIREFOX_TEST=1 npm run test:inject -- --ci --coverage` passed 170 tests. Browser instrumentation reports line/branch coverage: emitter 84.40%/76.56%, index 82.35%/75.84%, inline styles 78.12%/59.52%, and style manager 88.88%/77.21%. These figures include browser integration coverage and remain below 95%; they are distinct from the emitter's 100% focused Jest coverage. The page proxy is excluded by the instrumentation configuration. Mutation scores for the other slices remain unmeasured.

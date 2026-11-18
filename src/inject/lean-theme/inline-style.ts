@@ -1,6 +1,5 @@
 import type {Theme} from '../../definitions';
 import {forEach} from '../../utils/array';
-import {isShadowDomSupported} from '../../utils/platform';
 import {iterateShadowHosts} from '../utils/dom';
 import {logWarn} from '../utils/log';
 
@@ -93,23 +92,18 @@ export function getLeanInlineOverrideStyle(): string {
     }).join('\n');
 }
 
-function getInlineStyleElements(root: Node): Array<HTMLElement | SVGElement> {
+function getInlineStyleElements(root: Document | ShadowRoot): Array<HTMLElement | SVGElement> {
     const results: Array<HTMLElement | SVGElement> = [];
-    if ((root instanceof HTMLElement || root instanceof SVGElement) && root.hasAttribute('style')) {
-        results.push(root);
-    }
-    if (root instanceof Element || root === document || (isShadowDomSupported && root instanceof ShadowRoot)) {
-        forEach((root as ParentNode).querySelectorAll(LEAN_INLINE_STYLE_SELECTOR), (el) => {
-            if (el instanceof HTMLElement || el instanceof SVGElement) {
-                results.push(el);
-            }
-        });
-        iterateShadowHosts(root, (host) => {
-            if (host.shadowRoot) {
-                results.push(...getInlineStyleElements(host.shadowRoot));
-            }
-        });
-    }
+    forEach(root.querySelectorAll(LEAN_INLINE_STYLE_SELECTOR), (el) => {
+        if (el instanceof HTMLElement || el instanceof SVGElement) {
+            results.push(el);
+        }
+    });
+    iterateShadowHosts(root, (host) => {
+        if (host.shadowRoot) {
+            results.push(...getInlineStyleElements(host.shadowRoot));
+        }
+    });
     return results;
 }
 
