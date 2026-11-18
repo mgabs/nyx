@@ -48,6 +48,7 @@ jest.mock('../../../src/inject/lean-theme/inline-style', () => ({
 jest.mock('../../../src/inject/lean-theme/style-manager', () => ({cleanLeanLoadingLinks: jest.fn(), manageLeanStyle: jest.fn()}));
 
 import {getCSSFilterValue} from '../../../src/generators/css-filter';
+import {getSRGBLightness, parseColorWithCache} from '../../../src/utils/color';
 import {isDOMReady, addDOMReadyListener, addReadyStateCompleteListener, iterateShadowHosts} from '../../../src/inject/utils/dom';
 import {logWarn} from '../../../src/inject/utils/log';
 import {getManageableStyles, setIgnoredCSSURLs, shouldManageStyle} from '../../../src/inject/dynamic-theme/style-manager';
@@ -157,7 +158,7 @@ describe('Lean injector lifecycle', () => {
         createOrUpdateLeanTheme({...theme, useFont: true, selectionColor: 'auto'}, fixes({invert: ['.logo'], css: '.x { color: ${invalid}; }'}), false);
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'text', 'font override', 'beginning');
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'invert', expect.stringContaining('.logo'), 'beginning');
-        expect(logWarn).toHaveBeenCalled();
+        expect(logWarn).toHaveBeenCalledWith("Couldn't parse CSSTemplate's color.");
         expect(serializeLeanCSS()).toBe('exported');
         expect(applyLeanInlineStyles).toHaveBeenCalled();
         removeLeanTheme();
@@ -178,7 +179,10 @@ describe('Lean injector lifecycle', () => {
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'user-agent', 'user-agent', 'beginning');
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'text', 'font override', 'beginning');
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'invert', '.first, .second {\n  filter: invert(100%) !important;\n}', 'beginning');
-        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'variables', expect.stringContaining('--nyx-selection-background: selection-bg;'), 'beginning');
+        expect(parseColorWithCache).toHaveBeenCalledWith('#ffffff');
+        expect(parseColorWithCache).toHaveBeenCalledWith('#000000');
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'variables', ':root {\n  --nyx-neutral-background: dark-background;\n  --nyx-neutral-text: light-text;\n  --nyx-selection-background: selection-bg;\n  --nyx-selection-text: selection-text;\n}', 'beginning');
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'root-vars', '', 'beginning');
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'variables', expect.stringContaining('--nyx-selection-text: selection-text;'), 'beginning');
         expect(registerVariablesSheet).toHaveBeenCalledTimes(1);
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'inline', 'inline', 'ending');
@@ -189,8 +193,20 @@ describe('Lean injector lifecycle', () => {
         createOrUpdateLeanTheme(theme, fixes(), false);
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'text', '', 'beginning');
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'invert', '', 'beginning');
+        expect(getCSSFilterValue).not.toHaveBeenCalled();
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'variables', expect.stringContaining('--nyx-selection-background: initial;'), 'beginning');
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'variables', expect.stringContaining('--nyx-selection-text: initial;'), 'beginning');
+    });
+
+    test('treats the midpoint lightness as foreground in site templates', () => {
+        jest.mocked(getSRGBLightness).mockReturnValueOnce(0.5);
+        createOrUpdateLeanTheme(theme, fixes({css: '.x { color: ${#808080}; }'}), false);
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'override', '.x { color: light-text; }', 'ending');
+    });
+
+    test('applies text stroke without a custom font', () => {
+        createOrUpdateLeanTheme({...theme, textStroke: 1}, null, false);
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'text', 'font override', 'beginning');
     });
 
     test('defers initial rendering until ready and ignores ready callbacks after removal', () => {
@@ -312,6 +328,8 @@ describe('Lean injector lifecycle', () => {
         expect(manager.watch).toHaveBeenCalledTimes(1);
         expect(applyLeanInlineStyles).toHaveBeenCalledWith(shadow, theme, expect.anything(), [], []);
         expect(watchAdoptedRoot).toHaveBeenCalledWith(shadow, expect.anything());
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(shadow, 'invert', '', 'beginning');
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(shadow, 'override', '', 'ending');
         expect(TestObserver.instances).toHaveLength(2);
         TestObserver.instances[0].callback([{type: 'childList', addedNodes: [host], removedNodes: []} as unknown as MutationRecord]);
         await flushFrame();
