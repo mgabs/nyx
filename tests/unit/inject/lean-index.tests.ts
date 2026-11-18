@@ -51,6 +51,7 @@ import {getCSSFilterValue} from '../../../src/generators/css-filter';
 import {isDOMReady, addDOMReadyListener, addReadyStateCompleteListener, iterateShadowHosts} from '../../../src/inject/utils/dom';
 import {logWarn} from '../../../src/inject/utils/log';
 import {getManageableStyles, shouldManageStyle} from '../../../src/inject/dynamic-theme/style-manager';
+import {createStyleSheetModifier} from '../../../src/inject/dynamic-theme/stylesheet-modifier';
 import {createAdoptedEmitter} from '../../../src/inject/lean-theme/adopted-emitter';
 import {syncAdoptedSheets} from '../../../src/inject/lean-theme/adopted-sync';
 import {watchAdoptedRoot} from '../../../src/inject/lean-theme/adopted-watch';
@@ -220,6 +221,128 @@ describe('Lean injector lifecycle', () => {
         options.loadingStart();
         options.loadingEnd();
         expect(emitter.setNamedSheet).not.toHaveBeenCalled();
+    });
+
+    test('routes adopted-sheet events and cancels queued work on teardown', async () => {
+        createOrUpdateLeanTheme(theme, null, false);
+        const options = jest.mocked(watchAdoptedRoot).mock.calls[0][1];
+        expect(options.isActive()).toBe(true);
+        expect(options.getManagers(doc as never)).toBeUndefined();
+        expect(options.needsFlush()).toBe(false);
+        options.addRules([{}] as never);
+        expect(options.needsFlush()).toBe(true);
+        options.sync(doc as never);
+        options.render(doc as never, {} as never);
+        options.reorder(doc as never);
+        options.scheduleFlush();
+        await Promise.resolve();
+        removeLeanTheme();
+        expect(globalThis.cancelAnimationFrame).toHaveBeenCalled();
+        expect(options.isActive()).toBe(false);
+    });
+
+    test('connects variable changes and adopted rules to the next flush', async () => {
+        createOrUpdateLeanTheme(theme, null, false);
+        const syncOptions = jest.mocked(syncAdoptedSheets).mock.calls[0][1];
+        syncOptions.createModifier();
+        syncOptions.addRules([{}] as never);
+        const modifierOptions = jest.mocked(createStyleSheetModifier).mock.calls[0][0] as unknown as {variablesStore: {setOnRootVariableChange: jest.Mock; matchVariablesAndDependents: jest.Mock}};
+        const variables = modifierOptions.variablesStore;
+        const rootChanged = variables.setOnRootVariableChange.mock.calls[0][0];
+        rootChanged();
+        await flushFrame();
+        expect(variables.matchVariablesAndDependents).toHaveBeenCalledTimes(2);
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'root-vars', 'root vars', 'beginning');
+    });
+
+    test('uses the Chromium proxy event and applies valid color templates', () => {
+        Object.assign(globalThis, {__CHROMIUM_MV3__: true});
+        const dispatch = jest.spyOn(doc, 'dispatchEvent');
+        createOrUpdateLeanTheme(theme, fixes({css: '.x { color: ${#ffffff}; background: ${#000000}; }', disableStyleSheetsProxy: true}), false);
+        const event = dispatch.mock.calls.map(([value]) => value).find((value) => value.type === '__nyx__stylesheetProxy__arg') as CustomEvent;
+        expect(event.detail).toEqual({enableStyleSheetsProxy: false, enableCustomElementRegistryProxy: true, enableLeanDeclarations: true});
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'override', '.x { color: dark-background; background: light-text; }', 'ending');
+    });
+
+    test('tracks styles and adopted sheets in newly observed shadow roots', async () => {
+        const shadow = new TestShadowRoot();
+        const host = new TestHTMLElement();
+        host.shadowRoot = shadow;
+        const style = new TestHTMLElement();
+        style.parentRoot = shadow;
+        const manager = {details: jest.fn(() => ({rules: [{}]})), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        jest.mocked(getManageableStyles).mockImplementation((node) => node === shadow as unknown as Node ? [style as never] : []);
+        jest.mocked(syncAdoptedSheets).mockImplementation((root) => root === shadow as unknown as ShadowRoot ? [{} as CSSStyleSheet] : []);
+        createOrUpdateLeanTheme(theme, null, false);
+        TestObserver.instances[0].callback([{type: 'childList', addedNodes: [host], removedNodes: []} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(manager.render).toHaveBeenCalledTimes(1);
+        expect(manager.watch).toHaveBeenCalledTimes(1);
+        expect(applyLeanInlineStyles).toHaveBeenCalledWith(shadow, theme, expect.anything(), [], []);
+        expect(watchAdoptedRoot).toHaveBeenCalledWith(shadow, expect.anything());
+        expect(TestObserver.instances).toHaveLength(2);
+        TestObserver.instances[0].callback([{type: 'childList', addedNodes: [host], removedNodes: []} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(TestObserver.instances).toHaveLength(2);
+        expect(manager.render).toHaveBeenCalledTimes(1);
+    });
+
+    test('coalesces direct stylesheet additions and removals and skips disconnected nodes', async () => {
+        const style = new TestHTMLElement();
+        style.parentRoot = doc;
+        const disconnected = new TestHTMLElement();
+        disconnected.isConnected = false;
+        const manager = {details: jest.fn(() => null), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(shouldManageStyle).mockImplementation((node) => node === style as unknown as Node || node === disconnected as unknown as Node);
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        createOrUpdateLeanTheme(theme, null, false);
+        const observer = TestObserver.instances[0];
+        observer.callback([{type: 'childList', addedNodes: [style, disconnected, style], removedNodes: []} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(manageLeanStyle).toHaveBeenCalledTimes(1);
+        expect(manager.render).toHaveBeenCalledTimes(1);
+        observer.callback([{type: 'childList', addedNodes: [], removedNodes: [style]} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(manager.destroy).toHaveBeenCalledTimes(1);
+    });
+
+    test('ignores unrelated mutations and completes deferred rendering', async () => {
+        jest.mocked(isDOMReady).mockReturnValue(false);
+        const fallback = new TestHTMLElement();
+        doc.fallback = fallback;
+        createOrUpdateLeanTheme(theme, null, false);
+        const ready = jest.mocked(addDOMReadyListener).mock.calls[0][0];
+        const complete = jest.mocked(addReadyStateCompleteListener).mock.calls[0][0];
+        complete();
+        expect(fallback.remove).toHaveBeenCalled();
+        ready();
+        const initial = emitter.setNamedSheet.mock.calls.length;
+        TestObserver.instances[0].callback([{type: 'attributes', attributeName: 'class', target: new TestElement()} as unknown as MutationRecord]);
+        await flushFrame();
+        expect(emitter.setNamedSheet).toHaveBeenCalledTimes(initial);
+    });
+
+    test('refreshes existing managers and adopted output when settings change', () => {
+        const style = new TestHTMLElement();
+        const shadow = new TestShadowRoot();
+        style.parentRoot = shadow;
+        const sheet = {} as CSSStyleSheet;
+        const manager = {details: jest.fn(() => ({rules: []})), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        jest.mocked(getManageableStyles).mockReturnValue([style as never]);
+        jest.mocked(syncAdoptedSheets).mockImplementation((root, options) => {
+            options.managersByRoot.set(root, new Map([[sheet, {} as never]]));
+            return [];
+        });
+        jest.mocked(getCSSFilterValue).mockReturnValue('');
+        const settings = fixes({invert: ['.logo']});
+        createOrUpdateLeanTheme(theme, settings, false);
+        createOrUpdateLeanTheme({...theme, brightness: 90}, settings, false);
+        expect(manageLeanStyle).toHaveBeenCalledTimes(1);
+        expect(manager.render).toHaveBeenCalledTimes(2);
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'invert', '', 'beginning');
+        expect(manager.watch).toHaveBeenCalledTimes(2);
     });
 
     test('uses immediate scheduling when animation frames are unavailable', async () => {
