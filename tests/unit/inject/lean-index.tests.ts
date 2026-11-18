@@ -56,6 +56,7 @@ import {getModifiedFallbackStyle, getModifiedUserAgentStyle} from '../../../src/
 import {clearColorPalette, registerVariablesSheet, releaseVariablesSheet} from '../../../src/inject/dynamic-theme/palette';
 import {clearColorModificationCache} from '../../../src/inject/dynamic-theme/modify-colors';
 import {createStyleSheetModifier} from '../../../src/inject/dynamic-theme/stylesheet-modifier';
+import {VariablesStore} from '../../../src/inject/dynamic-theme/variables';
 import {createAdoptedEmitter} from '../../../src/inject/lean-theme/adopted-emitter';
 import {syncAdoptedSheets} from '../../../src/inject/lean-theme/adopted-sync';
 import {renderAdoptedOutput} from '../../../src/inject/lean-theme/adopted-render';
@@ -64,6 +65,8 @@ import {watchAdoptedRoot} from '../../../src/inject/lean-theme/adopted-watch';
 import {applyLeanInlineStyles, overrideLeanInlineStyle, clearLeanInlineOverrides} from '../../../src/inject/lean-theme/inline-style';
 import {cleanLeanLoadingLinks, manageLeanStyle} from '../../../src/inject/lean-theme/style-manager';
 import {createOrUpdateLeanTheme, removeLeanTheme, serializeLeanCSS} from '../../../src/inject/lean-theme';
+
+const initialVariableOptions = jest.mocked(VariablesStore).mock.calls[0][0];
 
 class TestElement extends EventTarget {
     isConnected = true;
@@ -156,6 +159,10 @@ async function flushFrame() {
 }
 
 describe('Lean injector lifecycle', () => {
+    test('does not enable image analysis in the Lean variable store', () => {
+        expect(initialVariableOptions).toEqual({imageURLModifier: null});
+    });
+
     test('applies theme settings and cleans up owned state', () => {
         jest.mocked(getCSSFilterValue).mockReturnValue('invert(100%)');
         createOrUpdateLeanTheme({...theme, useFont: true, selectionColor: 'auto'}, fixes({invert: ['.logo'], css: '.x { color: ${invalid}; }'}), false);
@@ -481,6 +488,18 @@ describe('Lean injector lifecycle', () => {
         expect(options.isActive()).toBe(false);
     });
 
+    test('refreshes root variables after a variable-change callback without new rules', async () => {
+        createOrUpdateLeanTheme(theme, null, false);
+        const syncOptions = jest.mocked(syncAdoptedSheets).mock.calls[0][1];
+        syncOptions.createModifier();
+        const modifierOptions = jest.mocked(createStyleSheetModifier).mock.calls[0][0] as unknown as {variablesStore: {setOnRootVariableChange: jest.Mock}};
+        const rootChanged = modifierOptions.variablesStore.setOnRootVariableChange.mock.calls[0][0];
+        emitter.setNamedSheet.mockClear();
+        rootChanged();
+        await flushFrame();
+        expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'root-vars', 'root vars', 'beginning');
+    });
+
     test('connects variable changes and adopted rules to the next flush', async () => {
         createOrUpdateLeanTheme(theme, null, false);
         const syncOptions = jest.mocked(syncAdoptedSheets).mock.calls[0][1];
@@ -667,6 +686,38 @@ describe('Lean injector lifecycle', () => {
         observer.callback([{type: 'childList', addedNodes: [], removedNodes: [style]} as unknown as MutationRecord]);
         await flushFrame();
         expect(manager.destroy).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not match empty rules from an inserted stylesheet', async () => {
+        const style = new TestHTMLElement();
+        const manager = {details: jest.fn(() => ({rules: []})), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        jest.mocked(shouldManageStyle).mockImplementation((node) => node === style as unknown as Node);
+        createOrUpdateLeanTheme(theme, null, false);
+        TestObserver.instances[0].callback([{type: 'childList', addedNodes: [style], removedNodes: []} as unknown as MutationRecord]);
+        await flushFrame();
+        const variables = jest.mocked(manageLeanStyle).mock.calls[0][1].variablesStore;
+        expect(variables.addRulesForMatching).not.toHaveBeenCalled();
+        expect(variables.matchVariablesAndDependents).toHaveBeenCalledTimes(1);
+        expect(manager.render).toHaveBeenCalledTimes(1);
+    });
+
+    test('uses document ownership for inserted sheets when shadow DOM is unavailable', async () => {
+        const platform = jest.requireMock('../../../src/utils/platform') as {isShadowDomSupported: boolean};
+        const style = new TestHTMLElement();
+        style.parentRoot = new TestShadowRoot();
+        const manager = {details: jest.fn(() => null), render: jest.fn(), watch: jest.fn(), destroy: jest.fn()};
+        jest.mocked(manageLeanStyle).mockReturnValue(manager as never);
+        jest.mocked(shouldManageStyle).mockImplementation((node) => node === style as unknown as Node);
+        platform.isShadowDomSupported = false;
+        try {
+            createOrUpdateLeanTheme(theme, null, false);
+            TestObserver.instances[0].callback([{type: 'childList', addedNodes: [style], removedNodes: []} as unknown as MutationRecord]);
+            await flushFrame();
+            expect(jest.mocked(manageLeanStyle).mock.calls[0][1].root).toBe(doc);
+        } finally {
+            platform.isShadowDomSupported = true;
+        }
     });
 
     test('ignores unrelated mutations and completes deferred rendering', async () => {
