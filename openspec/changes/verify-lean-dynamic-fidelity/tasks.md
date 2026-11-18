@@ -45,7 +45,7 @@ flowchart LR
 - [x] 7.2 Measure startup, CPU and memory for Lean and Dynamic on repeatable representative workloads; report methodology, results and limitations without assuming improvement. Evidence: `node tests/perf/compare-lean.mjs`, 10 measured iterations per fixture and engine; see verification.md for results and scope.
 - [x] 7.3 Reconcile the earlier change's tasks and conflicting requirement identifiers against actual evidence; verify no unsupported completion claims or accidental spec changes. Evidence: task-by-task disposition and requirement mapping in verification.md; `git diff -- openspec/specs` is empty.
 - [x] 7.4 Human comprehension verification: review the implementation and red-green evidence; verify the reviewer can explain the changed logic.
-- [ ] 7.5 Integrate and rebase the stream, rerun affected checks and strict OpenSpec validation; verify the final state before a separate archive decision.
+- [x] 7.5 Integrate and rebase the stream, rerun affected checks and strict OpenSpec validation; verify the final state before a separate archive decision. Evidence: fast-forwarded local main at 4ff879e3; unit 363/363, Firefox injection 195/195 and packaged 31/31, lint, build, API and strict validation passed; focused Helium passed and full-suite navigation/reload limitations are recorded in verification.md.
 
 ## Review Gate
 - [x] **Gate 3 Approval**: Tasks breakdown approved by human before writing test code.

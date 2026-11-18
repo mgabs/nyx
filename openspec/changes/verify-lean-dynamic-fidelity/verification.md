@@ -7,6 +7,23 @@ Lean tracks each page stylesheet separately for every document or accessible ope
 The latest full injector run killed 606 of 636 mutations (95.28%) without timeouts or exclusions. Focused injector coverage is 98.98% lines and 96.56% branches; the changed Lean reconciliation, lifecycle and proxy components also meet their scoped targets. The full Helium suites retain the independently reproduced reload/navigation failure, while focused Helium cases and the full Firefox suite pass. The user reviewed the implementation and evidence and marked the comprehension gate complete.
 
 
+## Integrated main verification
+
+The fidelity branch was already based on local `main` and was fast-forwarded into it at `4ff879e3`. The original untracked planning files were verified unchanged and preserved at `/private/tmp/nyx-fidelity-root-before-integration`. On the integrated code, 363 unit tests, lint, the extension build, API build, 195 Firefox injection tests and 31 packaged Firefox tests passed; strict OpenSpec validation passed. The raw 606/636 mutation result above was measured against the same source and test code before the fast-forward.
+
+The focused packaged Lean test passed in Helium. The full Helium packaged suite passed 22 of 31 tests; nine aborted navigation to the local test server before their assertions. The full Helium injection run stopped with the previously reproduced full-page reload error before completing tests. These are recorded environment gaps, not passing full-suite results. Raw logs: `/private/tmp/nyx-main-firefox-inject.log`, `/private/tmp/nyx-main-firefox-browser.log`, `/private/tmp/nyx-main-helium-browser.log`, `/private/tmp/nyx-main-helium-inject.log`, and `/private/tmp/nyx-main-helium-lean.log`.
+
+A post-integration Helium performance run used one warmup and ten measured iterations per engine and fixture, with no measured retries. Medians are shown below; they measure page readiness, renderer task time and page JavaScript heap on one machine, and do not establish a general performance advantage.
+
+| Fixture | Engine | Page ready (ms) | Renderer task (ms) | Page JS heap (bytes) |
+| --- | --- | ---: | ---: | ---: |
+| Article | Dynamic | 53.51 | 22.42 | 2,813,588 |
+| Article | Lean | 56.25 | 22.17 | 2,762,632 |
+| SPA churn | Dynamic | 53.70 | 26.24 | 2,865,244 |
+| SPA churn | Lean | 56.26 | 23.79 | 2,877,674 |
+
+Raw records: `/private/tmp/nyx-main-perf.jsonl`.
+
 ## Review findings and fixes
 
 A review found that Lean reused Dynamic's animation-frame fallback when a stylesheet was unavailable. A focused Firefox test failed because it scheduled a frame; after introducing a Lean-only watcher for stylesheet and load events, it passed in Firefox and Helium. The watcher coalesces events and invalidates callbacks on stop. Dynamic keeps its original watcher. Raw red and green outputs: `/private/tmp/nyx-lean-no-poll-red.log`, `/private/tmp/nyx-lean-no-poll-green.log`, and `/private/tmp/nyx-lean-no-poll-helium.log`.
@@ -29,7 +46,7 @@ The full Firefox injection suite passed 195/195 after the startup fix, following
 
 A combined reusable unit mutation run across 14 Lean modules and the Lean-only proxy block killed 920 of 957 mutations (96.13%); nine timed out and 28 survived. Its Stryker score, which counts timeouts, was 97.07%. The stylesheet manager's earlier isolated run killed 170 of 175 mutations without timeouts. The combined reconciliation browser and unit run separately killed 197 of 199 mutations without timeouts. The combined unit configuration is `tests/unit/stryker.lean.mjs`; it requires Stryker and its Jest runner installed separately, with `NYX_STRYKER_JEST_PLUGIN` pointing to the runner's entry point. Raw combined output: `/private/tmp/nyx-all-lean-mutation-final.log`.
 
-The user confirmed that the reviewed behaviors and documented reload and hook limitations match their intent and marked the human review checkbox. Final integration remains open. Full Helium suites still encounter the independently reproduced browser navigation/reload issue described below; isolated representative checks pass, but this is not a full-suite pass.
+The user confirmed that the reviewed behaviors and documented reload and hook limitations match their intent and marked the human review checkbox. Integration and post-integration checks are recorded above. Full Helium suites still encounter the independently reproduced browser navigation/reload issue described below; isolated representative checks pass, but this is not a full-suite pass.
 
 ## Preliminary performance probe
 
