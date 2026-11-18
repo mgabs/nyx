@@ -514,6 +514,24 @@ describe('LEAN DYNAMIC THEME', () => {
         expect(getComputedStyle(target).backgroundColor).not.toBe('rgb(17, 17, 17)');
     });
 
+    it('preserves native declaration methods while detecting CSSOM edits', async () => {
+        const style = document.createElement('style');
+        style.textContent = '.cssom-methods { background-color: white; color: black; }';
+        const target = document.createElement('div');
+        target.className = 'cssom-methods';
+        container.append(style, target);
+        createOrUpdateLeanTheme(theme, null, false);
+        const declaration = (style.sheet!.cssRules[0] as CSSStyleRule).style;
+        expect(CSSStyleDeclaration.prototype.item.call(declaration, 0)).toBe('background-color');
+        declaration.setProperty('background-color', 'red', 'important');
+        expect(declaration.getPropertyPriority('background-color')).toBe('important');
+        await timeout(150);
+        expect(getComputedStyle(target).backgroundColor).not.toBe('rgb(17, 17, 17)');
+        expect(declaration.removeProperty('background-color')).toBe('red');
+        await timeout(150);
+        expect(getComputedStyle(target).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    });
+
     it('styles page via adoptedStyleSheets with zero .nyx--sync or canvas elements', () => {
         const style = document.createElement('style');
         style.textContent = multiline(

@@ -19,12 +19,12 @@ Run `npm run build`, then `CHROME_BIN="<Helium executable>" node tests/perf/comp
 
 | Fixture | Engine | Page ready median (ms) | Renderer task median (ms) | Page JS heap median (bytes) |
 | --- | --- | ---: | ---: | ---: |
-| Article | Dynamic | 47.73 | 20.21 | 2,838,208 |
-| Article | Lean | 48.51 | 19.07 | 2,713,016 |
-| SPA churn | Dynamic | 47.39 | 26.51 | 2,893,368 |
-| SPA churn | Lean | 48.07 | 22.94 | 2,873,664 |
+| Article | Dynamic | 47.65 | 20.14 | 2,838,208 |
+| Article | Lean | 47.70 | 18.80 | 2,713,272 |
+| SPA churn | Dynamic | 48.68 | 25.38 | 2,880,908 |
+| SPA churn | Lean | 47.69 | 22.59 | 2,874,282 |
 
-Page ready includes navigation, verification that the selected theme applied, and two animation frames. The SPA fixture adds 200 nodes once. Task duration is a renderer metric, not total CPU usage; JS heap is page heap, not total browser or extension memory. A single device, browser and short workload cannot establish a general performance advantage. Raw records: `/private/tmp/nyx-perf-final.jsonl`.
+Page ready includes navigation, verification that the selected theme applied, and two animation frames. The SPA fixture adds 200 nodes once. Task duration is a renderer metric, not total CPU usage; JS heap is page heap, not total browser or extension memory. A single device, browser and short workload cannot establish a general performance advantage. This run was repeated after the settings fix. Raw records: `/private/tmp/nyx-perf-after-palette.jsonl`.
 
 ## Retrospective red-green baseline
 
@@ -45,6 +45,10 @@ Stryker 10.1.1 was installed outside the repository. The latest scoped run mutat
 Focused Jest unit coverage for `adopted-emitter.ts` reached 100% lines and 100% branches. This does not establish coverage for the other changed files or the excluded page proxy.
 
 The full Firefox injection run passed 168 tests. Its browser instrumentation reported line/branch coverage of 85.32%/76.47% for `adopted-emitter.ts`, 82.31%/75.84% for `index.ts`, 71.87%/57.14% for `inline-style.ts`, and 88.88%/77.21% for `style-manager.ts`. These are separate from the focused Jest figures and below the required 95% thresholds. The browser instrumentation excludes `stylesheet-proxy.ts`.
+
+## Declaration compatibility
+
+A focused browser test checks that a wrapped declaration supports native `item`, `setProperty`, `getPropertyPriority`, and `removeProperty` calls and that edits update themed output. It passed individually in both Firefox and Helium. It does not remove the documented limitation for declarations retained before hook installation.
 
 ## Latest Firefox injection coverage
 
