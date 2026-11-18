@@ -57,6 +57,8 @@ import {registerVariablesSheet} from '../../../src/inject/dynamic-theme/palette'
 import {createStyleSheetModifier} from '../../../src/inject/dynamic-theme/stylesheet-modifier';
 import {createAdoptedEmitter} from '../../../src/inject/lean-theme/adopted-emitter';
 import {syncAdoptedSheets} from '../../../src/inject/lean-theme/adopted-sync';
+import {renderAdoptedOutput} from '../../../src/inject/lean-theme/adopted-render';
+import {reorderAdoptedOutputs} from '../../../src/inject/lean-theme/adopted-reorder';
 import {watchAdoptedRoot} from '../../../src/inject/lean-theme/adopted-watch';
 import {applyLeanInlineStyles, overrideLeanInlineStyle, clearLeanInlineOverrides} from '../../../src/inject/lean-theme/inline-style';
 import {manageLeanStyle} from '../../../src/inject/lean-theme/style-manager';
@@ -256,8 +258,11 @@ describe('Lean injector lifecycle', () => {
         jest.mocked(getManageableStyles).mockReturnValue([style as never]);
         createOrUpdateLeanTheme(theme, null, false);
         const options = jest.mocked(manageLeanStyle).mock.calls[0][1];
+        expect(options.variablesStore.addRulesForMatching).toHaveBeenCalledWith([{}]);
+        jest.mocked(options.variablesStore.addRulesForMatching).mockClear();
         options.update();
         await flushFrame();
+        expect(options.variablesStore.addRulesForMatching).toHaveBeenCalledWith([{}]);
         expect(manager.render).toHaveBeenCalledTimes(2);
         options.loadingStart();
         options.loadingEnd();
@@ -296,6 +301,7 @@ describe('Lean injector lifecycle', () => {
         const modifierOptions = jest.mocked(createStyleSheetModifier).mock.calls[0][0] as unknown as {variablesStore: {setOnRootVariableChange: jest.Mock; matchVariablesAndDependents: jest.Mock}};
         const variables = modifierOptions.variablesStore;
         const rootChanged = variables.setOnRootVariableChange.mock.calls[0][0];
+        emitter.setNamedSheet.mockClear();
         rootChanged();
         await flushFrame();
         expect(variables.matchVariablesAndDependents).toHaveBeenCalledTimes(2);
@@ -392,6 +398,8 @@ describe('Lean injector lifecycle', () => {
         expect(manager.render).toHaveBeenCalledTimes(2);
         expect(emitter.setNamedSheet).toHaveBeenCalledWith(doc, 'invert', '', 'beginning');
         expect(manager.watch).toHaveBeenCalledTimes(2);
+        expect(renderAdoptedOutput).toHaveBeenCalledWith(doc, sheet, expect.objectContaining({theme: expect.objectContaining({brightness: 90})}));
+        expect(reorderAdoptedOutputs).toHaveBeenCalledWith(doc, expect.anything());
     });
 
     test('keeps the fallback until every pending stylesheet finishes loading', () => {
